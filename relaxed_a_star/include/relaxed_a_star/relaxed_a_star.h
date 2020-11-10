@@ -1,11 +1,21 @@
 #pragma once
 
 #include "ros/ros.h"
+
 #include <mbf_costmap_core/costmap_planner.h>
+#include <nav_core/base_global_planner.h>
+
+#include <geometry_msgs/PoseStamped.h>
+#include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
+
+#include <string>
+#include <memory> // Usage of smart pointers
+#include <vector>
 
 namespace relaxed_a_star
 {
-    class RelaxedAStar : public mbf_costmap_core::CostmapPlanner
+    class RelaxedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public:
             RelaxedAStar();
@@ -47,6 +57,16 @@ namespace relaxed_a_star
                                         std::string &message);
 
             /**
+             * @brief Given a goal pose in the world, compute a plan
+             * @param start The start pose 
+             * @param goal The goal pose 
+             * @param plan The plan... filled by the planner
+             * @return True if a valid plan was found, false otherwise
+             */
+            bool makePlan(const geometry_msgs::PoseStamped& start, 
+                const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
+
+            /**
             * @brief Requests the planner to cancel, e.g. if it takes too much time.
             * @remark New on MBF API
             * @return True if a cancel has been successfully requested, false if not implemented.
@@ -59,7 +79,5 @@ namespace relaxed_a_star
             * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
             */
             void initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
-
-            
     };
 }
