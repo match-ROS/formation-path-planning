@@ -12,7 +12,11 @@ find_package(catkin REQUIRED)
 ## System dependencies are found with CMake's conventions
 find_package(
     catkin REQUIRED COMPONENTS 
-    roscpp)
+    roscpp
+    mbf_costmap_core
+    nav_core
+    geometry_msgs
+    costmap_2d)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -101,10 +105,16 @@ find_package(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES relaxed_a_star
-  CATKIN_DEPENDS roscpp
-#  DEPENDS system_lib
+  INCLUDE_DIRS 
+    include
+  LIBRARIES 
+    relaxed_a_star
+  CATKIN_DEPENDS 
+    roscpp
+    pluginlib
+    mbf_costmap_core
+    nav_core
+    geometry_msgs
 )
 
 ###########

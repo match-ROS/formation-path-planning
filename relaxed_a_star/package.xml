@@ -50,16 +50,25 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>mbf_costmap_core</build_depend>
-  <build_depend>pluginlib</build_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>mbf_costmap_core</build_depend>
+  <build_depend>nav_core</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>costmap_2d</build_depend>
 
-  <exec_depend>mbf_costmap_core</exec_depend>
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>pluginlib</exec_depend>
+  <exec_depend>mbf_costmap_core</exec_depend>
+  <exec_depend>nav_core</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>costmap_2d</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
+    
     <mbf_costmap_core plugin="${prefix}/mbf_plugin.xml" />
+    <nav_core plugin="${prefix}/mbf_plugin.xml" />
   </export>
 </package>

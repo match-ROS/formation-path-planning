@@ -1,7 +1,12 @@
 <library path="lib/librelaxed_a_star">
   <class name="global_planner/RelaxedAStar" type="relaxed_a_star::RelaxedAStar" base_class_type="mbf_costmap_core::CostmapPlanner">
     <description>
-      This is a description.
+      This is a description. mbf_costmap_core
+    </description>
+  </class>
+  <class name="global_planner/RelaxedAStar" type="relaxed_a_star::RelaxedAStar" base_class_type="nav_core::BaseGlobalPlanner">
+    <description>
+      This is a description. Nav_core
     </description>
   </class>
 </library>
