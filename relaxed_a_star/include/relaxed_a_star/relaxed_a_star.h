@@ -3,11 +3,13 @@
 #include "ros/ros.h"
 
 #include <mbf_costmap_core/costmap_planner.h>
+#include <mbf_msgs/GetPathResult.h>
 #include <nav_core/base_global_planner.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
+#include <tf/transform_listener.h>
 
 #include <string>
 #include <memory> // Usage of smart pointers
@@ -19,13 +21,24 @@ namespace relaxed_a_star
     {
         public:
             RelaxedAStar();
+            RelaxedAStar(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
 
             // mbf_costmap_core::CostmapPlanner interface implementation
+            /**
+            * @brief Initialization function for the CostmapPlanner
+            * @param name The name of this planner
+            * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
+            */
+            void initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
 
-            // /**
-            // * @brief  Virtual destructor for the interface
-            // */
-            // ~CostmapPlanner(){}
+            /**
+             * @brief Initialization method for the CostmapPlanner
+             * 
+             * @param name The name of this planner
+             * @param costmap A pointer to the costmap that will be used for planning
+             * @param global_frame Global frame of the costmap
+             */
+            void initialize(std::string name, costmap_2d::Costmap2D *costmap, std::string global_frame);
 
             /**
              * @brief Given a goal pose in the world, compute a plan
@@ -72,12 +85,15 @@ namespace relaxed_a_star
             * @return True if a cancel has been successfully requested, false if not implemented.
             */
             bool cancel();
+        
+        protected:
+            bool initialized_;
 
-            /**
-            * @brief Initialization function for the CostmapPlanner
-            * @param name The name of this planner
-            * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
-            */
-            void initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
+            costmap_2d::Costmap2DROS *costmap_ros_;
+            costmap_2d::Costmap2D *costmap_;
+
+        private:
+            std::string global_frame_;
+            std::string tf_prefix_;
     };
 }

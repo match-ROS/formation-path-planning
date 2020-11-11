@@ -14,6 +14,7 @@ find_package(
     catkin REQUIRED COMPONENTS 
     roscpp
     mbf_costmap_core
+    mbf_msgs
     nav_core
     geometry_msgs
     costmap_2d)
@@ -113,8 +114,10 @@ catkin_package(
     roscpp
     pluginlib
     mbf_costmap_core
+    mbf_msgs
     nav_core
     geometry_msgs
+    tf
 )
 
 ###########
