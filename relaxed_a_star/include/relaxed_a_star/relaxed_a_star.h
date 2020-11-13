@@ -42,6 +42,16 @@ namespace relaxed_a_star
 
             /**
              * @brief Given a goal pose in the world, compute a plan
+             * @param start The start pose 
+             * @param goal The goal pose 
+             * @param plan The plan... filled by the planner
+             * @return True if a valid plan was found, false otherwise
+             */
+            bool makePlan(const geometry_msgs::PoseStamped& start, 
+                const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
+
+            /**
+             * @brief Given a goal pose in the world, compute a plan
              * @param start The start pose
              * @param goal The goal pose
              * @param tolerance If the goal is obstructed, how many meters the planner can relax the constraint
@@ -70,16 +80,6 @@ namespace relaxed_a_star
                                         std::string &message);
 
             /**
-             * @brief Given a goal pose in the world, compute a plan
-             * @param start The start pose 
-             * @param goal The goal pose 
-             * @param plan The plan... filled by the planner
-             * @return True if a valid plan was found, false otherwise
-             */
-            bool makePlan(const geometry_msgs::PoseStamped& start, 
-                const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
-
-            /**
             * @brief Requests the planner to cancel, e.g. if it takes too much time.
             * @remark New on MBF API
             * @return True if a cancel has been successfully requested, false if not implemented.
@@ -87,6 +87,7 @@ namespace relaxed_a_star
             bool cancel();
         
         protected:
+
             bool initialized_;
 
             costmap_2d::Costmap2DROS *costmap_ros_;
@@ -95,5 +96,8 @@ namespace relaxed_a_star
         private:
             std::string global_frame_;
             std::string tf_prefix_;
+
+            // Parameter list
+            float default_tolerance_;
     };
 }
