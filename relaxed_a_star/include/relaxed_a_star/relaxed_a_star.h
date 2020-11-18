@@ -14,9 +14,32 @@
 #include <string>
 #include <memory> // Usage of smart pointers
 #include <vector>
+#include <list>
+#include <set>
 
 namespace relaxed_a_star
 {
+    /**
+     * @brief Struct that acts as a container for storing the call with the according f_cost value
+     * Contains overwriten > and < operators for multiset comparator functions
+     * 
+     */
+    struct cell
+    {
+        int cell_index;
+        float f_cost;
+
+        bool operator<(const cell& rhs) const
+        {
+            return this->f_cost < rhs.f_cost;
+        }
+
+        bool operator>(const cell& rhs) const
+        {
+            return this->f_cost > rhs.f_cost;
+        }
+    };
+
     class RelaxedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public:
@@ -94,10 +117,41 @@ namespace relaxed_a_star
             costmap_2d::Costmap2D *costmap_;
 
         private:
+            /**
+             * @brief Calculates the heuristic cost from current_cell to the goal_cell.
+             * Currently the cost will be approximated with the euclidean distance.
+             * 
+             * @param current_cell Current cell from where the heuristic cost should be calculated to the goal
+             * @param map_goal Goal of the path planning
+             * @return float 
+             */
+            float calcHeuristicCost(int* current_cell, int* map_goal);
+
+            /**
+             * @brief Gets the index of the 2D position in the 1D representing array
+             * Here the costmap is represented by a 1 dimensional array.
+             * 
+             * @param map_point Array that contains x and y index of the costmap
+             * @return int Index in the one dimensional costmap
+             */
+            int getArrayIndexByCostmapPoint(int *map_point);
+
+            /**
+             * @brief Gets the index of the 1D array in the 2D costmap
+             * Here the costmap is represented by a 1 dimensional array.
+             * 
+             * @param array_index Index of the position in the one dimensional array
+             * @param map_point Point in the two dimensional costmap
+             */
+            int* getCostmapPositionByArrayIndex(int array_index);
+
             std::string global_frame_;
             std::string tf_prefix_;
 
             // Parameter list
             float default_tolerance_;
+
+            // Process information
+            int map_size_;
     };
 }
