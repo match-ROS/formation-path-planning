@@ -130,6 +130,7 @@ namespace relaxed_a_star
         int map_start[2]; // I will save the position as array and not some ros-pose type so it can easily be extracted into a separate class independent of ros
         map_start[0] = map_x;
         map_start[1] = map_y;
+        int start_cell_index = this->getArrayIndexByCostmapPoint(map_start);
         
         // Check if the goal position is in the map
         world_x = goal.pose.position.x;
@@ -152,14 +153,15 @@ namespace relaxed_a_star
         int map_goal[2];
         map_goal[0] = map_x;
         map_goal[1] = map_y;
+        int goal_cell_index = this->getArrayIndexByCostmapPoint(map_goal);
 
         // Begin of Relaxed_A_Star
         float fTieBreaker = 1 + (1/(this->costmap_->getSizeInCellsX() + this->costmap_->getSizeInCellsY()));
 
         // Initialization 
-        std::multiset<cell, std::greater<cell>> open_cell_set;
+        std::multiset<Cell, std::greater<Cell>> open_cell_set;
         open_cell_set.insert({this->getArrayIndexByCostmapPoint(map_start),
-                              this->calcHeuristicCost(map_start, map_goal)});
+                              this->calcHCost(map_start, map_goal)});
         ROS_INFO("Open_cell_set:");
         for(auto it: open_cell_set)
         {
@@ -179,12 +181,22 @@ namespace relaxed_a_star
                g_score[map_goal[0], map_goal[1]] == std::numeric_limits<float>::infinity())
         {
             ROS_INFO("Open_Cell_Count: %i", open_cell_set.size());
-            std::multiset<cell>::iterator current_cell_it = open_cell_set.begin(); // Get cell with lowest f_score
+            std::multiset<Cell>::iterator current_cell_it = open_cell_set.begin(); // Get cell with lowest f_score
             open_cell_set.erase(current_cell_it); // Remove cell from open_cell_set so it will not be visited again
 
             std::vector<int> neighbor_cell_list = this->getFreeNeighborCells(current_cell_it->cell_index);
 
-
+            for(int neighbor_cell_index: neighbor_cell_list)
+            {
+                if(g_score[neighbor_cell_index] == std::numeric_limits<float>::infinity())
+                {
+                    g_score[neighbor_cell_index] = this->calcGCost(g_score[current_cell_it->cell_index], current_cell_it->cell_index, neighbor_cell_index);
+                    open_cell_set.insert({neighbor_cell_index,
+                                          this->calcFCost(g_score[current_cell_it->cell_index],
+                                                          current_cell_it->cell_index,
+                                                          goal_cell_index)});
+                }
+            }
         }
     }
 
@@ -195,10 +207,30 @@ namespace relaxed_a_star
     }
 
 
-    float RelaxedAStar::calcHeuristicCost(int* current_cell, int* map_goal)
+    float RelaxedAStar::calcGCost(int current_g_cost, int current_cell_index, int target_cell_index)
+    {
+        return current_g_cost + this->calcMoveCost(current_cell_index, target_cell_index);
+    }
+
+    float RelaxedAStar::calcHCost(int* map_current_position, int* map_goal)
     {
         // Calc euclidean distance and return
-        return std::sqrt(std::pow(current_cell[0] - map_goal[0], 2) + std::pow(current_cell[1] - map_goal[1], 2));
+        return std::sqrt(std::pow(map_current_position[0] - map_goal[0], 2) +
+                         std::pow(map_current_position[1] - map_goal[1], 2));
+    }
+
+    float RelaxedAStar::calcHCost(int current_cell_index, int goal_cell_index)
+    {
+        int map_current_position[2];
+        int map_goal_position[2];
+        this->getCostmapPointByArrayIndex(current_cell_index, map_current_position);
+        this->getCostmapPointByArrayIndex(goal_cell_index, map_goal_position);
+        return this->calcHCost(map_current_position, map_goal_position);
+    }
+
+    float RelaxedAStar::calcFCost(float current_g_score, int current_cell_index, int goal_cell_index)
+    {
+        return current_g_score + this->calcHCost(current_cell_index, goal_cell_index);
     }
 
     int RelaxedAStar::getArrayIndexByCostmapPoint(int *map_point)
@@ -255,5 +287,27 @@ namespace relaxed_a_star
     bool RelaxedAStar::isCellFree(int cell_index)
     {
         return this->occupancy_map_[cell_index];
+    }
+
+    float RelaxedAStar::calcMoveCost(int current_cell_index, int target_cell_index)
+    {
+        int map_current_position[2];
+        int map_target_position[2];
+        this->getCostmapPointByArrayIndex(current_cell_index, map_current_position);
+        this->getCostmapPointByArrayIndex(target_cell_index, map_target_position);
+        return this->calcMoveCost(map_current_position, map_target_position);
+    }
+
+    float RelaxedAStar::calcMoveCost(int* map_current_position, int* map_target_position)
+    {
+        return this->calcMoveCost(map_current_position[0],
+                                  map_current_position[1],
+                                  map_target_position[0],
+                                  map_target_position[1]);
+    }
+
+    float RelaxedAStar::calcMoveCost(int map_current_pos_x, int map_current_pos_y, int map_target_pos_x, int map_target_pos_y)
+    {
+        return sqrt(pow(map_current_pos_x - map_target_pos_x, 2) + pow(map_current_pos_y - map_target_pos_y, 2));
     }
 }

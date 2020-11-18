@@ -24,17 +24,17 @@ namespace relaxed_a_star
      * Contains overwriten > and < operators for multiset comparator functions
      * 
      */
-    struct cell
+    struct Cell
     {
         int cell_index;
         float f_cost;
 
-        bool operator<(const cell& rhs) const
+        bool operator<(const Cell& rhs) const
         {
             return this->f_cost < rhs.f_cost;
         }
 
-        bool operator>(const cell& rhs) const
+        bool operator>(const Cell& rhs) const
         {
             return this->f_cost > rhs.f_cost;
         }
@@ -124,15 +124,21 @@ namespace relaxed_a_star
             std::shared_ptr<bool[]> occupancy_map_; // One dimensional represantation of the map. True = occupied, false = free
 
         private:
+            float calcGCost(int current_g_cost, int current_cell_index, int target_cell_index);
+
             /**
-             * @brief Calculates the heuristic cost from current_cell to the goal_cell.
+             * @brief Calculates the heuristic cost from current position to the goal_cell.
              * Currently the cost will be approximated with the euclidean distance.
              * 
-             * @param current_cell Current cell from where the heuristic cost should be calculated to the goal
+             * @param map_current_position Current cell from where the heuristic cost should be calculated to the goal
              * @param map_goal Goal of the path planning
              * @return float 
              */
-            float calcHeuristicCost(int* current_cell, int* map_goal);
+            float calcHCost(int* map_current_position, int* map_goal);
+            float calcHCost(int current_cell_index, int goal_cell_index);
+
+            float calcFCost(float current_g_score, int current_cell_index, int goal_cell_index);
+
 
             /**
              * @brief Gets the index of the 2D position in the 1D representing array
@@ -171,6 +177,10 @@ namespace relaxed_a_star
             std::vector<int> getFreeNeighborCells(int current_cell_index);
 
             bool isCellFree(int cell_index);
+
+            float calcMoveCost(int current_cell_index, int target_cell_index);
+            float calcMoveCost(int* map_current_position, int* map_target_position);
+            float calcMoveCost(int map_current_pos_x, int map_current_pos_y, int map_target_pos_x, int map_target_pos_y);
 
             std::string global_frame_;
             std::string tf_prefix_;
