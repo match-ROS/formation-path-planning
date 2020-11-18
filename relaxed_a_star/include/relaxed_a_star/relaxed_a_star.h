@@ -40,6 +40,12 @@ namespace relaxed_a_star
         }
     };
 
+    enum NeighborType
+    {
+        FourWay = 4,
+        EightWay = 8
+    };
+
     class RelaxedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public:
@@ -115,6 +121,7 @@ namespace relaxed_a_star
 
             costmap_2d::Costmap2DROS *costmap_ros_;
             costmap_2d::Costmap2D *costmap_;
+            std::shared_ptr<bool[]> occupancy_map_; // One dimensional represantation of the map. True = occupied, false = free
 
         private:
             /**
@@ -132,9 +139,19 @@ namespace relaxed_a_star
              * Here the costmap is represented by a 1 dimensional array.
              * 
              * @param map_point Array that contains x and y index of the costmap
-             * @return int Index in the one dimensional costmap
+             * @return int Cell index in one dimensional representation
              */
             int getArrayIndexByCostmapPoint(int *map_point);
+
+            /**
+             * @brief Gets the index of the 2D position in the 1D representing array
+             * Here the costmap is represented by a 1 dimensional array.
+             * 
+             * @param map_x_coord X coordinate of the point in the map as int
+             * @param map_y_coord Y coordinate of the point in the map as int
+             * @return int Cell index in one dimensional representation
+             */
+            int getArrayIndexByCostmapPoint(int map_x_coord, int map_y_coord);
 
             /**
              * @brief Gets the index of the 1D array in the 2D costmap
@@ -143,13 +160,24 @@ namespace relaxed_a_star
              * @param array_index Index of the position in the one dimensional array
              * @param map_point Point in the two dimensional costmap
              */
-            int* getCostmapPositionByArrayIndex(int array_index);
+            void getCostmapPointByArrayIndex(int array_index, int *map_point);
+
+            /**
+             * @brief Gets all free neighbor cells adjacent to the current cell
+             * 
+             * @param current_cell_index 
+             * @return std::vector<int> 
+             */
+            std::vector<int> getFreeNeighborCells(int current_cell_index);
+
+            bool isCellFree(int cell_index);
 
             std::string global_frame_;
             std::string tf_prefix_;
 
             // Parameter list
             float default_tolerance_;
+            NeighborType neighbor_type_;
 
             // Process information
             int map_size_;
