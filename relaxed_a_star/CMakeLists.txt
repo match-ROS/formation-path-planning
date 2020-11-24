@@ -16,6 +16,7 @@ find_package(
     mbf_costmap_core
     mbf_msgs
     nav_core
+    nav_msgs
     geometry_msgs
     costmap_2d)
 

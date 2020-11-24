@@ -55,6 +55,7 @@
   <build_depend>mbf_costmap_core</build_depend>
   <build_depend>mbf_msgs</build_depend>
   <build_depend>nav_core</build_depend>
+  <build_depend>nav_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>costmap_2d</build_depend>
   <build_depend>tf</build_depend>
@@ -64,6 +65,7 @@
   <exec_depend>mbf_costmap_core</exec_depend>
   <exec_depend>mbf_msgs</exec_depend>
   <exec_depend>nav_core</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>costmap_2d</exec_depend>
   <exec_depend>tf</exec_depend>

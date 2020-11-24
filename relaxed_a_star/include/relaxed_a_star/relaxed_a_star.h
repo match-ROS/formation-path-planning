@@ -7,6 +7,7 @@
 #include <nav_core/base_global_planner.h>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
 #include <tf/transform_listener.h>
@@ -123,21 +124,31 @@ namespace relaxed_a_star
             costmap_2d::Costmap2D *costmap_;
             std::shared_ptr<bool[]> occupancy_map_; // One dimensional represantation of the map. True = occupied, false = free
 
+            ros::Publisher plan_publisher_;
+
         private:
-            float calcGCost(int current_g_cost, int current_cell_index, int target_cell_index);
+            /**
+             * @brief Method for calulcating the g score for the target cell.
+             * 
+             * @param current_g_cost g score for the current cell
+             * @param array_current_cell Index for the current cell in the one dimensional representation of the costmap
+             * @param array_target_cell Index for the target cell in the one dimensional representation of the costmap
+             * @return float 
+             */
+            float calcGCost(int current_g_cost, int array_current_cell, int array_target_cell);
 
             /**
              * @brief Calculates the heuristic cost from current position to the goal_cell.
              * Currently the cost will be approximated with the euclidean distance.
              * 
-             * @param map_current_position Current cell from where the heuristic cost should be calculated to the goal
-             * @param map_goal Goal of the path planning
+             * @param map_current_cell Current cell from where the heuristic cost should be calculated to the goal
+             * @param map_goal_cell Goal of the path planning
              * @return float 
              */
-            float calcHCost(int* map_current_position, int* map_goal);
-            float calcHCost(int current_cell_index, int goal_cell_index);
+            float calcHCost(int* map_current_cell, int* map_goal_cell);
+            float calcHCost(int array_current_cell, int array_goal_cell);
 
-            float calcFCost(float current_g_score, int current_cell_index, int goal_cell_index);
+            float calcFCost(float current_g_score, int array_current_cell, int array_goal_cell);
 
 
             /**
@@ -147,40 +158,45 @@ namespace relaxed_a_star
              * @param map_point Array that contains x and y index of the costmap
              * @return int Cell index in one dimensional representation
              */
-            int getArrayIndexByCostmapPoint(int *map_point);
+            int getArrayIndexByCostmapCell(int *map_cell);
 
             /**
              * @brief Gets the index of the 2D position in the 1D representing array
              * Here the costmap is represented by a 1 dimensional array.
              * 
-             * @param map_x_coord X coordinate of the point in the map as int
-             * @param map_y_coord Y coordinate of the point in the map as int
+             * @param map_cell_x X coordinate of the point in the map as int
+             * @param map_cell_y Y coordinate of the point in the map as int
              * @return int Cell index in one dimensional representation
              */
-            int getArrayIndexByCostmapPoint(int map_x_coord, int map_y_coord);
+            int getArrayIndexByCostmapCell(int map_cell_x, int map_cell_y);
 
             /**
              * @brief Gets the index of the 1D array in the 2D costmap
              * Here the costmap is represented by a 1 dimensional array.
              * 
              * @param array_index Index of the position in the one dimensional array
-             * @param map_point Point in the two dimensional costmap
+             * @param map_cell Cell in the two dimensional costmap
              */
-            void getCostmapPointByArrayIndex(int array_index, int *map_point);
+            void getCostmapPointByArrayIndex(int array_index, int *map_cell);
 
             /**
              * @brief Gets all free neighbor cells adjacent to the current cell
              * 
-             * @param current_cell_index 
+             * @param array_current_cell 
              * @return std::vector<int> 
              */
-            std::vector<int> getFreeNeighborCells(int current_cell_index);
+            std::vector<int> getFreeNeighborCells(int array_current_cell);
 
-            bool isCellFree(int cell_index);
+            int getMinGScoreNeighborCell(int array_current_cell, std::shared_ptr<float[]> g_score);
 
-            float calcMoveCost(int current_cell_index, int target_cell_index);
-            float calcMoveCost(int* map_current_position, int* map_target_position);
-            float calcMoveCost(int map_current_pos_x, int map_current_pos_y, int map_target_pos_x, int map_target_pos_y);
+            void initializeOccupancyMap();
+            bool isCellFree(int array_cell_index);
+
+            float calcMoveCost(int array_current_cell, int array_target_cell);
+            float calcMoveCost(int* map_current_cell, int* map_target_cell);
+            float calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y);
+
+            void publishPlan(std::vector<geometry_msgs::PoseStamped> &plan);
 
             std::string global_frame_;
             std::string tf_prefix_;
@@ -190,6 +206,6 @@ namespace relaxed_a_star
             NeighborType neighbor_type_;
 
             // Process information
-            int map_size_;
+            int array_size_;
     };
 }
