@@ -114,25 +114,22 @@ namespace relaxed_a_star
         this->costmap_->setCost(map_start_cell_x, map_start_cell_y, costmap_2d::FREE_SPACE);
         
         // Safe the start position for the planner
-        int map_start[2]; // I will save the position as array and not some ros-pose type so it can easily be extracted into a separate class independent of ros
-        map_start[0] = map_start_cell_x;
-        map_start[1] = map_start_cell_y;
-        int start_cell_index = this->getArrayIndexByCostmapCell(map_start);
+        int map_start_cell[2]; // I will save the position as array and not some ros-pose type so it can easily be extracted into a separate class independent of ros
+        map_start_cell[0] = map_start_cell_x;
+        map_start_cell[1] = map_start_cell_y;
+        int start_cell_index = this->getArrayIndexByCostmapCell(map_start_cell);
         
         // Check if the goal position is in the map
-        // double world_start_pose_x = start.pose.position.x;
-        // double world_start_pose_y = start.pose.position.y;
-        // unsigned int map_start_cell_x, map_start_cell_y;
-        //HIER WEITER MACHEN!!!
-        world_x = goal.pose.position.x;
-        world_y = goal.pose.position.y;
+        double world_goal_pose_x = goal.pose.position.x;
+        double world_goal_pose_y = goal.pose.position.y;
+        unsigned int map_goal_cell_x, map_goal_cell_y;
 
         if (tolerance == 0.0) // For the moment I will use the default tolerance if somebody want 0 tolerance at the goal. Later this should throw an error or warning!
         {
             tolerance = this->default_tolerance_;
         }
         
-        if(!this->costmap_->worldToMap(world_x, world_y, map_x, map_y) ||
+        if(!this->costmap_->worldToMap(world_goal_pose_x, world_goal_pose_y, map_goal_cell_x, map_goal_cell_y) ||
             tolerance <= 0.0) // If goal is not in the map or the tolerance is too little than path is not possible
         {
             message = "The goal position of the robot is not inside the costmap or the tolerance is too tight";
@@ -141,77 +138,79 @@ namespace relaxed_a_star
         }
         
         // Safe the goal position for the planner
-        int map_goal[2];
-        map_goal[0] = map_x;
-        map_goal[1] = map_y;
-        int goal_cell_index = this->getArrayIndexByCostmapCell(map_goal);
+        int map_goal_cell[2];
+        map_goal_cell[0] = map_goal_cell_x;
+        map_goal_cell[1] = map_goal_cell_y;
+        int goal_cell_index = this->getArrayIndexByCostmapCell(map_goal_cell);
 
         // Begin of Relaxed_A_Star
         float fTieBreaker = 1 + (1/(this->costmap_->getSizeInCellsX() + this->costmap_->getSizeInCellsY()));
 
         // Initialization 
-        std::multiset<Cell, std::greater<Cell>> open_cell_set;
-        open_cell_set.insert({this->getArrayIndexByCostmapCell(map_start),
-                              this->calcHCost(map_start, map_goal)});
+        // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
+        // The elements in this list are linking to the index of the one dimensional costmap representation array.
+        std::multiset<Cell, std::greater<Cell>> array_open_cell_list; 
+        array_open_cell_list.insert({this->getArrayIndexByCostmapCell(map_start_cell),
+                              this->calcHCost(map_start_cell, map_goal_cell)});
         
-        // 1D-Array
+        // Create g_score array for the whole costmap and initialize with infinity so only visited cells get a value
         std::shared_ptr<float[]> g_score(new float[this->array_size_]);
         for(int counter = 0; counter < this->array_size_; counter++)
         {
             g_score[counter] = std::numeric_limits<float>::infinity();
         }
-        g_score[this->getArrayIndexByCostmapCell(map_start)] = 0;
+        g_score[this->getArrayIndexByCostmapCell()] = 0;
 
         // Start planning
-        while (!open_cell_set.empty() &&
-               g_score[this->getArrayIndexByCostmapCell(map_goal)] == std::numeric_limits<float>::infinity())
+        while (!array_open_cell_list.empty() &&
+               g_score[this->getArrayIndexByCostmapCell(map_goal_cell)] == std::numeric_limits<float>::infinity())
         {
-            ROS_INFO("Open_Cell_Count: %i", open_cell_set.size());
-            int current_cell_index = open_cell_set.begin()->cell_index; // Get cell with lowest f_score
-            open_cell_set.erase(open_cell_set.begin()); // Remove cell from open_cell_set so it will not be visited again
+            ROS_INFO("Open_Cell_Count: %i", array_open_cell_list.size());
+            int array_current_cell = array_open_cell_list.begin()->cell_index; // Get cell with lowest f_score
+            array_open_cell_list.erase(array_open_cell_list.begin()); // Remove cell from open_cell_set so it will not be visited again
 
-            std::vector<int> neighbor_cell_list = this->getFreeNeighborCells(current_cell_index);
-            for(int neighbor_cell_index: neighbor_cell_list)
+            std::vector<int> array_neighbor_cell_list = this->getFreeNeighborCells(array_current_cell);
+            for(int array_neighbor_cell: array_neighbor_cell_list)
             {
-                if(g_score[neighbor_cell_index] == std::numeric_limits<float>::infinity())
+                if(g_score[array_neighbor_cell] == std::numeric_limits<float>::infinity())
                 {
-                    g_score[neighbor_cell_index] = this->calcGCost(g_score[current_cell_index], current_cell_index, neighbor_cell_index);
-                    open_cell_set.insert({neighbor_cell_index,
-                                          this->calcFCost(g_score[current_cell_index],
-                                                          current_cell_index,
-                                                          goal_cell_index)});
+                    g_score[array_neighbor_cell] = this->calcGCost(g_score[array_current_cell], array_current_cell, array_neighbor_cell);
+                    array_open_cell_list.insert({array_neighbor_cell,
+                                                 this->calcFCost(g_score[array_current_cell],
+                                                                 array_current_cell,
+                                                                 array_goal_cell)});
                 }
             }
         }
-        if (g_score[goal_cell_index] != std::numeric_limits<float>::infinity())
+        if (g_score[array_goal_cell] != std::numeric_limits<float>::infinity())
         {
-            int current_cell_index = goal_cell_index;
-            std::vector<int> goal_to_start_path;
-            std::vector<int> start_to_goal_path;
+            int array_current_cell = array_goal_cell;
+            std::vector<int> array_goal_to_start_plan;
+            std::vector<int> array_start_to_goal_plan;
 
             // Construct path backwards from goal to start to get best path
-            goal_to_start_path.push_back(goal_cell_index);
-            while(current_cell_index != start_cell_index)
+            array_goal_to_start_plan.push_back(array_goal_cell);
+            while(array_current_cell != array_start_cell)
             {
-                int next_cell_index = this->getMinGScoreNeighborCell(current_cell_index, g_score);
-                goal_to_start_path.push_back(next_cell_index);
-                current_cell_index = next_cell_index;
+                int array_next_cell = this->getMinGScoreNeighborCell(array_current_cell, g_score);
+                array_goal_to_start_plan.push_back(array_next_cell);
+                array_current_cell = array_next_cell;
             }
 
-            for(uint path_counter = 0; path_counter < goal_to_start_path.size(); path_counter++)
+            for(uint path_counter = 0; path_counter < array_goal_to_start_plan.size(); path_counter++)
             {
-                start_to_goal_path.insert(start_to_goal_path.begin() + start_to_goal_path.size(),
-                                          goal_to_start_path[goal_to_start_path.size() - path_counter]);
+                array_start_to_goal_plan.insert(array_start_to_goal_plan.begin() + array_start_to_goal_plan.size(),
+                                                array_goal_to_start_plan[array_goal_to_start_plan.size() - path_counter]);
             }
 
-            for(uint path_counter = 0; path_counter < start_to_goal_path.size(); path_counter++)
+            for(uint path_counter = 0; path_counter < array_start_to_goal_plan.size(); path_counter++)
             {
                 geometry_msgs::PoseStamped pose = goal;
-                int costmap_point[2];
-                this->getCostmapPointByArrayIndex(start_to_goal_path[path_counter], costmap_point);
-                ROS_INFO("%f, %f", costmap_point[0], costmap_point[1]);
-                pose.pose.position.x = costmap_point[0];
-                pose.pose.position.y = costmap_point[1];
+                int map_cell[2];
+                this->getCostmapPointByArrayIndex(array_start_to_goal[path_counter], map_cell);
+                ROS_INFO("%f, %f", map_cell[0], map_cell[1]);
+                pose.pose.position.x = map_cell[0];
+                pose.pose.position.y = map_cell[1];
                 plan.insert(plan.begin() + plan.size(), pose);
             }
         }
