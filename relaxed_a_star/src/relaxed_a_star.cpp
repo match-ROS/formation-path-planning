@@ -149,7 +149,7 @@ namespace relaxed_a_star
         // Initialization 
         // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
         // The elements in this list are linking to the index of the one dimensional costmap representation array.
-        std::multiset<Cell, std::greater<Cell>> array_open_cell_list; 
+        std::multiset<Cell, std::less<Cell>> array_open_cell_list; 
         array_open_cell_list.insert({this->getArrayIndexByCostmapCell(map_start_cell),
                               this->calcHCost(map_start_cell, map_goal_cell)});
         
@@ -160,13 +160,14 @@ namespace relaxed_a_star
             g_score[counter] = std::numeric_limits<float>::infinity();
         }
         g_score[array_start_cell] = 0;
-
+        
         // Start planning
         while (!array_open_cell_list.empty() &&
                g_score[this->getArrayIndexByCostmapCell(map_goal_cell)] == std::numeric_limits<float>::infinity())
         {
             ROS_INFO("Open_Cell_Count: %i", array_open_cell_list.size());
             int array_current_cell = array_open_cell_list.begin()->cell_index; // Get cell with lowest f_score
+            ROS_INFO("cell0: %f, cell1: %f, last: %f", array_open_cell_list.begin()->f_cost, std::next(array_open_cell_list.begin())->f_cost, std::prev(array_open_cell_list.end())->f_cost);
             array_open_cell_list.erase(array_open_cell_list.begin()); // Remove cell from open_cell_set so it will not be visited again
 
             std::vector<int> array_neighbor_cell_list = this->getFreeNeighborCells(array_current_cell);
@@ -181,6 +182,7 @@ namespace relaxed_a_star
                                                                  array_goal_cell)});
                 }
             }
+            // ros::Duration(1.0).sleep();
         }
         if (g_score[array_goal_cell] != std::numeric_limits<float>::infinity())
         {
@@ -208,9 +210,8 @@ namespace relaxed_a_star
                 geometry_msgs::PoseStamped pose = goal;
                 int map_cell[2];
                 this->getCostmapPointByArrayIndex(array_start_to_goal_plan[path_counter], map_cell);
-                ROS_INFO("%f, %f", map_cell[0], map_cell[1]);
-                pose.pose.position.x = map_cell[0];
-                pose.pose.position.y = map_cell[1];
+                ROS_INFO("%i, %i", map_cell[0], map_cell[1]);
+                this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.pose.position.x, pose.pose.position.y);
                 plan.insert(plan.begin() + plan.size(), pose);
             }
         }
@@ -363,9 +364,6 @@ namespace relaxed_a_star
 
     float RelaxedAStar::calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y)
     {
-        float test1=pow(map_current_cell_x - map_target_cell_x, 2);
-        float test2=pow(map_current_cell_y - map_target_cell_y, 2);
-        float test3=sqrt(pow(map_current_cell_x - map_target_cell_x, 2) + pow(map_current_cell_y - map_target_cell_y, 2));
         return sqrt(pow(map_current_cell_x - map_target_cell_x, 2) + pow(map_current_cell_y - map_target_cell_y, 2));
     }
 
