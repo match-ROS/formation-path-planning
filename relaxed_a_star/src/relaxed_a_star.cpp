@@ -117,7 +117,7 @@ namespace relaxed_a_star
         int map_start_cell[2]; // I will save the position as array and not some ros-pose type so it can easily be extracted into a separate class independent of ros
         map_start_cell[0] = map_start_cell_x;
         map_start_cell[1] = map_start_cell_y;
-        int start_cell_index = this->getArrayIndexByCostmapCell(map_start_cell);
+        int array_start_cell = this->getArrayIndexByCostmapCell(map_start_cell);
         
         // Check if the goal position is in the map
         double world_goal_pose_x = goal.pose.position.x;
@@ -141,7 +141,7 @@ namespace relaxed_a_star
         int map_goal_cell[2];
         map_goal_cell[0] = map_goal_cell_x;
         map_goal_cell[1] = map_goal_cell_y;
-        int goal_cell_index = this->getArrayIndexByCostmapCell(map_goal_cell);
+        int array_goal_cell = this->getArrayIndexByCostmapCell(map_goal_cell);
 
         // Begin of Relaxed_A_Star
         float fTieBreaker = 1 + (1/(this->costmap_->getSizeInCellsX() + this->costmap_->getSizeInCellsY()));
@@ -159,7 +159,7 @@ namespace relaxed_a_star
         {
             g_score[counter] = std::numeric_limits<float>::infinity();
         }
-        g_score[this->getArrayIndexByCostmapCell()] = 0;
+        g_score[array_start_cell] = 0;
 
         // Start planning
         while (!array_open_cell_list.empty() &&
@@ -207,7 +207,7 @@ namespace relaxed_a_star
             {
                 geometry_msgs::PoseStamped pose = goal;
                 int map_cell[2];
-                this->getCostmapPointByArrayIndex(array_start_to_goal[path_counter], map_cell);
+                this->getCostmapPointByArrayIndex(array_start_to_goal_plan[path_counter], map_cell);
                 ROS_INFO("%f, %f", map_cell[0], map_cell[1]);
                 pose.pose.position.x = map_cell[0];
                 pose.pose.position.y = map_cell[1];
