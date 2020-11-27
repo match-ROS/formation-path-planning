@@ -18,6 +18,8 @@ find_package(
     nav_core
     nav_msgs
     geometry_msgs
+    visualization_msgs
+    std_srvs
     costmap_2d)
 
 
