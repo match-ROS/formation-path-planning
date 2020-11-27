@@ -23,6 +23,7 @@ namespace relaxed_a_star
     void RelaxedAStar::initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
     {
         this->costmap_ros_ = costmap_ros_;
+        ROS_INFO("bluib");
         this->initialize(name, costmap_ros->getCostmap(), costmap_ros->getGlobalFrameID());
     }
 
@@ -35,7 +36,7 @@ namespace relaxed_a_star
             this->costmap_ = costmap;
             this->global_frame_ = global_frame;
             this->array_size_ = this->costmap_->getSizeInCellsX() * this->costmap_->getSizeInCellsY();
-            this->initializeOccupancyMap();
+            
 
             // Get parameter of planner
             ros::NodeHandle private_nh("~/" + name);
@@ -45,6 +46,12 @@ namespace relaxed_a_star
             this->neighbor_type_ = static_cast<NeighborType>(neighbor_type);
 
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
+            this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
+
+            this->debug_publisher_ = private_nh.advertise<nav_msgs::OccupancyGrid>("debug_occupancy", 1);
+            this->marker_array_publisher_ = private_nh.advertise<visualization_msgs::MarkerArray>("marker_array", 1);
+            this->trigger_costmap_check_service_ = private_nh.advertiseService("trigger_costmap_check_service", &RelaxedAStar::service_cb, this);
+            this->costmap_sub_ = private_nh.subscribe("/robot1_ns/move_base_flex/global_costmap/costmap", 1, &RelaxedAStar::costmap_cb, this);
 
             // Get the tf prefix
             ros::NodeHandle nh;
@@ -53,12 +60,83 @@ namespace relaxed_a_star
             initialized_ = true; // Initialized method was called so planner is now initialized
 
             ROS_INFO("Relaxed AStar finished intitialization.");
+
+            // ROS_INFO("Test Costmap");
+            // for(int i=0; i < 1024; i++)
+            // {
+            //     ROS_INFO("x: %i, cost: %i",i, static_cast<int>(this->costmap_->getCost(i, 512)));
+            // }
+            
+            this->initializeOccupancyMap();
+            this->publishOccupancyGrid();
         }
         else
         {
             ROS_WARN("This planner has already been initialized");
         }
     }    
+
+    bool RelaxedAStar::service_cb(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+    {
+        this->costmap_->saveMap("/home/hlurz/Downloads/Third.pgm");
+        // ROS_ERROR("SERVICE CALLBACK");
+        // // Compare costmap then to now
+        // std::shared_ptr<bool[]> occumap2 = std::shared_ptr<bool[]>(new bool[this->array_size_]);
+        // for(int cell_counter_x = 0; cell_counter_x < this->costmap_->getSizeInCellsX(); cell_counter_x++)
+        // {
+        //     for(int cell_counter_y = 0; cell_counter_y < this->costmap_->getSizeInCellsY(); cell_counter_y++)
+        //     {
+        //         unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
+        //         int map_cell[2] = {cell_counter_x, cell_counter_y};
+        //         if(cell_cost == 0) // Cell is free
+        //         {
+        //             occumap2[this->getArrayIndexByCostmapCell(map_cell)] = false; // False because cell is not occupied
+        //             // ROS_INFO("FREE - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
+        //         }
+        //         else
+        //         {
+        //             occumap2[this->getArrayIndexByCostmapCell(map_cell)] = true;  // True because cell is occupied
+        //             // ROS_INFO("BLOCKED - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
+        //         }
+        //     }
+        // }
+
+        // ROS_INFO("VISUALIZATION MARKERS BEGIN");
+        // visualization_msgs::MarkerArray marker_array;
+        // for(int i=0; i<this->array_size_;i++)
+        // {
+        //     if(this->occupancy_map_[i] != occumap2[i])
+        //     {
+        //         visualization_msgs::Marker marker;
+        //         marker.type=visualization_msgs::Marker::SPHERE;
+        //         marker.action=visualization_msgs::Marker::ADD;
+        //         marker.color.a=1.0; //Otherwise will be invincible
+        //         marker.color.r= 1.0;
+        //         marker.header.frame_id="map";
+        //         marker.header.stamp=ros::Time::now();
+        //         geometry_msgs::Vector3 v;
+        //         v.x=0.1;
+        //         v.y=0.1;
+        //         v.z=0.1;
+        //         marker.scale=v;
+        //         marker.ns="my_namespace";
+        //         marker.id=i;
+        //         int point[2];
+        //         this->getCostmapPointByArrayIndex(i, point);
+        //         this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
+        //         marker.pose.position.z = 0;
+        //         tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
+        //         marker_array.markers.push_back(marker);
+        //     }
+        // }
+        // this->marker_array_publisher_.publish(marker_array);
+        // ROS_INFO("VISUALIZATION MARKERS END");
+    }
+
+    void RelaxedAStar::costmap_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg)
+    {
+        ROS_ERROR("COSTMAP UPDATE");
+    }
 
     bool RelaxedAStar::makePlan(const geometry_msgs::PoseStamped& start, 
                 const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan)
@@ -72,6 +150,70 @@ namespace relaxed_a_star
                                 double tolerance, std::vector<geometry_msgs::PoseStamped> &plan, double &cost,
                                 std::string &message)
     {
+        // ROS_INFO("Test Costmap2");
+        // for(int i=0; i < 1024; i++)
+        // {
+        //     ROS_INFO("x: %i, cost: %i",i, static_cast<int>(this->costmap_->getCost(i, 512)));
+        // }
+        this->initializeOccupancyMap();
+        //Compare costmap then to now
+        std::shared_ptr<bool[]> occumap2 = std::shared_ptr<bool[]>(new bool[this->array_size_]);
+        for(int cell_counter_x = 0; cell_counter_x < this->costmap_->getSizeInCellsX(); cell_counter_x++)
+        {
+            for(int cell_counter_y = 0; cell_counter_y < this->costmap_->getSizeInCellsY(); cell_counter_y++)
+            {
+                unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
+                int map_cell[2] = {cell_counter_x, cell_counter_y};
+                if(cell_cost == 0) // Cell is free
+                {
+                    occumap2[this->getArrayIndexByCostmapCell(map_cell)] = false; // False because cell is not occupied
+                    // ROS_INFO("FREE - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
+                }
+                else
+                {
+                    occumap2[this->getArrayIndexByCostmapCell(map_cell)] = true;  // True because cell is occupied
+                    // ROS_INFO("BLOCKED - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
+                }
+            }
+        }
+
+        ROS_INFO("VISUALIZATION MARKERS BEGIN");
+        visualization_msgs::MarkerArray marker_array;
+        for(int i=0; i<this->array_size_;i++)
+        {
+            if(this->occupancy_map_[i] != occumap2[i])
+            {
+                visualization_msgs::Marker marker;
+                marker.type=visualization_msgs::Marker::SPHERE;
+                marker.action=visualization_msgs::Marker::ADD;
+                marker.color.a=1.0; //Otherwise will be invincible
+                marker.color.r= 1.0;
+                marker.header.frame_id="map";
+                marker.header.stamp=ros::Time::now();
+                geometry_msgs::Vector3 v;
+                v.x=0.1;
+                v.y=0.1;
+                v.z=0.1;
+                marker.scale=v;
+                marker.ns="my_namespace";
+                marker.id=i;
+                int point[2];
+                this->getCostmapPointByArrayIndex(i, point);
+                this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
+                marker.pose.position.z = 0;
+                tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
+                marker_array.markers.push_back(marker);
+            }
+        }
+        this->marker_array_publisher_.publish(marker_array);
+        ROS_INFO("VISUALIZATION MARKERS END");
+
+
+        this->publishOccupancyGrid();
+        unsigned int test_cell[2];
+        this->costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, test_cell[0], test_cell[1]);
+        ROS_INFO("pose x: %f, pose y: %f, map x: %i, map y: %i", goal.pose.position.x, goal.pose.position.y, test_cell[0], test_cell[1]);
+
         if(!initialized_) //Planner was not initialized. Abort
         {
             ROS_ERROR("RelaxedAStar planner was not initialized yet. Please initialize the planner before usage.");
@@ -147,11 +289,7 @@ namespace relaxed_a_star
         float fTieBreaker = 1 + (1/(this->costmap_->getSizeInCellsX() + this->costmap_->getSizeInCellsY()));
 
         // Initialization 
-        // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
-        // The elements in this list are linking to the index of the one dimensional costmap representation array.
-        std::multiset<Cell, std::less<Cell>> array_open_cell_list; 
-        array_open_cell_list.insert({this->getArrayIndexByCostmapCell(map_start_cell),
-                              this->calcHCost(map_start_cell, map_goal_cell)});
+        
         
         // Create g_score array for the whole costmap and initialize with infinity so only visited cells get a value
         std::shared_ptr<float[]> g_score(new float[this->array_size_]);
@@ -162,12 +300,79 @@ namespace relaxed_a_star
         g_score[array_start_cell] = 0;
         
         // Start planning
-        while (!array_open_cell_list.empty() &&
-               g_score[this->getArrayIndexByCostmapCell(map_goal_cell)] == std::numeric_limits<float>::infinity())
+        this->findPlan(array_start_cell, array_goal_cell, g_score);
+        
+        if (g_score[array_goal_cell] != std::numeric_limits<float>::infinity())
         {
-            ROS_INFO("Open_Cell_Count: %i", array_open_cell_list.size());
+            std::vector<int> array_plan;
+            array_plan = this->createPlan(array_start_cell, array_goal_cell, g_score);
+
+            geometry_msgs::PoseArray planning_points_orientation;
+            planning_points_orientation.header.stamp = ros::Time::now();
+            planning_points_orientation.header.frame_id = "map";
+
+            geometry_msgs::PoseStamped last_pose;
+            // < is necessary because we just copy elements from one vector (0 until size()) to the other
+            for(uint path_counter = 0; path_counter < array_plan.size(); path_counter++)
+            {
+                geometry_msgs::PoseStamped pose;
+                pose.header.stamp = ros::Time::now();
+                pose.header.frame_id = this->global_frame_;
+
+                // Fill pose for plan
+                int map_current_cell[2];
+                this->getCostmapPointByArrayIndex(array_plan[path_counter], map_current_cell);
+                this->costmap_->mapToWorld(map_current_cell[0], map_current_cell[1], pose.pose.position.x, pose.pose.position.y);
+
+                ROS_INFO("x: %i, y: %i, costmap cost: %i, occu: %i", map_current_cell[0], map_current_cell[1], this->costmap_->getCost(map_current_cell[0], map_current_cell[1]), this->occupancy_map_[this->getArrayIndexByCostmapCell(map_current_cell)]);
+
+                // Calculate orientation for each point of the plan with the current position and the last one
+                if(path_counter == 0) // No previous point so orientation of start will be taken
+                {
+                    pose.pose.orientation = start.pose.orientation;
+                }
+                else // Some other points are before, so orientation can be calculated
+                {
+                    float delta_x = pose.pose.position.x - last_pose.pose.position.x;
+                    float delta_y = pose.pose.position.y - last_pose.pose.position.y;
+                    double yaw_angle = std::atan2(delta_y, delta_x);
+                    pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
+                }
+
+                last_pose = pose; // Safe pose for next iteration
+                plan.insert(plan.begin() + plan.size(), pose);
+                planning_points_orientation.poses.insert(planning_points_orientation.poses.begin() + planning_points_orientation.poses.size(), pose.pose);
+            }
+            int map_cell[2];
+            this->getCostmapPointByArrayIndex(array_plan[0], map_cell);
+            // ROS_INFO("elements: start_to_goal: %i, plan: %i", array_plan.size(), plan.size());
+
+            this->planning_points_orientation_publisher_.publish(planning_points_orientation);
+        }
+        ROS_INFO("Planning finished");
+        this->publishPlan(plan);
+        return 0;
+    }
+
+    bool RelaxedAStar::cancel()
+    {
+        ROS_ERROR("RELAXED A STAR CANCEL");
+        return false; // Returns false if not implemented. Returns true if implemented and cancel has been successful.
+    }
+
+    void RelaxedAStar::findPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score)
+    {
+        // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
+        // The elements in this list are linking to the index of the one dimensional costmap representation array.
+        std::multiset<Cell, std::less<Cell>> array_open_cell_list;
+        array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
+
+        while (!array_open_cell_list.empty() &&
+               g_score[array_goal_cell] == std::numeric_limits<float>::infinity())
+        {
+            // ROS_INFO("Open_Cell_Count: %i", array_open_cell_list.size());
             int array_current_cell = array_open_cell_list.begin()->cell_index; // Get cell with lowest f_score
-            ROS_INFO("cell0: %f, cell1: %f, last: %f", array_open_cell_list.begin()->f_cost, std::next(array_open_cell_list.begin())->f_cost, std::prev(array_open_cell_list.end())->f_cost);
+            // ROS_INFO("cell0: %f, cell1: %f, last: %f", array_open_cell_list.begin()->f_cost, std::next(array_open_cell_list.begin())->f_cost, std::prev(array_open_cell_list.end())->f_cost);
             array_open_cell_list.erase(array_open_cell_list.begin()); // Remove cell from open_cell_set so it will not be visited again
 
             std::vector<int> array_neighbor_cell_list = this->getFreeNeighborCells(array_current_cell);
@@ -184,49 +389,32 @@ namespace relaxed_a_star
             }
             // ros::Duration(1.0).sleep();
         }
-        if (g_score[array_goal_cell] != std::numeric_limits<float>::infinity())
-        {
-            int array_current_cell = array_goal_cell;
-            std::vector<int> array_goal_to_start_plan;
-            std::vector<int> array_start_to_goal_plan;
-
-            // Construct path backwards from goal to start to get best path
-            array_goal_to_start_plan.push_back(array_goal_cell);
-            while(array_current_cell != array_start_cell)
-            {
-                int array_next_cell = this->getMinGScoreNeighborCell(array_current_cell, g_score);
-                array_goal_to_start_plan.push_back(array_next_cell);
-                array_current_cell = array_next_cell;
-            }
-
-            for(uint path_counter = 0; path_counter < array_goal_to_start_plan.size(); path_counter++)
-            {
-                array_start_to_goal_plan.insert(array_start_to_goal_plan.begin() + array_start_to_goal_plan.size(),
-                                                array_goal_to_start_plan[array_goal_to_start_plan.size() - path_counter]);
-            }
-
-            for(uint path_counter = 0; path_counter < array_start_to_goal_plan.size(); path_counter++)
-            {
-                geometry_msgs::PoseStamped pose = goal;
-                int map_cell[2];
-                this->getCostmapPointByArrayIndex(array_start_to_goal_plan[path_counter], map_cell);
-                ROS_INFO("%i, %i", map_cell[0], map_cell[1]);
-                this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.pose.position.x, pose.pose.position.y);
-                plan.insert(plan.begin() + plan.size(), pose);
-            }
-        }
-        ROS_INFO("Planning finished");
-        ROS_INFO("Plan contains %i elements", plan.size());
-        this->publishPlan(plan);
-        return 0;
     }
 
-    bool RelaxedAStar::cancel()
+    std::vector<int> RelaxedAStar::createPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score)
     {
-        ROS_ERROR("RELAXED A STAR CANCEL");
-        return false; // Returns false if not implemented. Returns true if implemented and cancel has been successful.
-    }
+        int array_current_cell = array_goal_cell;
+        std::vector<int> array_goal_to_start_plan;
+        std::vector<int> array_start_to_goal_plan;
 
+        // Construct path backwards from goal to start to get best path
+        array_goal_to_start_plan.push_back(array_goal_cell);
+        while(array_current_cell != array_start_cell)
+        {
+            int array_next_cell = this->getMinGScoreNeighborCell(array_current_cell, g_score);
+            array_goal_to_start_plan.push_back(array_next_cell);
+            array_current_cell = array_next_cell;
+        }
+
+        // <= is necessary as we go backwards through the list. And first elment from the back is found with size()-1 until we match the size, thats the first array.
+        for(uint path_counter = 1; path_counter <= array_goal_to_start_plan.size(); path_counter++)
+        {
+            array_start_to_goal_plan.insert(array_start_to_goal_plan.begin() + array_start_to_goal_plan.size(),
+                                            array_goal_to_start_plan[array_goal_to_start_plan.size() - path_counter]);
+        }
+
+        return array_start_to_goal_plan;
+    }
 
     float RelaxedAStar::calcGCost(int current_g_cost, int array_current_cell, int array_target_cell)
     {
@@ -322,22 +510,74 @@ namespace relaxed_a_star
     void RelaxedAStar::initializeOccupancyMap()
     {
         this->occupancy_map_ = std::shared_ptr<bool[]>(new bool[this->array_size_]);
-        for(int cell_counter_x = 0; cell_counter_x < this->costmap_->getSizeInCellsX(); cell_counter_x++)
+        for(int i=0; i<this->array_size_;i++)
         {
-            for(int cell_counter_y = 0; cell_counter_y < this->costmap_->getSizeInCellsY(); cell_counter_y++)
-            {
-                unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
-                int map_cell[2] = {cell_counter_x, cell_counter_y};
-                if(cell_cost == 0) // Cell is free
-                {
-                    this->occupancy_map_[0] = false; // False because cell is not occupied
-                }
-                else
-                {
-                    this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)] = true;  // True because cell is occupied
-                }
-            }
+            this->occupancy_map_[i]=false;
         }
+        // FILE *fp = fopen("/home/hlurz/Downloads/First.pgm", "w+");
+        // if(!fp)
+        // {
+        //     ROS_INFO("NO FUCKING CLKUE");
+        // }
+        // bool b = this->costmap_->saveMap("/home/hlurz/Downloads/First.pgm");
+        // ROS_INFO("%i", b);
+        // for(int cell_counter_x = 0; cell_counter_x < this->costmap_->getSizeInCellsX(); cell_counter_x++)
+        // {
+        //     for(int cell_counter_y = 0; cell_counter_y < this->costmap_->getSizeInCellsY(); cell_counter_y++)
+        //     {
+        //         unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
+        //         int map_cell[2] = {cell_counter_x, cell_counter_y};
+        //         // if(cell_counter_x >=400 && cell_counter_x <= 600 && cell_counter_y >= 400 && cell_counter_y<=600)
+        //         // {
+        //         //     for(tempStruct x: already_written)
+        //         //     {
+        //         //         if(this->getArrayIndexByCostmapCell(map_cell)==x.array_index)
+        //         //         {
+        //         //             ROS_ERROR("SAME CELL TWICE! array: %i, current x:%i, current y:%i, past x: %i, past y: %i",x.array_index, cell_counter_x, cell_counter_y, x.x, x.y);
+        //         //         }        
+        //         //     }
+        //         //     tempStruct t;
+        //         //     t.array_index = this->getArrayIndexByCostmapCell(map_cell);
+        //         //     t.x = cell_counter_x;
+        //         //     t.y = cell_counter_y;
+        //         //     already_written.push_back(t);
+        //         //     ROS_INFO("%i %i %i",cell_counter_x, cell_counter_y, already_written.size());
+        //         // }
+
+        //         if(cell_cost == 0) // Cell is free
+        //         {
+        //             this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)] = false; // False because cell is not occupied
+        //             // this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)] = false; // False because cell is not occupied
+        //             // ROS_INFO("FREE - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
+        //         }
+        //         else
+        //         {
+        //             this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)] = true;  // True because cell is occupied
+        //             // ROS_INFO("BLOCKED - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
+        //         }
+        //         // ROS_INFO("array: %i, x: %i, y: %i, casted cost: %i, occupancy_map: %i", this->getArrayIndexByCostmapCell(map_cell), map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
+        //     }
+        // }
+        // ROS_INFO("DONE");
+        // int counter=0;
+        // for(int i=0; i < 1024*1024; i++)
+        // {
+        //     int map_cell[2];
+        //     this->getCostmapPointByArrayIndex(i, map_cell);
+        //     int cost = this->costmap_->getCost(map_cell[0], map_cell[1]);
+        //     if(cost > 0 && this->occupancy_map_[i] == false || cost == 0 && this->occupancy_map_[i] == true)
+        //     {
+        //         counter=counter+1;
+        //         //ROS_INFO("array: %i, x: %i, y: %i, cost: %i, blocked: %i", i, map_cell[0], map_cell[1], cost, this->occupancy_map_[i]);
+        //     }
+        //     // if(i == this->getArrayIndexByCostmapCell(740,437))
+        //     // {
+        //     //     ROS_INFO("x: %i, y: %i, cost: %i, blocked: %i", map_cell[0], map_cell[1], cost, this->occupancy_map_[i]);
+        //     // }
+        // }
+        // ROS_INFO("DONEDONE %i", counter);
+        this->costmap_->saveMap("/home/hlurz/Downloads/Second.pgm");
+        // publishOccupancyGrid();
     }
 
     bool RelaxedAStar::isCellFree(int array_cell_index)
@@ -376,5 +616,26 @@ namespace relaxed_a_star
         path_to_publish.poses = plan;
 
         this->plan_publisher_.publish(path_to_publish);
+    }
+
+    void RelaxedAStar::publishOccupancyGrid()
+    {
+        nav_msgs::OccupancyGrid debug;
+        debug.header.stamp = ros::Time::now();
+        debug.header.frame_id = "map";
+        for(int i=0; i<this->array_size_; i++)
+        {
+            debug.data.push_back(this->occupancy_map_[i]);
+        }
+        debug.info.map_load_time = ros::Time::now();
+        debug.info.width = this->costmap_->getSizeInCellsX();
+        debug.info.height = this->costmap_->getSizeInCellsY();
+        debug.info.resolution = this->costmap_->getResolution();
+        geometry_msgs::Pose pose;
+        pose.position.x = this->costmap_->getOriginX();
+        pose.position.y = this->costmap_->getOriginY();
+        debug.info.origin = pose;
+
+        this->debug_publisher_.publish(debug);
     }
 }

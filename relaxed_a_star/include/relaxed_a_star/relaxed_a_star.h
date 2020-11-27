@@ -7,7 +7,11 @@
 #include <nav_core/base_global_planner.h>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/Path.h>
+#include <nav_msgs/OccupancyGrid.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <std_srvs/SetBool.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
 #include <tf/transform_listener.h>
@@ -17,6 +21,7 @@
 #include <vector>
 #include <list>
 #include <set>
+#include <cmath>
 
 namespace relaxed_a_star
 {
@@ -31,7 +36,7 @@ namespace relaxed_a_star
         float f_cost;
 
         bool operator<(const Cell& rhs) const
-        {
+        { 
             return this->f_cost < rhs.f_cost;
         }
 
@@ -39,6 +44,13 @@ namespace relaxed_a_star
         {
             return this->f_cost > rhs.f_cost;
         }
+    };
+
+    struct tempStruct
+    {
+        int array_index;
+        int x;
+        int y;
     };
 
     enum NeighborType
@@ -125,8 +137,19 @@ namespace relaxed_a_star
             std::shared_ptr<bool[]> occupancy_map_; // One dimensional represantation of the map. True = occupied, false = free
 
             ros::Publisher plan_publisher_;
+            ros::Publisher planning_points_orientation_publisher_;
+            ros::Publisher debug_publisher_;
+            ros::Publisher marker_array_publisher_;
+            ros::ServiceServer trigger_costmap_check_service_;
+            ros::Subscriber costmap_sub_;
 
         private:
+            bool service_cb(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
+            void costmap_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+
+            void findPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
+            std::vector<int> createPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
+
             /**
              * @brief Method for calulcating the g score for the target cell.
              * 
@@ -197,6 +220,7 @@ namespace relaxed_a_star
             float calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y);
 
             void publishPlan(std::vector<geometry_msgs::PoseStamped> &plan);
+            void publishOccupancyGrid();
 
             std::string global_frame_;
             std::string tf_prefix_;
