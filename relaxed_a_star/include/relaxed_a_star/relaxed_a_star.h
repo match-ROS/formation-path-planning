@@ -46,17 +46,16 @@ namespace relaxed_a_star
         }
     };
 
-    struct tempStruct
-    {
-        int array_index;
-        int x;
-        int y;
-    };
-
     enum NeighborType
     {
         FourWay = 4,
         EightWay = 8
+    };
+
+    enum FreeNeighborMode
+    {
+        CostmapOnly = 0,
+        CostmapAndMinimalCurveRadius = 1
     };
 
     class RelaxedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
@@ -140,13 +139,8 @@ namespace relaxed_a_star
             ros::Publisher planning_points_orientation_publisher_;
             ros::Publisher debug_publisher_;
             ros::Publisher marker_array_publisher_;
-            ros::ServiceServer trigger_costmap_check_service_;
-            ros::Subscriber costmap_sub_;
-
+            
         private:
-            bool service_cb(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
-            void costmap_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg);
-
             void findPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
             std::vector<int> createPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
 
@@ -226,9 +220,43 @@ namespace relaxed_a_star
             std::string tf_prefix_;
 
             // Parameter list
+            // The default tolerance that is used if the tolerance of the received goal is not valid
+            // Default: 0.2
             float default_tolerance_;
+
+            // How many of the neighbor cells should be used. Options:
+            // 4 - This means the cells in the north, south, west, east direction are used
+            // 8 - This means all cells around (also the diagonal ones) are used
+            // Default: 8
             NeighborType neighbor_type_;
+
+            // Threshold for the costmap values that define if a cell is free or not.
+            // This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.
+            // Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
+            // The greater this value will be defined the closer the global path will be planed next to walls.
+            // Default: 0
             int free_cell_threshhold_;
+
+            // This value specifies different modes for declaring new cells as free and usable cells that will get added to the open list.
+            // 0 - This mode only uses the g_scores of the cells. If the score of the selected cell is infinity, the cell will be pushed into the open list
+            // 1 - This mode uses the same selection as mode 0. Additionally the curves get analyzed to have a maximal curvature. See: minimal_curve_radius parameter
+            // Default: 0
+            FreeNeighborMode free_neighbor_mode_;
+
+            // This parameter is used together with the mode 1 of the free_neighbor_mode.
+            // This parameter defines the maximal curvature the global plan should contain during a curve.
+            // This parameter is specified in degree.
+            // Default: 20
+            float maximal_curvature_;
+
+            // This parameter defines the distance between the two points that are used for calculating the curvature of the path.
+            // For example 1 uses the current cell and the cell that the global planner wants to expand to or place in the open set.
+            // 4 uses the following setup |x|3|2|C|F where F is future cell, C is current cell where the neighbors are inspcted and x is the fourth cell.
+            // Notice that the resulting angle heavily depends on this value!
+            // If this parameter is 1 then with neighbor_type_=8 the resulting value will be 0 or a multiple of 45°.
+            // So if the maximal_curvature_ is smaller than 45° the robot would not be able to turn.
+            // Default: 4
+            int curvature_calculation_cell_distance_;
 
             // Process information
             int array_size_;

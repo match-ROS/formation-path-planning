@@ -43,16 +43,19 @@ namespace relaxed_a_star
             private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
             int neighbor_type;
             private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(NeighborType::FourWay));
-            this->neighbor_type_ = static_cast<NeighborType>(neighbor_type);
+            this->neighbor_type_ = (NeighborType)neighbor_type;
+            int free_neighbor_mode;
+            private_nh.param<int>("free_neighbor_mode", free_neighbor_mode, 0);
+            this->free_neighbor_mode_ = (FreeNeighborMode)free_neighbor_mode;
+            private_nh.param<float>("maximal_curvature", this->maximal_curvature_, 20);
+            private_nh.param<int>("curvature_calculation_cell_distance", this->curvature_calculation_cell_distance_, 4);
 
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
 
             this->debug_publisher_ = private_nh.advertise<nav_msgs::OccupancyGrid>("debug_occupancy", 1);
             this->marker_array_publisher_ = private_nh.advertise<visualization_msgs::MarkerArray>("marker_array", 1);
-            this->trigger_costmap_check_service_ = private_nh.advertiseService("trigger_costmap_check_service", &RelaxedAStar::service_cb, this);
-            this->costmap_sub_ = private_nh.subscribe("/robot1_ns/move_base_flex/global_costmap/costmap", 1, &RelaxedAStar::costmap_cb, this);
-
+            
             // Get the tf prefix
             ros::NodeHandle nh;
             this->tf_prefix_ = tf::getPrefixParam(nh);
@@ -75,68 +78,6 @@ namespace relaxed_a_star
             ROS_WARN("This planner has already been initialized");
         }
     }    
-
-    bool RelaxedAStar::service_cb(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
-    {
-        this->costmap_->saveMap("/home/hlurz/Downloads/Third.pgm");
-        // ROS_ERROR("SERVICE CALLBACK");
-        // // Compare costmap then to now
-        // std::shared_ptr<bool[]> occumap2 = std::shared_ptr<bool[]>(new bool[this->array_size_]);
-        // for(int cell_counter_x = 0; cell_counter_x < this->costmap_->getSizeInCellsX(); cell_counter_x++)
-        // {
-        //     for(int cell_counter_y = 0; cell_counter_y < this->costmap_->getSizeInCellsY(); cell_counter_y++)
-        //     {
-        //         unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
-        //         int map_cell[2] = {cell_counter_x, cell_counter_y};
-        //         if(cell_cost == 0) // Cell is free
-        //         {
-        //             occumap2[this->getArrayIndexByCostmapCell(map_cell)] = false; // False because cell is not occupied
-        //             // ROS_INFO("FREE - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
-        //         }
-        //         else
-        //         {
-        //             occumap2[this->getArrayIndexByCostmapCell(map_cell)] = true;  // True because cell is occupied
-        //             // ROS_INFO("BLOCKED - x: %i, y: %i, casted cost: %i, occupancy_map: %i", map_cell[0], map_cell[1], cell_cost, this->occupancy_map_[this->getArrayIndexByCostmapCell(map_cell)]);
-        //         }
-        //     }
-        // }
-
-        // ROS_INFO("VISUALIZATION MARKERS BEGIN");
-        // visualization_msgs::MarkerArray marker_array;
-        // for(int i=0; i<this->array_size_;i++)
-        // {
-        //     if(this->occupancy_map_[i] != occumap2[i])
-        //     {
-        //         visualization_msgs::Marker marker;
-        //         marker.type=visualization_msgs::Marker::SPHERE;
-        //         marker.action=visualization_msgs::Marker::ADD;
-        //         marker.color.a=1.0; //Otherwise will be invincible
-        //         marker.color.r= 1.0;
-        //         marker.header.frame_id="map";
-        //         marker.header.stamp=ros::Time::now();
-        //         geometry_msgs::Vector3 v;
-        //         v.x=0.1;
-        //         v.y=0.1;
-        //         v.z=0.1;
-        //         marker.scale=v;
-        //         marker.ns="my_namespace";
-        //         marker.id=i;
-        //         int point[2];
-        //         this->getCostmapPointByArrayIndex(i, point);
-        //         this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
-        //         marker.pose.position.z = 0;
-        //         tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
-        //         marker_array.markers.push_back(marker);
-        //     }
-        // }
-        // this->marker_array_publisher_.publish(marker_array);
-        // ROS_INFO("VISUALIZATION MARKERS END");
-    }
-
-    void RelaxedAStar::costmap_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg)
-    {
-        ROS_ERROR("COSTMAP UPDATE");
-    }
 
     bool RelaxedAStar::makePlan(const geometry_msgs::PoseStamped& start, 
                 const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan)
