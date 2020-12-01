@@ -228,6 +228,7 @@ namespace relaxed_a_star
             // Parameter list
             float default_tolerance_;
             NeighborType neighbor_type_;
+            int free_cell_threshhold_;
 
             // Process information
             int array_size_;
