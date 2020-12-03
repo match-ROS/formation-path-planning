@@ -113,6 +113,7 @@ catkin_package(
     include
   LIBRARIES 
     relaxed_a_star
+    advanced_dijkstra
   CATKIN_DEPENDS 
     roscpp
     pluginlib
@@ -135,7 +136,9 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library( relaxed_a_star src/relaxed_a_star.cpp)
+add_library(relaxed_a_star src/relaxed_a_star.cpp)
+add_library(advanced_dijkstra src/advanced_dijkstra.cpp)
+add_library(visualization_helper src/visualization_helper.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -158,9 +161,8 @@ add_library( relaxed_a_star src/relaxed_a_star.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(relaxed_a_star visualization_helper ${catkin_LIBRARIES})
+target_link_libraries(advanced_dijkstra visualization_helper ${catkin_LIBRARIES})
 
 #############
 ## Install ##
