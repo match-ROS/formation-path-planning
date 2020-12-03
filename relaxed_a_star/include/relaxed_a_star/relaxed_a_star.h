@@ -23,6 +23,8 @@
 #include <set>
 #include <cmath>
 
+#include <debug_helper/visualization_helper.h>
+
 namespace relaxed_a_star
 {
     /**
@@ -138,7 +140,8 @@ namespace relaxed_a_star
             ros::Publisher plan_publisher_;
             ros::Publisher planning_points_orientation_publisher_;
             ros::Publisher debug_publisher_;
-            ros::Publisher marker_array_publisher_;
+
+            visualization_helper::VisualizationHelper visu_helper_;
             
         private:
             void findPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
@@ -260,5 +263,7 @@ namespace relaxed_a_star
 
             // Process information
             int array_size_;
+            geometry_msgs::PoseStamped start_;
+            geometry_msgs::PoseStamped goal_;
     };
 }

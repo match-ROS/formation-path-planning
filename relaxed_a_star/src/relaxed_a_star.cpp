@@ -54,7 +54,7 @@ namespace relaxed_a_star
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
 
             this->debug_publisher_ = private_nh.advertise<nav_msgs::OccupancyGrid>("debug_occupancy", 1);
-            this->marker_array_publisher_ = private_nh.advertise<visualization_msgs::MarkerArray>("marker_array", 1);
+            
             
             // Get the tf prefix
             ros::NodeHandle nh;
@@ -64,19 +64,17 @@ namespace relaxed_a_star
 
             ROS_INFO("Relaxed AStar finished intitialization.");
 
-            // ROS_INFO("Test Costmap");
-            // for(int i=0; i < 1024; i++)
-            // {
-            //     ROS_INFO("x: %i, cost: %i",i, static_cast<int>(this->costmap_->getCost(i, 512)));
-            // }
-            
             this->initializeOccupancyMap();
-            this->publishOccupancyGrid();
+
+            this->visu_helper_ = visualization_helper::VisualizationHelper(name);
         }
         else
         {
             ROS_WARN("This planner has already been initialized");
         }
+
+
+        
     }    
 
     bool RelaxedAStar::makePlan(const geometry_msgs::PoseStamped& start, 
@@ -98,6 +96,9 @@ namespace relaxed_a_star
         }
 
         ROS_ERROR("RELAXED A STAR MAKEPLAN");
+
+        this->start_ = start;
+        this->goal_ = goal;
 
         plan.clear(); // Clear path in case anything is already in it
         this->initializeOccupancyMap(); // Costmap can change so the occupancy map must be updated bevor making plan
@@ -179,6 +180,38 @@ namespace relaxed_a_star
         // Start planning
         this->findPlan(array_start_cell, array_goal_cell, g_score);
         
+        // DEBUGGING
+        // visualization_msgs::MarkerArray marker_array;
+        // for(int i; i < this->array_size_; i++)
+        // {
+        //     if(g_score[i] != std::numeric_limits<float>::infinity())
+        //     {
+        //         visualization_msgs::Marker marker;
+        //         marker.type=visualization_msgs::Marker::SPHERE;
+        //         marker.action=visualization_msgs::Marker::ADD;
+        //         marker.color.a=1.0; //Otherwise will be invincible
+        //         marker.color.r= 1.0;
+        //         marker.header.frame_id="map";
+        //         marker.header.stamp=ros::Time::now();
+        //         geometry_msgs::Vector3 v;
+        //         v.x=0.1;
+        //         v.y=0.1;
+        //         v.z=0.1;
+        //         marker.scale=v;
+        //         marker.ns="my_namespace";
+        //         marker.id=i;
+        //         int point[2];
+        //         this->getCostmapPointByArrayIndex(i, point);
+        //         this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
+        //         marker.pose.position.z = 0;
+        //         tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
+        //         marker_array.markers.push_back(marker);
+        //     }
+        // }
+        // this->marker_array_publisher_.publish(marker_array);
+        // ros::Duration(3.0).sleep();
+        // DEBUGGING END
+
         if (g_score[array_goal_cell] != std::numeric_limits<float>::infinity())
         {
             std::vector<int> array_plan;
@@ -224,7 +257,7 @@ namespace relaxed_a_star
 
             this->planning_points_orientation_publisher_.publish(planning_points_orientation);
         }
-        ROS_INFO("Planning finished");
+        ROS_INFO("Planning finished %i", plan.size());
         this->publishPlan(plan);
         return 0;
     }
@@ -249,19 +282,236 @@ namespace relaxed_a_star
             int array_current_cell = array_open_cell_list.begin()->cell_index; // Get cell with lowest f_score
             // ROS_INFO("cell0: %f, cell1: %f, last: %f", array_open_cell_list.begin()->f_cost, std::next(array_open_cell_list.begin())->f_cost, std::prev(array_open_cell_list.end())->f_cost);
             array_open_cell_list.erase(array_open_cell_list.begin()); // Remove cell from open_cell_set so it will not be visited again
-
+            
             std::vector<int> array_neighbor_cell_list = this->getFreeNeighborCells(array_current_cell);
+            
             for(int array_neighbor_cell: array_neighbor_cell_list)
             {
-                if(g_score[array_neighbor_cell] == std::numeric_limits<float>::infinity())
+                bool valid_cell = false;
+                switch (this->free_neighbor_mode_)
                 {
+                case FreeNeighborMode::CostmapOnly:
+                    valid_cell = true; // Just set this value to true so no sorting is applied to neighbor cells
+                    break;
+                case FreeNeighborMode::CostmapAndMinimalCurveRadius:
+                    // Get first vector for angle calculation
+                    // DEBUGGING
+                    visualization_msgs::MarkerArray marker_array2;
+                    // DEBUGGING END
+                    int array_last_cell = array_neighbor_cell;
+                    for(int counter = 0; counter < this->curvature_calculation_cell_distance_; counter++)
+                    {
+                        array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
+                        // DEBUGGING
+                        visualization_msgs::Marker marker;
+                        marker.type=visualization_msgs::Marker::SPHERE;
+                        marker.action=visualization_msgs::Marker::ADD;
+                        marker.color.a=1.0; //Otherwise will be invincible
+                        marker.color.b= 1.0;
+                        marker.header.frame_id="map";
+                        marker.header.stamp=ros::Time::now();
+                        geometry_msgs::Vector3 v;
+                        v.x=0.1;
+                        v.y=0.1;
+                        v.z=0.1;
+                        marker.scale=v;
+                        marker.ns="my_namespace";
+                        marker.id=array_last_cell;
+                        int point[2];
+                        this->getCostmapPointByArrayIndex(array_last_cell, point);
+                        this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
+                        marker.pose.position.z = 0;
+                        tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
+                        marker_array2.markers.push_back(marker);
+                        // DEBUGGING END
+                        if(array_last_cell == array_start_cell)
+                        {
+                            break;
+                        }
+                    }
+                    int array_first_vector_start_cell = array_last_cell;
+                    int map_first_vector_start[2];
+                    int map_first_vector_end[2];
+                    this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_first_vector_start);
+                    this->getCostmapPointByArrayIndex(array_neighbor_cell, map_first_vector_end);
+                    int first_vector[2];
+                    first_vector[0] = map_first_vector_end[0] - map_first_vector_start[0];
+                    first_vector[1] = map_first_vector_end[1] - map_first_vector_start[1];
+
+                    tf::Quaternion first_quaternion;
+                    double yaw = std::atan2(first_vector[1], first_vector[0]);
+                    first_quaternion.setRPY(0.0, 0.0, yaw);
+
+                    tf::Quaternion second_quaternion;
+                    if(array_last_cell != array_start_cell)
+                    {
+                        for (int counter = this->curvature_calculation_cell_distance_ - 1;
+                         counter < (2 * this->curvature_calculation_cell_distance_) - 1;
+                         counter++)
+                        {
+                            array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
+                            // DEBUGGING
+                            visualization_msgs::Marker marker;
+                            marker.type=visualization_msgs::Marker::SPHERE;
+                            marker.action=visualization_msgs::Marker::ADD;
+                            marker.color.a=1.0; //Otherwise will be invincible
+                            marker.color.b= 1.0;
+                            marker.header.frame_id="map";
+                            marker.header.stamp=ros::Time::now();
+                            geometry_msgs::Vector3 v;
+                            v.x=0.1;
+                            v.y=0.1;
+                            v.z=0.1;
+                            marker.scale=v;
+                            marker.ns="my_namespace";
+                            marker.id=array_last_cell;
+                            int point[2];
+                            this->getCostmapPointByArrayIndex(array_last_cell, point);
+                            this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
+                            marker.pose.position.z = 0;
+                            tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
+                            marker_array2.markers.push_back(marker);
+                            // DEBUGGING END
+                            if(array_last_cell == array_start_cell)
+                            {
+                                break;
+                            }
+                        }
+
+                        int array_second_vector_start_cell = array_last_cell;
+                        int map_second_vector_start[2];
+                        int map_second_vector_end[2];
+                        this->getCostmapPointByArrayIndex(array_second_vector_start_cell, map_second_vector_start);
+                        this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_second_vector_end);
+                        int second_vector[2];
+                        second_vector[0] = map_second_vector_end[0] - map_second_vector_start[0];
+                        second_vector[1] = map_second_vector_end[1] - map_second_vector_start[1]; 
+
+                        yaw = std::atan2(second_vector[1], second_vector[0]);
+                        second_quaternion.setRPY(0.0, 0.0, yaw);
+                    }
+                    else
+                    {
+                        tf::quaternionMsgToTF(this->start_.pose.orientation, second_quaternion);
+                    }
+                    
+                    
+
+                    // // DEBUGGING
+                    // visualization_msgs::Marker marker2;
+                    // marker2.type=visualization_msgs::Marker::SPHERE;
+                    // marker2.action=visualization_msgs::Marker::ADD;
+                    // marker2.color.a=1.0; //Otherwise will be invincible
+                    // marker2.color.b= 1.0;
+                    // marker2.header.frame_id="map";
+                    // marker2.header.stamp=ros::Time::now();
+                    // geometry_msgs::Vector3 v2;
+                    // v2.x=0.1;
+                    // v2.y=0.1;
+                    // v2.z=0.1;
+                    // marker2.scale=v2;
+                    // marker2.ns="my_namespace";
+                    // marker2.id=array_first_vector_start_cell;
+                    // int point2[2];
+                    // this->getCostmapPointByArrayIndex(array_first_vector_start_cell, point2);
+                    // this->costmap_->mapToWorld(point2[0], point2[1], marker2.pose.position.x, marker2.pose.position.y);
+                    // marker2.pose.position.z = 0;
+                    // tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker2.pose.orientation);
+                    // marker_array2.markers.push_back(marker2);
+                    // // DEBUGGING END
+
+                    // // DEBUGGING
+                    // visualization_msgs::Marker marker3;
+                    // marker3.type=visualization_msgs::Marker::SPHERE;
+                    // marker3.action=visualization_msgs::Marker::ADD;
+                    // marker3.color.a=1.0; //Otherwise will be invincible
+                    // marker3.color.g= 1.0;
+                    // marker3.header.frame_id="map";
+                    // marker3.header.stamp=ros::Time::now();
+                    // geometry_msgs::Vector3 v3;
+                    // v3.x=0.1;
+                    // v3.y=0.1;
+                    // v3.z=0.1;
+                    // marker3.scale=v3;
+                    // marker3.ns="my_namespace";
+                    // marker3.id=array_last_cell;
+                    // int point3[2];
+                    // this->getCostmapPointByArrayIndex(array_last_cell, point3);
+                    // this->costmap_->mapToWorld(point3[0], point3[1], marker3.pose.position.x, marker3.pose.position.y);
+                    // marker3.pose.position.z = 0;
+                    // tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker3.pose.orientation);
+                    // marker_array2.markers.push_back(marker3);
+                    // // DEBUGGING END
+
+                    //DEBUGGING
+                    // if(array_open_cell_list.size() == 0)
+                    // {
+                        
+                    // }
+                    //END DEBUGGING
+
+                    tf::Quaternion second_quaternion_inv;
+                    second_quaternion_inv = second_quaternion;
+                    second_quaternion_inv[3] = -second_quaternion_inv[3]; // Negate to get inverse quaternion for next calculation
+                    tf::Quaternion diff_quaternion = first_quaternion * second_quaternion_inv;
+                    tf::Matrix3x3 m(diff_quaternion);
+                    double roll, pitch;
+                    m.getRPY(roll, pitch, yaw);
+                    double yaw_angle = ((180/M_PI)*yaw);
+                    
+                    if(std::abs(yaw_angle) < this->maximal_curvature_)
+                    {
+                        valid_cell = true;
+                    }
+                    ROS_INFO("Angle: %f, valid: %i", yaw_angle, std::abs(yaw_angle) < this->maximal_curvature_);
+                    break; // case end
+                }
+
+                // DEBUGGING
+                visualization_msgs::MarkerArray marker_array;
+                // DEBUGGING END
+
+                if (g_score[array_neighbor_cell] == std::numeric_limits<float>::infinity() &&
+                    valid_cell)
+                {
+                    ROS_INFO("New cell");
                     g_score[array_neighbor_cell] = this->calcGCost(g_score[array_current_cell], array_current_cell, array_neighbor_cell);
                     array_open_cell_list.insert({array_neighbor_cell,
                                                  this->calcFCost(g_score[array_current_cell],
                                                                  array_current_cell,
                                                                  array_goal_cell)});
+                    valid_cell = false;
+
+                    // DEBUGGING
+                    visualization_msgs::Marker marker;
+                    marker.type=visualization_msgs::Marker::SPHERE;
+                    marker.action=visualization_msgs::Marker::ADD;
+                    marker.color.a=1.0; //Otherwise will be invincible
+                    marker.color.r= 1.0;
+                    marker.header.frame_id="map";
+                    marker.header.stamp=ros::Time::now();
+                    geometry_msgs::Vector3 v;
+                    v.x=0.1;
+                    v.y=0.1;
+                    v.z=0.1;
+                    marker.scale=v;
+                    marker.ns="my_namespace";
+                    marker.id=array_neighbor_cell;
+                    int point[2];
+                    this->getCostmapPointByArrayIndex(array_neighbor_cell, point);
+                    this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
+                    marker.pose.position.z = 0;
+                    tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
+                    marker_array.markers.push_back(marker);
+                    // DEBUGGING END
                 }
+                // DEBUGGING
+                // if(array_open_cell_list.size() != 0)
+                    // this->marker_array_publisher_.publish(marker_array);
+                ros::Duration(0.5).sleep();
+                // DEBUGGING END
             }
+            ROS_INFO("Goal gscore: %f", g_score[array_goal_cell]);
             // ros::Duration(1.0).sleep();
         }
     }
@@ -279,6 +529,7 @@ namespace relaxed_a_star
             int array_next_cell = this->getMinGScoreNeighborCell(array_current_cell, g_score);
             array_goal_to_start_plan.push_back(array_next_cell);
             array_current_cell = array_next_cell;
+            ROS_INFO("array_goal_to_start_plan size: %i", array_start_to_goal_plan.size());
         }
 
         // <= is necessary as we go backwards through the list. And first elment from the back is found with size()-1 until we match the size, thats the first array.
