@@ -142,6 +142,10 @@ namespace relaxed_a_star
             ros::Publisher debug_publisher_;
 
             visualization_helper::VisualizationHelper visu_helper_;
+            int g_score_marker_array_id_;
+            int g_score_marker_template_id_;
+            int theoretical_path_marker_array_id_;
+            int theoretical_path_marker_template_id_;
             
         private:
             void findPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
@@ -198,6 +202,7 @@ namespace relaxed_a_star
              * @param map_cell Cell in the two dimensional costmap
              */
             void getCostmapPointByArrayIndex(int array_index, int *map_cell);
+            void getCostmapPointByArrayIndex(int array_index, int &map_cell_x, int &map_cell_y);
 
             /**
              * @brief Gets all free neighbor cells adjacent to the current cell
@@ -215,6 +220,8 @@ namespace relaxed_a_star
             float calcMoveCost(int array_current_cell, int array_target_cell);
             float calcMoveCost(int* map_current_cell, int* map_target_cell);
             float calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y);
+
+            void createMarkersForGScoreArray(std::shared_ptr<float[]> g_score);
 
             void publishPlan(std::vector<geometry_msgs::PoseStamped> &plan);
             void publishOccupancyGrid();

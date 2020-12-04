@@ -23,7 +23,6 @@ namespace relaxed_a_star
     void RelaxedAStar::initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
     {
         this->costmap_ros_ = costmap_ros_;
-        ROS_INFO("bluib");
         this->initialize(name, costmap_ros->getCostmap(), costmap_ros->getGlobalFrameID());
     }
 
@@ -36,7 +35,6 @@ namespace relaxed_a_star
             this->costmap_ = costmap;
             this->global_frame_ = global_frame;
             this->array_size_ = this->costmap_->getSizeInCellsX() * this->costmap_->getSizeInCellsY();
-            
 
             // Get parameter of planner
             ros::NodeHandle private_nh("~/" + name);
@@ -55,6 +53,34 @@ namespace relaxed_a_star
 
             this->debug_publisher_ = private_nh.advertise<nav_msgs::OccupancyGrid>("debug_occupancy", 1);
             
+            this->visu_helper_ = visualization_helper::VisualizationHelper(name);
+            this->g_score_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+            visualization_msgs::Marker marker_template_g_score;
+            marker_template_g_score.action = visualization_msgs::Marker::ADD;
+            marker_template_g_score.color.a = 1.0;
+            marker_template_g_score.color.r = 1.0;
+            marker_template_g_score.header.frame_id = "map";
+            marker_template_g_score.lifetime = ros::Duration(1.0);
+            marker_template_g_score.ns = "g_score";
+            marker_template_g_score.scale.x = 0.1;
+            marker_template_g_score.scale.y = 0.1;
+            marker_template_g_score.scale.z = 0.1;
+            marker_template_g_score.type = visualization_msgs::Marker::SPHERE;
+            this->g_score_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_g_score);
+            
+            this->theoretical_path_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+            visualization_msgs::Marker marker_template_theoretical_path;
+            marker_template_theoretical_path.action = visualization_msgs::Marker::ADD;
+            marker_template_theoretical_path.color.a = 1.0;
+            marker_template_theoretical_path.color.b = 1.0;
+            marker_template_theoretical_path.header.frame_id = "map";
+            marker_template_theoretical_path.lifetime = ros::Duration(1.0);
+            marker_template_theoretical_path.ns = "theoretical_path";
+            marker_template_theoretical_path.scale.x = 0.1;
+            marker_template_theoretical_path.scale.y = 0.1;
+            marker_template_theoretical_path.scale.z = 0.1;
+            marker_template_theoretical_path.type = visualization_msgs::Marker::SPHERE;
+            this->theoretical_path_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_theoretical_path);
             
             // Get the tf prefix
             ros::NodeHandle nh;
@@ -65,16 +91,11 @@ namespace relaxed_a_star
             ROS_INFO("Relaxed AStar finished intitialization.");
 
             this->initializeOccupancyMap();
-
-            this->visu_helper_ = visualization_helper::VisualizationHelper(name);
         }
         else
         {
             ROS_WARN("This planner has already been initialized");
         }
-
-
-        
     }    
 
     bool RelaxedAStar::makePlan(const geometry_msgs::PoseStamped& start, 
@@ -180,38 +201,6 @@ namespace relaxed_a_star
         // Start planning
         this->findPlan(array_start_cell, array_goal_cell, g_score);
         
-        // DEBUGGING
-        // visualization_msgs::MarkerArray marker_array;
-        // for(int i; i < this->array_size_; i++)
-        // {
-        //     if(g_score[i] != std::numeric_limits<float>::infinity())
-        //     {
-        //         visualization_msgs::Marker marker;
-        //         marker.type=visualization_msgs::Marker::SPHERE;
-        //         marker.action=visualization_msgs::Marker::ADD;
-        //         marker.color.a=1.0; //Otherwise will be invincible
-        //         marker.color.r= 1.0;
-        //         marker.header.frame_id="map";
-        //         marker.header.stamp=ros::Time::now();
-        //         geometry_msgs::Vector3 v;
-        //         v.x=0.1;
-        //         v.y=0.1;
-        //         v.z=0.1;
-        //         marker.scale=v;
-        //         marker.ns="my_namespace";
-        //         marker.id=i;
-        //         int point[2];
-        //         this->getCostmapPointByArrayIndex(i, point);
-        //         this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
-        //         marker.pose.position.z = 0;
-        //         tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
-        //         marker_array.markers.push_back(marker);
-        //     }
-        // }
-        // this->marker_array_publisher_.publish(marker_array);
-        // ros::Duration(3.0).sleep();
-        // DEBUGGING END
-
         if (g_score[array_goal_cell] != std::numeric_limits<float>::infinity())
         {
             std::vector<int> array_plan;
@@ -295,35 +284,10 @@ namespace relaxed_a_star
                     break;
                 case FreeNeighborMode::CostmapAndMinimalCurveRadius:
                     // Get first vector for angle calculation
-                    // DEBUGGING
-                    visualization_msgs::MarkerArray marker_array2;
-                    // DEBUGGING END
                     int array_last_cell = array_neighbor_cell;
                     for(int counter = 0; counter < this->curvature_calculation_cell_distance_; counter++)
                     {
                         array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
-                        // DEBUGGING
-                        visualization_msgs::Marker marker;
-                        marker.type=visualization_msgs::Marker::SPHERE;
-                        marker.action=visualization_msgs::Marker::ADD;
-                        marker.color.a=1.0; //Otherwise will be invincible
-                        marker.color.b= 1.0;
-                        marker.header.frame_id="map";
-                        marker.header.stamp=ros::Time::now();
-                        geometry_msgs::Vector3 v;
-                        v.x=0.1;
-                        v.y=0.1;
-                        v.z=0.1;
-                        marker.scale=v;
-                        marker.ns="my_namespace";
-                        marker.id=array_last_cell;
-                        int point[2];
-                        this->getCostmapPointByArrayIndex(array_last_cell, point);
-                        this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
-                        marker.pose.position.z = 0;
-                        tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
-                        marker_array2.markers.push_back(marker);
-                        // DEBUGGING END
                         if(array_last_cell == array_start_cell)
                         {
                             break;
@@ -350,28 +314,6 @@ namespace relaxed_a_star
                          counter++)
                         {
                             array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
-                            // DEBUGGING
-                            visualization_msgs::Marker marker;
-                            marker.type=visualization_msgs::Marker::SPHERE;
-                            marker.action=visualization_msgs::Marker::ADD;
-                            marker.color.a=1.0; //Otherwise will be invincible
-                            marker.color.b= 1.0;
-                            marker.header.frame_id="map";
-                            marker.header.stamp=ros::Time::now();
-                            geometry_msgs::Vector3 v;
-                            v.x=0.1;
-                            v.y=0.1;
-                            v.z=0.1;
-                            marker.scale=v;
-                            marker.ns="my_namespace";
-                            marker.id=array_last_cell;
-                            int point[2];
-                            this->getCostmapPointByArrayIndex(array_last_cell, point);
-                            this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
-                            marker.pose.position.z = 0;
-                            tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
-                            marker_array2.markers.push_back(marker);
-                            // DEBUGGING END
                             if(array_last_cell == array_start_cell)
                             {
                                 break;
@@ -395,61 +337,6 @@ namespace relaxed_a_star
                         tf::quaternionMsgToTF(this->start_.pose.orientation, second_quaternion);
                     }
                     
-                    
-
-                    // // DEBUGGING
-                    // visualization_msgs::Marker marker2;
-                    // marker2.type=visualization_msgs::Marker::SPHERE;
-                    // marker2.action=visualization_msgs::Marker::ADD;
-                    // marker2.color.a=1.0; //Otherwise will be invincible
-                    // marker2.color.b= 1.0;
-                    // marker2.header.frame_id="map";
-                    // marker2.header.stamp=ros::Time::now();
-                    // geometry_msgs::Vector3 v2;
-                    // v2.x=0.1;
-                    // v2.y=0.1;
-                    // v2.z=0.1;
-                    // marker2.scale=v2;
-                    // marker2.ns="my_namespace";
-                    // marker2.id=array_first_vector_start_cell;
-                    // int point2[2];
-                    // this->getCostmapPointByArrayIndex(array_first_vector_start_cell, point2);
-                    // this->costmap_->mapToWorld(point2[0], point2[1], marker2.pose.position.x, marker2.pose.position.y);
-                    // marker2.pose.position.z = 0;
-                    // tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker2.pose.orientation);
-                    // marker_array2.markers.push_back(marker2);
-                    // // DEBUGGING END
-
-                    // // DEBUGGING
-                    // visualization_msgs::Marker marker3;
-                    // marker3.type=visualization_msgs::Marker::SPHERE;
-                    // marker3.action=visualization_msgs::Marker::ADD;
-                    // marker3.color.a=1.0; //Otherwise will be invincible
-                    // marker3.color.g= 1.0;
-                    // marker3.header.frame_id="map";
-                    // marker3.header.stamp=ros::Time::now();
-                    // geometry_msgs::Vector3 v3;
-                    // v3.x=0.1;
-                    // v3.y=0.1;
-                    // v3.z=0.1;
-                    // marker3.scale=v3;
-                    // marker3.ns="my_namespace";
-                    // marker3.id=array_last_cell;
-                    // int point3[2];
-                    // this->getCostmapPointByArrayIndex(array_last_cell, point3);
-                    // this->costmap_->mapToWorld(point3[0], point3[1], marker3.pose.position.x, marker3.pose.position.y);
-                    // marker3.pose.position.z = 0;
-                    // tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker3.pose.orientation);
-                    // marker_array2.markers.push_back(marker3);
-                    // // DEBUGGING END
-
-                    //DEBUGGING
-                    // if(array_open_cell_list.size() == 0)
-                    // {
-                        
-                    // }
-                    //END DEBUGGING
-
                     tf::Quaternion second_quaternion_inv;
                     second_quaternion_inv = second_quaternion;
                     second_quaternion_inv[3] = -second_quaternion_inv[3]; // Negate to get inverse quaternion for next calculation
@@ -463,13 +350,42 @@ namespace relaxed_a_star
                     {
                         valid_cell = true;
                     }
+
+                    // DEBUGGING AND VISUALIZING
                     ROS_INFO("Angle: %f, valid: %i", yaw_angle, std::abs(yaw_angle) < this->maximal_curvature_);
+                    geometry_msgs::Pose first_pose, second_pose, third_pose;
+                    geometry_msgs::Quaternion quaternion;
+                    tf::Quaternion tf_quaternion;
+                    tf_quaternion.setRPY(0.0, 0.0, 0.0);
+                    tf::quaternionTFToMsg(tf_quaternion, quaternion);
+                    first_pose.orientation = quaternion;
+                    second_pose.orientation = quaternion;
+                    third_pose.orientation = quaternion;
+                    int map_cell[2];
+                    this->getCostmapPointByArrayIndex(array_neighbor_cell, map_cell);
+                    this->costmap_->mapToWorld(map_cell[0], map_cell[1], first_pose.position.x, first_pose.position.y);
+                    first_pose.position.z = 0.0;
+                    this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_cell);
+                    this->costmap_->mapToWorld(map_cell[0], map_cell[1], second_pose.position.x, second_pose.position.y);
+                    second_pose.position.z = 0.0;
+                    this->getCostmapPointByArrayIndex(array_last_cell, map_cell);
+                    this->costmap_->mapToWorld(map_cell[0], map_cell[1], third_pose.position.x, third_pose.position.y);
+                    third_pose.position.z = 0.0;
+
+                    this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                      first_pose,
+                                                                      this->theoretical_path_marker_template_id_);
+                    this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                      second_pose,
+                                                                      this->theoretical_path_marker_template_id_);                                                                      
+                    this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                      third_pose,
+                                                                      this->theoretical_path_marker_template_id_);
+                    this->visu_helper_.visualizeMarkerArray(this->theoretical_path_marker_array_id_);
+                    this->visu_helper_.clearMarkerArray(this->theoretical_path_marker_array_id_);
+                    // DEBUGGING AND VISUALIZING
                     break; // case end
                 }
-
-                // DEBUGGING
-                visualization_msgs::MarkerArray marker_array;
-                // DEBUGGING END
 
                 if (g_score[array_neighbor_cell] == std::numeric_limits<float>::infinity() &&
                     valid_cell)
@@ -481,38 +397,12 @@ namespace relaxed_a_star
                                                                  array_current_cell,
                                                                  array_goal_cell)});
                     valid_cell = false;
-
-                    // DEBUGGING
-                    visualization_msgs::Marker marker;
-                    marker.type=visualization_msgs::Marker::SPHERE;
-                    marker.action=visualization_msgs::Marker::ADD;
-                    marker.color.a=1.0; //Otherwise will be invincible
-                    marker.color.r= 1.0;
-                    marker.header.frame_id="map";
-                    marker.header.stamp=ros::Time::now();
-                    geometry_msgs::Vector3 v;
-                    v.x=0.1;
-                    v.y=0.1;
-                    v.z=0.1;
-                    marker.scale=v;
-                    marker.ns="my_namespace";
-                    marker.id=array_neighbor_cell;
-                    int point[2];
-                    this->getCostmapPointByArrayIndex(array_neighbor_cell, point);
-                    this->costmap_->mapToWorld(point[0], point[1], marker.pose.position.x, marker.pose.position.y);
-                    marker.pose.position.z = 0;
-                    tf::quaternionTFToMsg(tf::Quaternion(0,0,0), marker.pose.orientation);
-                    marker_array.markers.push_back(marker);
-                    // DEBUGGING END
                 }
-                // DEBUGGING
-                // if(array_open_cell_list.size() != 0)
-                    // this->marker_array_publisher_.publish(marker_array);
-                ros::Duration(0.5).sleep();
-                // DEBUGGING END
             }
-            ROS_INFO("Goal gscore: %f", g_score[array_goal_cell]);
-            // ros::Duration(1.0).sleep();
+            this->createMarkersForGScoreArray(g_score);
+            this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
+            this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
+            ros::Duration(1.0).sleep();
         }
     }
 
@@ -583,6 +473,14 @@ namespace relaxed_a_star
     {
         map_cell[1] = array_index / this->costmap_->getSizeInCellsX();
         map_cell[0] = array_index % this->costmap_->getSizeInCellsX();
+    }
+
+    void RelaxedAStar::getCostmapPointByArrayIndex(int array_index, int &map_cell_x, int &map_cell_y)
+    {
+        int map_cell[2];
+        this->getCostmapPointByArrayIndex(array_index, map_cell);
+        map_cell_x = map_cell[0];
+        map_cell_y = map_cell[1];
     }
 
     std::vector<int> RelaxedAStar::getFreeNeighborCells(int array_current_cell)
@@ -681,6 +579,29 @@ namespace relaxed_a_star
     float RelaxedAStar::calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y)
     {
         return sqrt(pow(map_current_cell_x - map_target_cell_x, 2) + pow(map_current_cell_y - map_target_cell_y, 2));
+    }
+
+    void RelaxedAStar::createMarkersForGScoreArray(std::shared_ptr<float[]> g_score)
+    {
+        for(int counter = 0; counter < this->array_size_; counter++)
+        {
+            if(g_score[counter] != std::numeric_limits<float>::infinity())
+            {
+                geometry_msgs::Pose pose;
+                geometry_msgs::Quaternion quaternion;
+                tf::Quaternion tf_quaternion;
+                tf_quaternion.setRPY(0.0, 0.0, 0.0);
+                tf::quaternionTFToMsg(tf_quaternion, quaternion);
+                pose.orientation = quaternion;
+                int map_cell[2];
+                this->getCostmapPointByArrayIndex(counter, map_cell);
+                this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.position.x, pose.position.y);
+                pose.position.z = 0.0;
+                this->visu_helper_.addMarkerToExistingMarkerArray(this->g_score_marker_array_id_,
+                                                                  pose,
+                                                                  this->g_score_marker_template_id_);
+            }
+        }
     }
 
     void RelaxedAStar::publishPlan(std::vector<geometry_msgs::PoseStamped> &plan)
