@@ -264,7 +264,7 @@ namespace relaxed_a_star
     {
         // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
         // The elements in this list are linking to the index of the one dimensional costmap representation array.
-        std::multiset<types::Cell, std::less<types::Cell>> array_open_cell_list;
+        std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list;
         array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
 
         while (!array_open_cell_list.empty() &&

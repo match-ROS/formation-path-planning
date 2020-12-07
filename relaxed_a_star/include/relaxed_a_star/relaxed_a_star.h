@@ -24,7 +24,6 @@
 #include <cmath>
 
 #include <general_types/general_types.h>
-#include <relaxed_a_star/types.h>
 #include <debug_helper/visualization_helper.h>
 
 namespace relaxed_a_star

@@ -189,7 +189,20 @@ namespace advanced_a_star
         std::vector<int> closed_cell_list;
         float fTieBreaker = 1 + (1/(this->costmap_->getSizeInCellsX() + this->costmap_->getSizeInCellsY()));
 
-        
+        // Create g_score array for the whole costmap and initialize with infinity so only visited cells get a value
+        std::shared_ptr<float[]> g_score(new float[this->array_size_]);
+        for(int counter = 0; counter < this->array_size_; counter++)
+        {
+            g_score[counter] = std::numeric_limits<float>::infinity();
+        }
+        g_score[array_start_cell] = 0;
+
+        // Find plan
+        // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
+        // The elements in this list are linking to the index of the one dimensional costmap representation array.
+        std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list;
+        array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
+
     }
 
     int AdvancedAStar::getArrayIndexByCostmapCell(int *map_cell)
@@ -215,6 +228,26 @@ namespace advanced_a_star
         this->getCostmapPointByArrayIndex(array_index, map_cell);
         map_cell_x = map_cell[0];
         map_cell_y = map_cell[1];
+    }
+
+    float AdvancedAStar::calcGCost(int current_g_cost, int array_current_cell, int array_target_cell)
+    {
+
+    }
+
+    float AdvancedAStar::calcHCost(int* map_current_cell, int* map_goal_cell)
+    {
+
+    }
+
+    float AdvancedAStar::calcHCost(int array_current_cell, int array_goal_cell)
+    {
+
+    }
+
+    float AdvancedAStar::calcFCost(float current_g_score, int array_current_cell, int array_goal_cell)
+    {
+
     }
 
     void AdvancedAStar::createOccupancyMap()
