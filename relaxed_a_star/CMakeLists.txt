@@ -136,8 +136,10 @@ include_directories(
 )
 
 ## Declare a C++ library
+add_library(general_types include/general_types/general_types.h)
+add_library(relaxed_a_star_types include/relaxed_a_star/types.h)
 add_library(relaxed_a_star src/relaxed_a_star.cpp)
-add_library(advanced_dijkstra src/advanced_dijkstra.cpp)
+add_library(advanced_a_star src/advanced_a_star.cpp)
 add_library(visualization_helper src/visualization_helper.cpp)
 
 ## Add cmake target dependencies of the library
@@ -156,13 +158,18 @@ add_library(visualization_helper src/visualization_helper.cpp)
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
+## This setting of properties is so that I can only use a .h file without a .cpp file
+## cpp would be empty as these files only contain types
+set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(relaxed_a_star_types PROPERTIES LINKER_LANGUAGE CXX)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(relaxed_a_star visualization_helper ${catkin_LIBRARIES})
-target_link_libraries(advanced_dijkstra visualization_helper ${catkin_LIBRARIES})
+target_link_libraries(relaxed_a_star general_types relaxed_a_star_types visualization_helper  ${catkin_LIBRARIES})
+target_link_libraries(advanced_a_star general_types visualization_helper ${catkin_LIBRARIES})
 
 #############
 ## Install ##

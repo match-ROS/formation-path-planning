@@ -43,6 +43,7 @@ namespace visualization_helper
             this->setTimeStamps(marker_array_index);
             this->setMarkerIds(marker_array_index);
             this->marker_array_publisher_.publish(this->marker_array_list_[marker_array_index]);
+            ros::Duration(0.1); // Wait for markers to be shown, maybe this helps to visualize them every time
             return true;
         }
         else

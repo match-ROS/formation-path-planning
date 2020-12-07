@@ -24,30 +24,15 @@
 #include <cmath>
 
 #include <general_types/general_types.h>
-#include <relaxed_a_star/types.h>
 #include <debug_helper/visualization_helper.h>
 
-namespace relaxed_a_star
+namespace advanced_a_star
 {
-    
-
-    // enum NeighborType
-    // {
-    //     FourWay = 4,
-    //     EightWay = 8
-    // };
-
-    // enum FreeNeighborMode
-    // {
-    //     CostmapOnly = 0,
-    //     CostmapAndMinimalCurveRadius = 1
-    // };
-
-    class RelaxedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
+    class AdvancedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public:
-            RelaxedAStar();
-            RelaxedAStar(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
+            AdvancedAStar();
+            AdvancedAStar(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
 
             // mbf_costmap_core::CostmapPlanner interface implementation
             /**
@@ -111,9 +96,8 @@ namespace relaxed_a_star
             * @return True if a cancel has been successfully requested, false if not implemented.
             */
             bool cancel();
-        
-        protected:
 
+        protected:
             bool initialized_;
 
             costmap_2d::Costmap2DROS *costmap_ros_;
@@ -122,42 +106,14 @@ namespace relaxed_a_star
 
             ros::Publisher plan_publisher_;
             ros::Publisher planning_points_orientation_publisher_;
-            ros::Publisher debug_publisher_;
 
             visualization_helper::VisualizationHelper visu_helper_;
             int g_score_marker_array_id_;
             int g_score_marker_template_id_;
             int theoretical_path_marker_array_id_;
             int theoretical_path_marker_template_id_;
-            
+
         private:
-            void findPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
-            std::vector<int> createPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
-
-            /**
-             * @brief Method for calulcating the g score for the target cell.
-             * 
-             * @param current_g_cost g score for the current cell
-             * @param array_current_cell Index for the current cell in the one dimensional representation of the costmap
-             * @param array_target_cell Index for the target cell in the one dimensional representation of the costmap
-             * @return float 
-             */
-            float calcGCost(int current_g_cost, int array_current_cell, int array_target_cell);
-
-            /**
-             * @brief Calculates the heuristic cost from current position to the goal_cell.
-             * Currently the cost will be approximated with the euclidean distance.
-             * 
-             * @param map_current_cell Current cell from where the heuristic cost should be calculated to the goal
-             * @param map_goal_cell Goal of the path planning
-             * @return float 
-             */
-            float calcHCost(int* map_current_cell, int* map_goal_cell);
-            float calcHCost(int array_current_cell, int array_goal_cell);
-
-            float calcFCost(float current_g_score, int array_current_cell, int array_goal_cell);
-
-
             /**
              * @brief Gets the index of the 2D position in the 1D representing array
              * Here the costmap is represented by a 1 dimensional array.
@@ -187,27 +143,9 @@ namespace relaxed_a_star
             void getCostmapPointByArrayIndex(int array_index, int *map_cell);
             void getCostmapPointByArrayIndex(int array_index, int &map_cell_x, int &map_cell_y);
 
-            /**
-             * @brief Gets all free neighbor cells adjacent to the current cell
-             * 
-             * @param array_current_cell 
-             * @return std::vector<int> 
-             */
-            std::vector<int> getFreeNeighborCells(int array_current_cell);
 
-            int getMinGScoreNeighborCell(int array_current_cell, std::shared_ptr<float[]> g_score);
+            void createOccupancyMap();
 
-            void initializeOccupancyMap();
-            bool isCellFree(int array_cell_index);
-
-            float calcMoveCost(int array_current_cell, int array_target_cell);
-            float calcMoveCost(int* map_current_cell, int* map_target_cell);
-            float calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y);
-
-            void createMarkersForGScoreArray(std::shared_ptr<float[]> g_score);
-
-            void publishPlan(std::vector<geometry_msgs::PoseStamped> &plan);
-            void publishOccupancyGrid();
 
             std::string global_frame_;
             std::string tf_prefix_;
@@ -255,5 +193,6 @@ namespace relaxed_a_star
             int array_size_;
             geometry_msgs::PoseStamped start_;
             geometry_msgs::PoseStamped goal_;
+
     };
 }

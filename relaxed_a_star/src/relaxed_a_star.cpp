@@ -22,8 +22,11 @@ namespace relaxed_a_star
 
     void RelaxedAStar::initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
     {
-        this->costmap_ros_ = costmap_ros_;
-        this->initialize(name, costmap_ros->getCostmap(), costmap_ros->getGlobalFrameID());
+        if(!this->initialized_)
+        {
+            this->costmap_ros_ = costmap_ros_;
+            this->initialize(name, costmap_ros->getCostmap(), costmap_ros->getGlobalFrameID());
+        }
     }
 
     void RelaxedAStar::initialize(std::string name, costmap_2d::Costmap2D *costmap, std::string global_frame)
@@ -40,11 +43,11 @@ namespace relaxed_a_star
             ros::NodeHandle private_nh("~/" + name);
             private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
             int neighbor_type;
-            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(NeighborType::FourWay));
-            this->neighbor_type_ = (NeighborType)neighbor_type;
+            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(general_types::NeighborType::FourWay));
+            this->neighbor_type_ = (general_types::NeighborType)neighbor_type;
             int free_neighbor_mode;
             private_nh.param<int>("free_neighbor_mode", free_neighbor_mode, 0);
-            this->free_neighbor_mode_ = (FreeNeighborMode)free_neighbor_mode;
+            this->free_neighbor_mode_ = (general_types::FreeNeighborMode)free_neighbor_mode;
             private_nh.param<float>("maximal_curvature", this->maximal_curvature_, 20);
             private_nh.param<int>("curvature_calculation_cell_distance", this->curvature_calculation_cell_distance_, 4);
 
@@ -60,7 +63,7 @@ namespace relaxed_a_star
             marker_template_g_score.color.a = 1.0;
             marker_template_g_score.color.r = 1.0;
             marker_template_g_score.header.frame_id = "map";
-            marker_template_g_score.lifetime = ros::Duration(1.0);
+            marker_template_g_score.lifetime = ros::Duration(0.3);
             marker_template_g_score.ns = "g_score";
             marker_template_g_score.scale.x = 0.1;
             marker_template_g_score.scale.y = 0.1;
@@ -74,7 +77,7 @@ namespace relaxed_a_star
             marker_template_theoretical_path.color.a = 1.0;
             marker_template_theoretical_path.color.b = 1.0;
             marker_template_theoretical_path.header.frame_id = "map";
-            marker_template_theoretical_path.lifetime = ros::Duration(1.0);
+            marker_template_theoretical_path.lifetime = ros::Duration(0.3);
             marker_template_theoretical_path.ns = "theoretical_path";
             marker_template_theoretical_path.scale.x = 0.1;
             marker_template_theoretical_path.scale.y = 0.1;
@@ -261,7 +264,7 @@ namespace relaxed_a_star
     {
         // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
         // The elements in this list are linking to the index of the one dimensional costmap representation array.
-        std::multiset<Cell, std::less<Cell>> array_open_cell_list;
+        std::multiset<types::Cell, std::less<types::Cell>> array_open_cell_list;
         array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
 
         while (!array_open_cell_list.empty() &&
@@ -279,10 +282,10 @@ namespace relaxed_a_star
                 bool valid_cell = false;
                 switch (this->free_neighbor_mode_)
                 {
-                case FreeNeighborMode::CostmapOnly:
+                case general_types::FreeNeighborMode::CostmapOnly:
                     valid_cell = true; // Just set this value to true so no sorting is applied to neighbor cells
                     break;
-                case FreeNeighborMode::CostmapAndMinimalCurveRadius:
+                case general_types::FreeNeighborMode::CostmapAndMinimalCurveRadius:
                     // Get first vector for angle calculation
                     int array_last_cell = array_neighbor_cell;
                     for(int counter = 0; counter < this->curvature_calculation_cell_distance_; counter++)
@@ -362,7 +365,7 @@ namespace relaxed_a_star
                     second_pose.orientation = quaternion;
                     third_pose.orientation = quaternion;
                     int map_cell[2];
-                    this->getCostmapPointByArrayIndex(array_neighbor_cell, map_cell);
+                    this->getCostmapPointByArrayIndex(array_current_cell, map_cell);
                     this->costmap_->mapToWorld(map_cell[0], map_cell[1], first_pose.position.x, first_pose.position.y);
                     first_pose.position.z = 0.0;
                     this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_cell);
@@ -402,7 +405,7 @@ namespace relaxed_a_star
             this->createMarkersForGScoreArray(g_score);
             this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
             this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
-            ros::Duration(1.0).sleep();
+            ros::Duration(0.3).sleep();
         }
     }
 
@@ -496,8 +499,8 @@ namespace relaxed_a_star
                 if(counter_x == 0 && counter_y == 0)
                     continue;
 
-                if (this->neighbor_type_ == NeighborType::EightWay ||
-                    (this->neighbor_type_ == NeighborType::FourWay &&
+                if (this->neighbor_type_ == general_types::NeighborType::EightWay ||
+                    (this->neighbor_type_ == general_types::NeighborType::FourWay &&
                      ((counter_x == 0 && counter_y == -1) ||
                       (counter_x == -1 && counter_y == 0) ||
                       (counter_x == 1 && counter_y == 0) ||
