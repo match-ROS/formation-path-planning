@@ -143,6 +143,10 @@ namespace advanced_a_star
             void getCostmapPointByArrayIndex(int array_index, int *map_cell);
             void getCostmapPointByArrayIndex(int array_index, int &map_cell_x, int &map_cell_y);
 
+            float calcMoveCost(int array_current_cell, int array_target_cell);
+            float calcMoveCost(int* map_current_cell, int* map_target_cell);
+            float calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y);
+
             /**
              * @brief Method for calulcating the g score for the target cell.
              * 

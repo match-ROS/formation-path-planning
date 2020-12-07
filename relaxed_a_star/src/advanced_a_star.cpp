@@ -187,7 +187,7 @@ namespace advanced_a_star
 
         // Beginn of AStar planner
         std::vector<int> closed_cell_list;
-        float fTieBreaker = 1 + (1/(this->costmap_->getSizeInCellsX() + this->costmap_->getSizeInCellsY()));
+        float tieBreaker = 1 + (1/(this->costmap_->getSizeInCellsX() + this->costmap_->getSizeInCellsY()));
 
         // Create g_score array for the whole costmap and initialize with infinity so only visited cells get a value
         std::shared_ptr<float[]> g_score(new float[this->array_size_]);
@@ -201,8 +201,10 @@ namespace advanced_a_star
         // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
         // The elements in this list are linking to the index of the one dimensional costmap representation array.
         std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list;
-        array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
-
+        // Add start cell to open list to initialize it
+        array_open_cell_list.insert({array_start_cell, this->calcFCost(g_score[array_start_cell],
+                                                                       array_start_cell,
+                                                                       array_goal_cell)});
     }
 
     int AdvancedAStar::getArrayIndexByCostmapCell(int *map_cell)
@@ -230,9 +232,31 @@ namespace advanced_a_star
         map_cell_y = map_cell[1];
     }
 
+    float AdvancedAStar::calcMoveCost(int array_current_cell, int array_target_cell)
+    {
+        int map_current_cell[2];
+        int map_target_cell[2];
+        this->getCostmapPointByArrayIndex(array_current_cell, map_current_cell);
+        this->getCostmapPointByArrayIndex(array_target_cell, map_target_cell);
+        return this->calcMoveCost(map_current_cell, map_target_cell);
+    }
+
+    float AdvancedAStar::calcMoveCost(int* map_current_cell, int* map_target_cell)
+    {
+        return this->calcMoveCost(map_current_cell[0],
+                                  map_current_cell[1],
+                                  map_target_cell[0],
+                                  map_target_cell[1]);
+    }
+
+    float AdvancedAStar::calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y)
+    {
+        return sqrt(pow(map_current_cell_x - map_target_cell_x, 2) + pow(map_current_cell_y - map_target_cell_y, 2));
+    }
+
     float AdvancedAStar::calcGCost(int current_g_cost, int array_current_cell, int array_target_cell)
     {
-
+        return current_g_cost + this->calcMoveCost(array_current_cell, array_target_cell);
     }
 
     float AdvancedAStar::calcHCost(int* map_current_cell, int* map_goal_cell)
