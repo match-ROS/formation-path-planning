@@ -282,39 +282,13 @@ namespace relaxed_a_star
                 bool valid_cell = false;
                 switch (this->free_neighbor_mode_)
                 {
-                case general_types::FreeNeighborMode::CostmapOnly:
-                    valid_cell = true; // Just set this value to true so no sorting is applied to neighbor cells
-                    break;
-                case general_types::FreeNeighborMode::CostmapAndMinimalCurveRadius:
-                    // Get first vector for angle calculation
-                    int array_last_cell = array_neighbor_cell;
-                    for(int counter = 0; counter < this->curvature_calculation_cell_distance_; counter++)
-                    {
-                        array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
-                        if(array_last_cell == array_start_cell)
-                        {
-                            break;
-                        }
-                    }
-                    int array_first_vector_start_cell = array_last_cell;
-                    int map_first_vector_start[2];
-                    int map_first_vector_end[2];
-                    this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_first_vector_start);
-                    this->getCostmapPointByArrayIndex(array_neighbor_cell, map_first_vector_end);
-                    int first_vector[2];
-                    first_vector[0] = map_first_vector_end[0] - map_first_vector_start[0];
-                    first_vector[1] = map_first_vector_end[1] - map_first_vector_start[1];
-
-                    tf::Quaternion first_quaternion;
-                    double yaw = std::atan2(first_vector[1], first_vector[0]);
-                    first_quaternion.setRPY(0.0, 0.0, yaw);
-
-                    tf::Quaternion second_quaternion;
-                    if(array_last_cell != array_start_cell)
-                    {
-                        for (int counter = this->curvature_calculation_cell_distance_ - 1;
-                         counter < (2 * this->curvature_calculation_cell_distance_) - 1;
-                         counter++)
+                    case general_types::FreeNeighborMode::CostmapOnly:
+                        valid_cell = true; // Just set this value to true so no sorting is applied to neighbor cells
+                        break;
+                    case general_types::FreeNeighborMode::CostmapAndMinimalCurveRadius:
+                        // Get first vector for angle calculation
+                        int array_last_cell = array_neighbor_cell;
+                        for(int counter = 0; counter < this->curvature_calculation_cell_distance_; counter++)
                         {
                             array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
                             if(array_last_cell == array_start_cell)
@@ -322,72 +296,98 @@ namespace relaxed_a_star
                                 break;
                             }
                         }
+                        int array_first_vector_start_cell = array_last_cell;
+                        int map_first_vector_start[2];
+                        int map_first_vector_end[2];
+                        this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_first_vector_start);
+                        this->getCostmapPointByArrayIndex(array_neighbor_cell, map_first_vector_end);
+                        int first_vector[2];
+                        first_vector[0] = map_first_vector_end[0] - map_first_vector_start[0];
+                        first_vector[1] = map_first_vector_end[1] - map_first_vector_start[1];
 
-                        int array_second_vector_start_cell = array_last_cell;
-                        int map_second_vector_start[2];
-                        int map_second_vector_end[2];
-                        this->getCostmapPointByArrayIndex(array_second_vector_start_cell, map_second_vector_start);
-                        this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_second_vector_end);
-                        int second_vector[2];
-                        second_vector[0] = map_second_vector_end[0] - map_second_vector_start[0];
-                        second_vector[1] = map_second_vector_end[1] - map_second_vector_start[1]; 
+                        tf::Quaternion first_quaternion;
+                        double yaw = std::atan2(first_vector[1], first_vector[0]);
+                        first_quaternion.setRPY(0.0, 0.0, yaw);
 
-                        yaw = std::atan2(second_vector[1], second_vector[0]);
-                        second_quaternion.setRPY(0.0, 0.0, yaw);
-                    }
-                    else
-                    {
-                        tf::quaternionMsgToTF(this->start_.pose.orientation, second_quaternion);
-                    }
-                    
-                    tf::Quaternion second_quaternion_inv;
-                    second_quaternion_inv = second_quaternion;
-                    second_quaternion_inv[3] = -second_quaternion_inv[3]; // Negate to get inverse quaternion for next calculation
-                    tf::Quaternion diff_quaternion = first_quaternion * second_quaternion_inv;
-                    tf::Matrix3x3 m(diff_quaternion);
-                    double roll, pitch;
-                    m.getRPY(roll, pitch, yaw);
-                    double yaw_angle = ((180/M_PI)*yaw);
-                    
-                    if(std::abs(yaw_angle) < this->maximal_curvature_)
-                    {
-                        valid_cell = true;
-                    }
+                        tf::Quaternion second_quaternion;
+                        if(array_last_cell != array_start_cell)
+                        {
+                            for (int counter = this->curvature_calculation_cell_distance_ - 1;
+                            counter < (2 * this->curvature_calculation_cell_distance_) - 1;
+                            counter++)
+                            {
+                                array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
+                                if(array_last_cell == array_start_cell)
+                                {
+                                    break;
+                                }
+                            }
 
-                    // DEBUGGING AND VISUALIZING
-                    ROS_INFO("Angle: %f, valid: %i", yaw_angle, std::abs(yaw_angle) < this->maximal_curvature_);
-                    geometry_msgs::Pose first_pose, second_pose, third_pose;
-                    geometry_msgs::Quaternion quaternion;
-                    tf::Quaternion tf_quaternion;
-                    tf_quaternion.setRPY(0.0, 0.0, 0.0);
-                    tf::quaternionTFToMsg(tf_quaternion, quaternion);
-                    first_pose.orientation = quaternion;
-                    second_pose.orientation = quaternion;
-                    third_pose.orientation = quaternion;
-                    int map_cell[2];
-                    this->getCostmapPointByArrayIndex(array_current_cell, map_cell);
-                    this->costmap_->mapToWorld(map_cell[0], map_cell[1], first_pose.position.x, first_pose.position.y);
-                    first_pose.position.z = 0.0;
-                    this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_cell);
-                    this->costmap_->mapToWorld(map_cell[0], map_cell[1], second_pose.position.x, second_pose.position.y);
-                    second_pose.position.z = 0.0;
-                    this->getCostmapPointByArrayIndex(array_last_cell, map_cell);
-                    this->costmap_->mapToWorld(map_cell[0], map_cell[1], third_pose.position.x, third_pose.position.y);
-                    third_pose.position.z = 0.0;
+                            int array_second_vector_start_cell = array_last_cell;
+                            int map_second_vector_start[2];
+                            int map_second_vector_end[2];
+                            this->getCostmapPointByArrayIndex(array_second_vector_start_cell, map_second_vector_start);
+                            this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_second_vector_end);
+                            int second_vector[2];
+                            second_vector[0] = map_second_vector_end[0] - map_second_vector_start[0];
+                            second_vector[1] = map_second_vector_end[1] - map_second_vector_start[1]; 
 
-                    this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
-                                                                      first_pose,
-                                                                      this->theoretical_path_marker_template_id_);
-                    this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
-                                                                      second_pose,
-                                                                      this->theoretical_path_marker_template_id_);                                                                      
-                    this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
-                                                                      third_pose,
-                                                                      this->theoretical_path_marker_template_id_);
-                    this->visu_helper_.visualizeMarkerArray(this->theoretical_path_marker_array_id_);
-                    this->visu_helper_.clearMarkerArray(this->theoretical_path_marker_array_id_);
-                    // DEBUGGING AND VISUALIZING
-                    break; // case end
+                            yaw = std::atan2(second_vector[1], second_vector[0]);
+                            second_quaternion.setRPY(0.0, 0.0, yaw);
+                        }
+                        else
+                        {
+                            tf::quaternionMsgToTF(this->start_.pose.orientation, second_quaternion);
+                        }
+                        
+                        tf::Quaternion second_quaternion_inv;
+                        second_quaternion_inv = second_quaternion;
+                        second_quaternion_inv[3] = -second_quaternion_inv[3]; // Negate to get inverse quaternion for next calculation
+                        tf::Quaternion diff_quaternion = first_quaternion * second_quaternion_inv;
+                        tf::Matrix3x3 m(diff_quaternion);
+                        double roll, pitch;
+                        m.getRPY(roll, pitch, yaw);
+                        double yaw_angle = ((180/M_PI)*yaw);
+                        
+                        if(std::abs(yaw_angle) < this->maximal_curvature_)
+                        {
+                            valid_cell = true;
+                        }
+
+                        // DEBUGGING AND VISUALIZING
+                        ROS_INFO("Angle: %f, valid: %i", yaw_angle, std::abs(yaw_angle) < this->maximal_curvature_);
+                        geometry_msgs::Pose first_pose, second_pose, third_pose;
+                        geometry_msgs::Quaternion quaternion;
+                        tf::Quaternion tf_quaternion;
+                        tf_quaternion.setRPY(0.0, 0.0, 0.0);
+                        tf::quaternionTFToMsg(tf_quaternion, quaternion);
+                        first_pose.orientation = quaternion;
+                        second_pose.orientation = quaternion;
+                        third_pose.orientation = quaternion;
+                        int map_cell[2];
+                        this->getCostmapPointByArrayIndex(array_current_cell, map_cell);
+                        this->costmap_->mapToWorld(map_cell[0], map_cell[1], first_pose.position.x, first_pose.position.y);
+                        first_pose.position.z = 0.0;
+                        this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_cell);
+                        this->costmap_->mapToWorld(map_cell[0], map_cell[1], second_pose.position.x, second_pose.position.y);
+                        second_pose.position.z = 0.0;
+                        this->getCostmapPointByArrayIndex(array_last_cell, map_cell);
+                        this->costmap_->mapToWorld(map_cell[0], map_cell[1], third_pose.position.x, third_pose.position.y);
+                        third_pose.position.z = 0.0;
+
+                        this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                        first_pose,
+                                                                        this->theoretical_path_marker_template_id_);
+                        this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                        second_pose,
+                                                                        this->theoretical_path_marker_template_id_);                                                                      
+                        this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                        third_pose,
+                                                                        this->theoretical_path_marker_template_id_);
+                        this->visu_helper_.visualizeMarkerArray(this->theoretical_path_marker_array_id_);
+                        this->visu_helper_.clearMarkerArray(this->theoretical_path_marker_array_id_);
+                        // DEBUGGING AND VISUALIZING
+                        break; // case end
                 }
 
                 if (g_score[array_neighbor_cell] == std::numeric_limits<float>::infinity() &&
