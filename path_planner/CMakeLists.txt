@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(relaxed_a_star)
+project(path_planner)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -113,7 +113,7 @@ catkin_package(
     include
   LIBRARIES 
     relaxed_a_star
-    advanced_dijkstra
+    advanced_a_star
   CATKIN_DEPENDS 
     roscpp
     pluginlib

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>relaxed_a_star</name>
+  <name>path_planner</name>
   <version>0.0.0</version>
   <description>The relaxed_a_star package</description>
 
@@ -80,5 +80,8 @@
     
     <mbf_costmap_core plugin="${prefix}/mbf_plugin.xml" />
     <nav_core plugin="${prefix}/mbf_plugin.xml" />
+
+    <mbf_costmap_core plugin="${prefix}/advanced_a_star_plugin.xml" />
+    <nav_core plugin="${prefix}/advanced_a_star_plugin.xml" />
   </export>
 </package>

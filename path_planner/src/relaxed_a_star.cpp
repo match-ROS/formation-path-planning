@@ -398,6 +398,7 @@ namespace relaxed_a_star
                     array_open_cell_list.insert({array_neighbor_cell,
                                                  this->calcFCost(g_score[array_current_cell],
                                                                  array_current_cell,
+                                                                 array_neighbor_cell,
                                                                  array_goal_cell)});
                     valid_cell = false;
                 }
@@ -405,7 +406,7 @@ namespace relaxed_a_star
             this->createMarkersForGScoreArray(g_score);
             this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
             this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
-            ros::Duration(0.3).sleep();
+            // ros::Duration(0.3).sleep();
         }
     }
 
@@ -435,30 +436,31 @@ namespace relaxed_a_star
         return array_start_to_goal_plan;
     }
 
-    float RelaxedAStar::calcGCost(int current_g_cost, int array_current_cell, int array_target_cell)
+    float RelaxedAStar::calcGCost(int current_cell_g_cost, int array_current_cell, int array_target_cell)
     {
-        return current_g_cost + this->calcMoveCost(array_current_cell, array_target_cell);
+        return current_cell_g_cost + this->calcMoveCost(array_current_cell, array_target_cell);
     }
 
-    float RelaxedAStar::calcHCost(int* map_current_cell, int* map_goal_cell)
+    float RelaxedAStar::calcHCost(int* map_selected_cell, int* map_goal_cell)
     {
         // Calc euclidean distance and return
-        return std::sqrt(std::pow(map_current_cell[0] - map_goal_cell[0], 2) +
-                         std::pow(map_current_cell[1] - map_goal_cell[1], 2));
+        return std::sqrt(std::pow(map_selected_cell[0] - map_goal_cell[0], 2) +
+                         std::pow(map_selected_cell[1] - map_goal_cell[1], 2));
     }
 
-    float RelaxedAStar::calcHCost(int array_current_cell, int array_goal_cell)
+    float RelaxedAStar::calcHCost(int array_selected_cell, int array_goal_cell)
     {
-        int map_current_cell[2];
+        int map_selected_cell[2];
         int map_goal_cell[2];
-        this->getCostmapPointByArrayIndex(array_current_cell, map_current_cell);
+        this->getCostmapPointByArrayIndex(array_selected_cell, map_selected_cell);
         this->getCostmapPointByArrayIndex(array_goal_cell, map_goal_cell);
-        return this->calcHCost(map_current_cell, map_goal_cell);
+        return this->calcHCost(map_selected_cell, map_goal_cell);
     }
 
-    float RelaxedAStar::calcFCost(float current_g_score, int array_current_cell, int array_goal_cell)
+    float RelaxedAStar::calcFCost(float current_cell_g_score, int array_current_cell, int array_target_cell, int array_goal_cell)
     {
-        return current_g_score + this->calcHCost(array_current_cell, array_goal_cell);
+        return this->calcGCost(current_cell_g_score, array_current_cell, array_target_cell) +
+               this->calcHCost(array_target_cell, array_goal_cell);
     }
 
     int RelaxedAStar::getArrayIndexByCostmapCell(int *map_cell)

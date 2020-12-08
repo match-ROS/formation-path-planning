@@ -10,7 +10,9 @@ Panels:
         - /TF1/Tree1
         - /Global Map1
         - /Global Map1/Potential Planner1/Autocompute Value Bounds1
+        - /Global Map1/Full Plan1
         - /Local Map1/DWB Markers1/Namespaces1
+        - /Amcl Particle Swarm1
         - /Map2
         - /MarkerArray1
       Splitter Ratio: 0.5761123895645142
@@ -362,7 +364,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot1_ns/move_base_flex/RelaxedAStar/plan
+          Topic: /robot1_ns/move_base_flex/AdvancedAStar/plan
           Unreliable: false
           Value: true
         - Alpha: 1
@@ -471,7 +473,7 @@ Visualization Manager:
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
-      Topic: /robot1_ns/move_base_flex/RelaxedAStar/planning_points_orientation
+      Topic: /robot1_ns/move_base_flex/AdvancedAStar/planning_points_orientation
       Unreliable: false
       Value: true
     - Class: rviz/Axes
@@ -526,7 +528,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 10.769868850708008
+      Distance: 9.451848983764648
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -541,10 +543,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6597979068756104
+      Pitch: 1.0697975158691406
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 1.0653953552246094
+      Yaw: 0.8853955268859863
     Saved: ~
 Window Geometry:
   Displays:

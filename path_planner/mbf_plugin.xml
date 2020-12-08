@@ -9,15 +9,4 @@
       This is a description. Nav_core
     </description>
   </class>
-
-  <class name="global_planner/AdvancedAStar" type="advanced_dijkstra::AdvancedAStar" base_class_type="mbf_costmap_core::CostmapPlanner">
-    <description>
-      This is a description. mbf_costmap_core
-    </description>
-  </class>
-  <class name="global_planner/AdvancedAStar" type="advanced_dijkstra::AdvancedAStar" base_class_type="nav_core::BaseGlobalPlanner">
-    <description>
-      This is a description. Nav_core
-    </description>
-  </class>
 </library>

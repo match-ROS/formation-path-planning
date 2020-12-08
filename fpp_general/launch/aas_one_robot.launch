@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="moveit_rviz" default="false"/> <!--False so moveit rviz wont open as I dont need that here-->
+    <arg name="open_navigation_rviz" default="false"/> <!--False so the default RVIZ wont open and my special rviz config will be loaded-->
+    <arg name="gazebo_gui" default="false"/> <!--Start without Gazebo GUI, RVIZ is enough-->
+
+    <include file="$(find mur205_launch)/launch/system_sim.launch">
+        <arg name="open_navigation_rviz" value="$(arg open_navigation_rviz)"/>
+        <arg name="gui" value="$(arg gazebo_gui)"/>
+    </include>
+    <include file="$(find fpp_general)/launch/helper/spawn_robot1.launch">
+        <arg name="moveit_rviz" value="$(arg moveit_rviz)"/>
+    </include>
+
+    <!--Launch rviz-->
+    <!-- <node type="rviz" name="rviz2" pkg="rviz" args="-d $(find fpp_general)/rviz/relaxed_a_star.rviz"/> -->
+    <include file="$(find fpp_general)/launch/helper/rviz_advanced_a_star.launch"/>
+</launch>

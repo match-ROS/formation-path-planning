@@ -136,25 +136,34 @@ namespace relaxed_a_star
             /**
              * @brief Method for calulcating the g score for the target cell.
              * 
-             * @param current_g_cost g score for the current cell
+             * @param current_cell_g_cost g score for the current cell
              * @param array_current_cell Index for the current cell in the one dimensional representation of the costmap
              * @param array_target_cell Index for the target cell in the one dimensional representation of the costmap
              * @return float 
              */
-            float calcGCost(int current_g_cost, int array_current_cell, int array_target_cell);
+            float calcGCost(int current_cell_g_cost, int array_current_cell, int array_target_cell);
 
             /**
-             * @brief Calculates the heuristic cost from current position to the goal_cell.
+             * @brief Calculates the heuristic cost from the selected cell to the goal_cell.
              * Currently the cost will be approximated with the euclidean distance.
              * 
-             * @param map_current_cell Current cell from where the heuristic cost should be calculated to the goal
+             * @param map_selected_cell Selected cell from where the heuristic cost should be calculated to the goal
              * @param map_goal_cell Goal of the path planning
              * @return float 
              */
-            float calcHCost(int* map_current_cell, int* map_goal_cell);
-            float calcHCost(int array_current_cell, int array_goal_cell);
+            float calcHCost(int* map_selected_cell, int* map_goal_cell);
 
-            float calcFCost(float current_g_score, int array_current_cell, int array_goal_cell);
+            /**
+             * @brief Calculates the heuristic cost from the selected cell to the goal_cell.
+             * Currently the cost will be approximated with the euclidean distance.
+             * 
+             * @param array_selected_cell Selected cell from where the heuristic cost should be calculated to the goal. One-dimensional array index.
+             * @param array_goal_cell Goal of the path planning. One-dimensional array index.
+             * @return float 
+             */
+            float calcHCost(int array_selected_cell, int array_goal_cell);
+
+            float calcFCost(float current_cell_g_score, int array_current_cell, int array_target_cell, int array_goal_cell);
 
 
             /**
