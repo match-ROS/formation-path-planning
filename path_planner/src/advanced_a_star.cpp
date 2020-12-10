@@ -50,6 +50,7 @@ namespace advanced_a_star
             this->neighbor_type_ = (general_types::NeighborType)neighbor_type;
             int free_neighbor_mode;
             private_nh.param<int>("free_neighbor_mode", free_neighbor_mode, 0);
+            ROS_INFO("mode: %i", free_neighbor_mode);
             this->free_neighbor_mode_ = (general_types::FreeNeighborMode)free_neighbor_mode;
             private_nh.param<float>("maximal_curvature", this->maximal_curvature_, 20);
             private_nh.param<int>("curvature_calculation_cell_distance", this->curvature_calculation_cell_distance_, 4);
@@ -78,13 +79,27 @@ namespace advanced_a_star
             marker_template_theoretical_path.color.a = 1.0;
             marker_template_theoretical_path.color.b = 1.0;
             marker_template_theoretical_path.header.frame_id = "map";
-            marker_template_theoretical_path.lifetime = ros::Duration(0.3);
+            marker_template_theoretical_path.lifetime = ros::Duration(0.5);
             marker_template_theoretical_path.ns = "theoretical_path";
             marker_template_theoretical_path.scale.x = 0.1;
             marker_template_theoretical_path.scale.y = 0.1;
             marker_template_theoretical_path.scale.z = 0.1;
             marker_template_theoretical_path.type = visualization_msgs::Marker::SPHERE;
             this->theoretical_path_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_theoretical_path);
+
+            this->open_cell_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+            visualization_msgs::Marker marker_template_open_cell;
+            marker_template_open_cell.action = visualization_msgs::Marker::ADD;
+            marker_template_open_cell.color.a = 1.0;
+            marker_template_open_cell.color.g = 1.0;
+            marker_template_open_cell.header.frame_id = "map";
+            marker_template_open_cell.lifetime = ros::Duration(0.5);
+            marker_template_open_cell.ns = "open_cell";
+            marker_template_open_cell.scale.x = 0.1;
+            marker_template_open_cell.scale.y = 0.1;
+            marker_template_open_cell.scale.z = 0.1;
+            marker_template_open_cell.type = visualization_msgs::Marker::SPHERE;
+            this->open_cell_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_open_cell);
 
              // Get the tf prefix
             ros::NodeHandle nh;
@@ -227,8 +242,116 @@ namespace advanced_a_star
                         valid_cell = true;
                         break;
                     case general_types::FreeNeighborMode::CostmapAndMinimalCurveRadius:
-                        valid_cell = true;
-                        ROS_ERROR("Currently not implemented!");
+                        // Get first vector for angle calculation
+                        int array_last_cell = array_neighbor_cell;
+                        this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                          this->createGeometryPose(array_neighbor_cell),
+                                                                          this->theoretical_path_marker_template_id_);
+                        for(int counter = 0; counter < this->curvature_calculation_cell_distance_; counter++)
+                        {
+                            array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
+                            this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                              this->createGeometryPose(array_last_cell),
+                                                                              this->theoretical_path_marker_template_id_);
+                            if(array_last_cell == array_start_cell)
+                            {
+                                break;
+                            }
+                        }
+                        int array_first_vector_start_cell = array_last_cell;
+                        int map_first_vector_start[2];
+                        int map_first_vector_end[2];
+                        this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_first_vector_start);
+                        this->getCostmapPointByArrayIndex(array_neighbor_cell, map_first_vector_end);
+                        int first_vector[2];
+                        first_vector[0] = map_first_vector_end[0] - map_first_vector_start[0];
+                        first_vector[1] = map_first_vector_end[1] - map_first_vector_start[1];
+
+                        tf::Quaternion first_quaternion;
+                        double yaw = std::atan2(first_vector[1], first_vector[0]);
+                        first_quaternion.setRPY(0.0, 0.0, yaw);
+
+                        tf::Quaternion second_quaternion;
+                        if(array_last_cell != array_start_cell)
+                        {
+                            for (int counter = this->curvature_calculation_cell_distance_ - 1;
+                            counter < (2 * this->curvature_calculation_cell_distance_) - 1;
+                            counter++)
+                            {
+                                array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
+                                this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                                                                  this->createGeometryPose(array_last_cell),
+                                                                                  this->theoretical_path_marker_template_id_);
+                                if(array_last_cell == array_start_cell)
+                                {
+                                    break;
+                                }
+                            }
+
+                            int array_second_vector_start_cell = array_last_cell;
+                            int map_second_vector_start[2];
+                            int map_second_vector_end[2];
+                            this->getCostmapPointByArrayIndex(array_second_vector_start_cell, map_second_vector_start);
+                            this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_second_vector_end);
+                            int second_vector[2];
+                            second_vector[0] = map_second_vector_end[0] - map_second_vector_start[0];
+                            second_vector[1] = map_second_vector_end[1] - map_second_vector_start[1]; 
+
+                            yaw = std::atan2(second_vector[1], second_vector[0]);
+                            second_quaternion.setRPY(0.0, 0.0, yaw);
+                        }
+                        else
+                        {
+                            tf::quaternionMsgToTF(this->start_.pose.orientation, second_quaternion);
+                        }
+                        
+                        tf::Quaternion second_quaternion_inv;
+                        second_quaternion_inv = second_quaternion;
+                        second_quaternion_inv[3] = -second_quaternion_inv[3]; // Negate to get inverse quaternion for next calculation
+                        tf::Quaternion diff_quaternion = first_quaternion * second_quaternion_inv;
+                        tf::Matrix3x3 m(diff_quaternion);
+                        double roll, pitch;
+                        m.getRPY(roll, pitch, yaw);
+                        double yaw_angle = ((180/M_PI)*yaw);
+                        
+                        if(std::abs(yaw_angle) < this->maximal_curvature_)
+                        {
+                            valid_cell = true;
+                        }
+
+                        // DEBUGGING AND VISUALIZING
+                        // ROS_INFO("Angle: %f, valid: %i", yaw_angle, std::abs(yaw_angle) < this->maximal_curvature_);
+                        // geometry_msgs::Pose first_pose, second_pose, third_pose;
+                        // geometry_msgs::Quaternion quaternion;
+                        // tf::Quaternion tf_quaternion;
+                        // tf_quaternion.setRPY(0.0, 0.0, 0.0);
+                        // tf::quaternionTFToMsg(tf_quaternion, quaternion);
+                        // first_pose.orientation = quaternion;
+                        // second_pose.orientation = quaternion;
+                        // third_pose.orientation = quaternion;
+                        // int map_cell[2];
+                        // this->getCostmapPointByArrayIndex(array_current_cell, map_cell);
+                        // this->costmap_->mapToWorld(map_cell[0], map_cell[1], first_pose.position.x, first_pose.position.y);
+                        // first_pose.position.z = 0.0;
+                        // this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_cell);
+                        // this->costmap_->mapToWorld(map_cell[0], map_cell[1], second_pose.position.x, second_pose.position.y);
+                        // second_pose.position.z = 0.0;
+                        // this->getCostmapPointByArrayIndex(array_last_cell, map_cell);
+                        // this->costmap_->mapToWorld(map_cell[0], map_cell[1], third_pose.position.x, third_pose.position.y);
+                        // third_pose.position.z = 0.0;
+
+                        // this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                        //                                                 first_pose,
+                        //                                                 this->theoretical_path_marker_template_id_);
+                        // this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                        //                                                 second_pose,
+                        //                                                 this->theoretical_path_marker_template_id_);                                                                      
+                        // this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                        //                                                 third_pose,
+                        //                                                 this->theoretical_path_marker_template_id_);
+                        this->visu_helper_.visualizeMarkerArray(this->theoretical_path_marker_array_id_);
+                        this->visu_helper_.clearMarkerArray(this->theoretical_path_marker_array_id_);
+                        // DEBUGGING AND VISUALIZING
                         break;
                 }
 
@@ -241,23 +364,58 @@ namespace advanced_a_star
                                                                                           array_current_cell,
                                                                                           array_neighbor_cell,
                                                                                           array_goal_cell)});
+                        // array_open_cell_list.insert({array_neighbor_cell, this->calcGCost(g_score[array_current_cell], array_current_cell, array_neighbor_cell)});
                     }
 
                     float new_neighbor_g_score = this->calcGCost(g_score[array_current_cell], array_current_cell, array_neighbor_cell);
+                    //DEBUGGING
+                    // int map_current_cell[2];
+                    // int map_neighbor_cell[2];
+                    // this->getCostmapPointByArrayIndex(array_current_cell, map_current_cell);
+                    // this->getCostmapPointByArrayIndex(array_neighbor_cell, map_neighbor_cell);
+                    // ROS_INFO("current_x: %i, current_y: %i, neighbor_x: %i, neighbor_y: %i", map_current_cell[0], map_current_cell[1], map_neighbor_cell[0], map_neighbor_cell[1]);
+                    // ROS_INFO("current_cell: %f | old: %f | new: %f | move cost: %f", g_score[array_current_cell], g_score[array_neighbor_cell],  new_neighbor_g_score, this->calcMoveCost(array_current_cell, array_neighbor_cell));
+                    //DEBUGGING
                     // Update the g_score if the path to the current cell is shorter than the one from before
                     if (g_score[array_neighbor_cell] == std::numeric_limits<float>::infinity() ||
                         new_neighbor_g_score < g_score[array_neighbor_cell])
                     {
                         g_score[array_neighbor_cell] = new_neighbor_g_score;
                     }
+                    valid_cell = false;
                 }
+                // ros::Duration(0.1).sleep();
             }
+            //DEBUGGING
+            // for(int y = 509; y <= 513; y++)
+            // {
+            //     for(int x = 510; x <=525; x++)
+            //     {
+            //         float g_score_value = g_score[this->getArrayIndexByCostmapCell(x, y)];
+            //         if(g_score_value == std::numeric_limits<float>::infinity())
+            //         {
+            //             ROS_INFO("x: %i | y: %i | g_score: infinity", x, y);
+            //         }
+            //         else
+            //         {
+            //             ROS_INFO("x: %i | y: %i | g_score: %f", x, y, g_score_value);
+            //         }
+            //     }
+            // }
+            //DEBUGGING
+            
+            // this->createMarkersForGScoreArray(g_score);
+            // this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
+            // this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
             // ROS_INFO("open list, %i", array_open_cell_list.size());
         }
+
         // Reached goal, construct path now
         // Goal was not reached! Error handling
         if(g_score[array_goal_cell] == std::numeric_limits<float>::infinity())
         {
+            ROS_ERROR("RelaxedAStar: No path found");
+            ros::Duration(10.0).sleep();
             return mbf_msgs::GetPathResult::NO_PATH_FOUND;
         }
 
@@ -430,7 +588,7 @@ namespace advanced_a_star
         return sqrt(pow(map_current_cell_x - map_target_cell_x, 2) + pow(map_current_cell_y - map_target_cell_y, 2));
     }
 
-    float AdvancedAStar::calcGCost(int current_cell_g_cost, int array_current_cell, int array_target_cell)
+    float AdvancedAStar::calcGCost(float current_cell_g_cost, int array_current_cell, int array_target_cell)
     {
         return current_cell_g_cost + this->calcMoveCost(array_current_cell, array_target_cell);
     }
@@ -485,5 +643,66 @@ namespace advanced_a_star
     bool AdvancedAStar::isCellFree(int array_cell_index)
     {
         return !this->occupancy_map_[array_cell_index]; // Negate because function is "isFree" but occupancy_map_ defines with true where it is blocked
+    }
+
+    geometry_msgs::Pose AdvancedAStar::createGeometryPose(int array_cell)
+    {
+        geometry_msgs::Pose pose_to_return;
+        geometry_msgs::Quaternion default_quaternion;
+        tf::Quaternion default_tf_quaternion;
+        default_tf_quaternion.setRPY(0.0, 0.0, 0.0);
+        tf::quaternionTFToMsg(default_tf_quaternion, default_quaternion);
+        pose_to_return.orientation = default_quaternion;
+        int map_cell[2];
+        this->getCostmapPointByArrayIndex(array_cell, map_cell);
+        this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose_to_return.position.x, pose_to_return.position.y);
+        pose_to_return.position.z = 0.0;
+
+        return pose_to_return;
+    }
+
+    void AdvancedAStar::createMarkersForGScoreArray(std::shared_ptr<float[]> g_score)
+    {
+        for(int counter = 0; counter < this->array_size_; counter++)
+        {
+            if(g_score[counter] != std::numeric_limits<float>::infinity())
+            {
+                geometry_msgs::Pose pose;
+                geometry_msgs::Quaternion quaternion;
+                tf::Quaternion tf_quaternion;
+                tf_quaternion.setRPY(0.0, 0.0, 0.0);
+                tf::quaternionTFToMsg(tf_quaternion, quaternion);
+                pose.orientation = quaternion;
+                int map_cell[2];
+                this->getCostmapPointByArrayIndex(counter, map_cell);
+                this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.position.x, pose.position.y);
+                pose.position.z = 0.0;
+                this->visu_helper_.addMarkerToExistingMarkerArray(this->g_score_marker_array_id_,
+                                                                  pose,
+                                                                  this->g_score_marker_template_id_);
+            }
+        }
+    }
+
+    void AdvancedAStar::createMarkersForOpenCellList(std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list)
+    {
+        for(std::multiset<general_types::Cell, std::less<general_types::Cell>>::const_iterator iterator = array_open_cell_list.begin();
+            iterator != array_open_cell_list.end();
+            ++iterator)
+        {
+            geometry_msgs::Pose pose;
+            geometry_msgs::Quaternion quaternion;
+            tf::Quaternion tf_quaternion;
+            tf_quaternion.setRPY(0.0, 0.0, 0.0);
+            tf::quaternionTFToMsg(tf_quaternion, quaternion);
+            pose.orientation = quaternion;
+            int map_cell[2];
+            this->getCostmapPointByArrayIndex(iterator->cell_index, map_cell);
+            this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.position.x, pose.position.y);
+            pose.position.z = 0.0;
+            this->visu_helper_.addMarkerToExistingMarkerArray(this->open_cell_marker_array_id_,
+                                                              pose,
+                                                              this->open_cell_marker_template_id_);
+        }
     }
 }

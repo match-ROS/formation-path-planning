@@ -13,7 +13,6 @@ Panels:
         - /Global Map1/Full Plan1
         - /Local Map1/DWB Markers1/Namespaces1
         - /Amcl Particle Swarm1
-        - /Map2
         - /MarkerArray1
       Splitter Ratio: 0.5761123895645142
     Tree Height: 913
@@ -483,19 +482,9 @@ Visualization Manager:
       Radius: 0.009999999776482582
       Reference Frame: map
       Value: false
-    - Alpha: 0.699999988079071
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: true
-      Name: Map
-      Topic: /robot1_ns/move_base_flex/RelaxedAStar/debug_occupancy
-      Unreliable: false
-      Use Timestamp: false
-      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /robot1_ns/move_base_flex/RelaxedAStar/marker_array
+      Marker Topic: /robot1_ns/move_base_flex/AdvancedAStar/marker_array
       Name: MarkerArray
       Namespaces:
         {}
@@ -528,25 +517,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 9.451848983764648
+      Distance: 13.436732292175293
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.4586427211761475
-        Y: 0.8831090927124023
+        X: 3.8291025161743164
+        Y: -0.3278084993362427
         Z: 6.108180969022214e-6
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0697975158691406
+      Pitch: 1.204797387123108
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 0.8853955268859863
+      Yaw: 0.8703955411911011
     Saved: ~
 Window Geometry:
   Displays:

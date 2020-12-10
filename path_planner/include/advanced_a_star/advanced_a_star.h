@@ -112,6 +112,8 @@ namespace advanced_a_star
             int g_score_marker_template_id_;
             int theoretical_path_marker_array_id_;
             int theoretical_path_marker_template_id_;
+            int open_cell_marker_array_id_;
+            int open_cell_marker_template_id_;
 
         private:
             std::vector<int> getFreeNeighborCells(int array_current_cell);
@@ -132,7 +134,7 @@ namespace advanced_a_star
              * @param array_target_cell Index for the target cell in the one dimensional representation of the costmap
              * @return float 
              */
-            float calcGCost(int current_cell_g_cost, int array_current_cell, int array_target_cell);
+            float calcGCost(float current_cell_g_cost, int array_current_cell, int array_target_cell);
 
             /**
              * @brief Calculates the heuristic cost from current position to the goal_cell.
@@ -177,6 +179,10 @@ namespace advanced_a_star
             void getCostmapPointByArrayIndex(int array_index, int &map_cell_x, int &map_cell_y);
 
             bool isCellFree(int array_cell_index);
+
+            geometry_msgs::Pose createGeometryPose(int array_cell);
+            void createMarkersForGScoreArray(std::shared_ptr<float[]> g_score);
+            void createMarkersForOpenCellList(std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list);
 
 
             std::string global_frame_;
