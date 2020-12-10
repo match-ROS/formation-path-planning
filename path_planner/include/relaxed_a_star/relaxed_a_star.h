@@ -141,7 +141,7 @@ namespace relaxed_a_star
              * @param array_target_cell Index for the target cell in the one dimensional representation of the costmap
              * @return float 
              */
-            float calcGCost(int current_cell_g_cost, int array_current_cell, int array_target_cell);
+            float calcGCost(float current_cell_g_cost, int array_current_cell, int array_target_cell);
 
             /**
              * @brief Calculates the heuristic cost from the selected cell to the goal_cell.

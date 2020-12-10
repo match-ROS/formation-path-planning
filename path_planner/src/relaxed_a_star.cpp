@@ -436,7 +436,7 @@ namespace relaxed_a_star
         return array_start_to_goal_plan;
     }
 
-    float RelaxedAStar::calcGCost(int current_cell_g_cost, int array_current_cell, int array_target_cell)
+    float RelaxedAStar::calcGCost(float current_cell_g_cost, int array_current_cell, int array_target_cell)
     {
         return current_cell_g_cost + this->calcMoveCost(array_current_cell, array_target_cell);
     }
