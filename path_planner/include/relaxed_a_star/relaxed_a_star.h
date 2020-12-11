@@ -346,12 +346,6 @@ namespace relaxed_a_star
             // Default: 0
             int free_cell_threshhold_;
 
-            // This value specifies different modes for declaring new cells as free and usable cells that will get added to the open list.
-            // 0 - This mode only uses the g_scores of the cells. If the score of the selected cell is infinity, the cell will be pushed into the open list
-            // 1 - This mode uses the same selection as mode 0. Additionally the curves get analyzed to have a maximal curvature. See: minimal_curve_radius parameter
-            // Default: 0
-            general_types::FreeNeighborMode free_neighbor_mode_;
-
             // This parameter is used together with the mode 1 of the free_neighbor_mode.
             // This parameter defines the maximal curvature the global plan should contain during a curve.
             // This parameter is specified in degree.
