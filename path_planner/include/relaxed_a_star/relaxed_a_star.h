@@ -16,12 +16,14 @@
 #include <costmap_2d/costmap_2d.h>
 #include <tf/transform_listener.h>
 
+#include <iostream>
 #include <string>
 #include <memory> // Usage of smart pointers
 #include <vector>
 #include <list>
 #include <set>
 #include <cmath>
+#include <Eigen/Dense>
 
 #include <general_types/general_types.h>
 #include <debug_helper/visualization_helper.h>
@@ -154,6 +156,8 @@ namespace relaxed_a_star
              * @return std::vector<int> List of indexes in the 1D-array representation to define the cells the robot has to travel through
              */
             std::vector<int> createPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
+
+            void RelaxedAStar::createPoseArrayForPlan(std::vector<int> array_plan, std::vector<geometry_msgs::PoseStamped>& plan);
 
             /**
              * @brief Gets all free neighbor cells adjacent to the current cell
@@ -316,6 +320,8 @@ namespace relaxed_a_star
              * @param g_score g_Score array with all g_Score values
              */
             void createMarkersForGScoreArray(std::shared_ptr<float[]> g_score);
+
+            geometry_msgs::PoseArray RelaxedAStar::createPoseArrayForOrientationVisu(std::vector<geometry_msgs::PoseStamped>& plan);
 
             /**
              * @brief Global frame of the robot

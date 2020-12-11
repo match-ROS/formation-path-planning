@@ -89,6 +89,19 @@ namespace relaxed_a_star
             ROS_INFO("Relaxed AStar finished intitialization.");
 
             this->createOccupancyMap();
+
+            //TESTING THIS WORKS FOR SOLVING LIN EQUATIONS
+            // Eigen::Matrix<float, 4, 4> A;
+            // A << 0,0,0,1,1,1,1,1,0,0,1,0,3,2,1,0;
+            // Eigen::Matrix<float, 4, 1> b;
+            // b << 5, 0, -1 , 1;
+            // std::cout << "Matrix:\n" << A << std::endl;
+            // std::cout << "Vector:\n" << b << std::endl;
+            // Eigen::Matrix<float, 4, 1> result;
+            // result = A.colPivHouseholderQr().solve(b);
+            // std::cout << "Result:\n" << result << std::endl;
+            // ros::Duration(100).sleep();
+            //TESTING END
         }
         else
         {
@@ -204,45 +217,96 @@ namespace relaxed_a_star
             std::vector<int> array_plan;
             array_plan = this->createPlan(array_start_cell, array_goal_cell, g_score);
 
-            geometry_msgs::PoseArray planning_points_orientation;
-            planning_points_orientation.header.stamp = ros::Time::now();
-            planning_points_orientation.header.frame_id = "map";
+            this->createPoseArrayForPlan(array_plan, plan);
 
-            geometry_msgs::PoseStamped last_pose;
-            // < is necessary because we just copy elements from one vector (0 until size()) to the other
-            for(uint path_counter = 0; path_counter < array_plan.size(); path_counter++)
+            // Select pose very so often
+            int cell_distance = 10; // Make this to a param later
+            std::vector<geometry_msgs::PoseStamped> selected_poses;
+            for(int pose_counter = 0; pose_counter < plan.size(); pose_counter++)
             {
-                geometry_msgs::PoseStamped pose;
-                pose.header.stamp = ros::Time::now();
-                pose.header.frame_id = this->global_frame_;
-
-                // Fill pose for plan
-                int map_current_cell[2];
-                this->getCostmapPointByArrayIndex(array_plan[path_counter], map_current_cell);
-                this->costmap_->mapToWorld(map_current_cell[0], map_current_cell[1], pose.pose.position.x, pose.pose.position.y);
-
-                // Calculate orientation for each point of the plan with the current position and the last one
-                if(path_counter == 0) // No previous point so orientation of start will be taken
+                if(pose_counter % cell_distance == 0)
                 {
-                    pose.pose.orientation = start.pose.orientation;
+                    selected_poses.push_back(plan[pose_counter]);
                 }
-                else // Some other points are before, so orientation can be calculated
-                {
-                    float delta_x = pose.pose.position.x - last_pose.pose.position.x;
-                    float delta_y = pose.pose.position.y - last_pose.pose.position.y;
-                    double yaw_angle = std::atan2(delta_y, delta_x);
-                    pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
-                }
-
-                last_pose = pose; // Safe pose for next iteration
-                plan.insert(plan.begin() + plan.size(), pose);
-                planning_points_orientation.poses.insert(planning_points_orientation.poses.begin() + planning_points_orientation.poses.size(), pose.pose);
             }
-            int map_cell[2];
-            this->getCostmapPointByArrayIndex(array_plan[0], map_cell);
-            // ROS_INFO("elements: start_to_goal: %i, plan: %i", array_plan.size(), plan.size());
+            // end
 
-            this->planning_points_orientation_publisher_.publish(planning_points_orientation);
+            // Create splines
+            for(int pose_counter = 0; pose_counter < selected_poses.size(); pose_counter++)
+            {
+                geometry_msgs::PoseStamped first_pose;
+                geometry_msgs::PoseStamped first_support_pose;
+                geometry_msgs::PoseStamped second_support_pose;
+                geometry_msgs::PoseStamped second_pose;
+
+                geometry_msgs::PoseStamped first_direction_pose;
+                geometry_msgs::PoseStamped second_direction_pose;
+
+                // Calculation of the supporting poses to define the orientation in first_pose and second_pose
+                // Use the resolution from the map to get the support pose
+                tf::Vector3 first_pose_support_vector(this->costmap_->getResolution(),0,0);
+                tf::Quaternion tf_first_pose_orientation;
+                tf::quaternionMsgToTF(first_pose.pose.orientation, tf_first_pose_orientation);
+                tf::quatRotate(tf_first_pose_orientation, first_pose_support_vector);
+                first_support_pose.pose.position.x = first_support_pose.pose.position.x + first_pose_support_vector.getX();
+                first_support_pose.pose.position.y = first_support_pose.pose.position.y + first_pose_support_vector.getY();
+                tf::Vector3 second_pose_support_vector(this->costmap_->getResolution(),0,0);
+                tf::Quaternion tf_second_pose_orientation;
+                tf::quaternionMsgToTF(second_pose.pose.orientation, tf_second_pose_orientation);
+                tf::quatRotate(tf_second_pose_orientation, second_pose_support_vector);
+                second_support_pose.pose.position.x = second_support_pose.pose.position.x + second_pose_support_vector.getX();
+                second_support_pose.pose.position.y = second_support_pose.pose.position.y + second_pose_support_vector.getY();
+
+                Eigen::Matrix<float, 4, 4> A_x;
+                Eigen::Matrix<float, 4, 1> b_x;
+                Eigen::Matrix<float, 4, 4> A_y;
+                Eigen::Matrix<float, 4, 1> b_y;
+
+                // First row
+                A_x(0,0) = std::pow(pose_counter, 3);
+                A_x(0,1) = std::pow(pose_counter, 2);
+                A_x(0,2) = pose_counter;
+                A_x(0,3) = 1;
+                // Second row
+                A_x(1,0) = std::pow(pose_counter + 1, 3);
+                A_x(1,1) = std::pow(pose_counter + 1, 2);
+                A_x(1,2) = pose_counter + 1;
+                A_x(1,3) = 1;
+                // Third row
+                A_x(2,0) = std::pow(pose_counter, 2);
+                A_x(2,1) = pose_counter;
+                A_x(2,2) = ;
+                A_x(2,3) = ;
+                // Fourth row
+                A_x(3,0) = 3 * std::pow(pose_counter + 1, 2);
+                A_x(3,1) = 2 * (pose_counter + 1);
+                A_x(3,2) = 1;
+                A_x(3,3) = 0;
+                
+                b_x(0,0) = selected_poses[pose_counter].pose.position.x;
+                b_x(1,0) = selected_poses[pose_counter + 1].pose.position.x;
+                b_x(2,0) = std::tan(tf::getYaw(selected_poses[pose_counter].pose.orientation));
+                b_x(3,0) = std::tan(tf::getYaw(selected_poses[pose_counter + 1].pose.orientation));
+
+                // A_y only differs in the results in the vector b_y
+                A_y = A_x;
+                
+                b_y(0,0) = selected_poses[pose_counter].pose.position.y;
+                b_y(1,0) = selected_poses[pose_counter + 1].pose.position.y;
+                b_y(2,0) = std::tan(tf::getYaw(selected_poses[pose_counter].pose.orientation));
+                b_y(3,0) = std::tan(tf::getYaw(selected_poses[pose_counter + 1].pose.orientation));
+            }
+            // end
+
+            // Visualize splines
+            // end
+
+            // Check for hitting obstacles
+            // end
+
+            // Create new poses for plan
+
+            // end
         }
         ROS_INFO("Planning finished %i", plan.size());
         this->publishPlan(plan);
@@ -276,7 +340,6 @@ namespace relaxed_a_star
             {
                 if (g_score[array_neighbor_cell] == std::numeric_limits<float>::infinity())
                 {
-                    ROS_INFO("New cell");
                     g_score[array_neighbor_cell] = this->calcGCost(g_score[array_current_cell], array_current_cell, array_neighbor_cell);
                     array_open_cell_list.insert({array_neighbor_cell,
                                                  this->calcFCost(g_score[array_current_cell],
@@ -285,8 +348,8 @@ namespace relaxed_a_star
                                                                  array_goal_cell)});
                 }
             }
-            this->createMarkersForGScoreArray(g_score);
-            this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
+            // this->createMarkersForGScoreArray(g_score);
+            // this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
             this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
             // ros::Duration(0.3).sleep();
         }
@@ -316,6 +379,39 @@ namespace relaxed_a_star
         }
 
         return array_start_to_goal_plan;
+    }
+
+    void RelaxedAStar::createPoseArrayForPlan(std::vector<int> array_plan, std::vector<geometry_msgs::PoseStamped>& plan)
+    {
+        geometry_msgs::PoseStamped last_pose;
+        // < is necessary because we just copy elements from one vector (0 until size()) to the other
+        for(uint path_counter = 0; path_counter < array_plan.size(); path_counter++)
+        {
+            geometry_msgs::PoseStamped pose;
+            pose.header.stamp = ros::Time::now();
+            pose.header.frame_id = this->global_frame_;
+
+            // Fill pose for plan
+            int map_current_cell[2];
+            this->getCostmapPointByArrayIndex(array_plan[path_counter], map_current_cell);
+            this->costmap_->mapToWorld(map_current_cell[0], map_current_cell[1], pose.pose.position.x, pose.pose.position.y);
+
+            // Calculate orientation for each point of the plan with the current position and the last one
+            if(path_counter == 0) // No previous point so orientation of start will be taken
+            {
+                pose.pose.orientation = this->start_.pose.orientation;
+            }
+            else // Some other points are before, so orientation can be calculated
+            {
+                float delta_x = pose.pose.position.x - last_pose.pose.position.x;
+                float delta_y = pose.pose.position.y - last_pose.pose.position.y;
+                double yaw_angle = std::atan2(delta_y, delta_x);
+                pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
+            }
+
+            last_pose = pose; // Safe pose for next iteration
+            plan.insert(plan.begin() + plan.size(), pose);
+        }
     }
 
     std::vector<int> RelaxedAStar::getFreeNeighborCells(int array_current_cell)
@@ -518,5 +614,17 @@ namespace relaxed_a_star
         }
     }
 
-    
+    geometry_msgs::PoseArray RelaxedAStar::createPoseArrayForOrientationVisu(std::vector<geometry_msgs::PoseStamped>& plan)
+    {
+        geometry_msgs::PoseArray planning_points_orientation;
+        planning_points_orientation.header.stamp = ros::Time::now();
+        planning_points_orientation.header.frame_id = "map";
+
+        for(geometry_msgs::PoseStamped pose_stamped: plan)
+        {
+            planning_points_orientation.poses.insert(planning_points_orientation.poses.begin() + planning_points_orientation.poses.size(),
+                                                     pose_stamped.pose);
+        }
+        return planning_points_orientation;
+    }
 }
