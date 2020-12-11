@@ -54,8 +54,6 @@ namespace relaxed_a_star
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
 
-            this->debug_publisher_ = private_nh.advertise<nav_msgs::OccupancyGrid>("debug_occupancy", 1);
-            
             this->visu_helper_ = visualization_helper::VisualizationHelper(name);
             this->g_score_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
             visualization_msgs::Marker marker_template_g_score;
@@ -93,7 +91,7 @@ namespace relaxed_a_star
 
             ROS_INFO("Relaxed AStar finished intitialization.");
 
-            this->initializeOccupancyMap();
+            this->createOccupancyMap();
         }
         else
         {
@@ -125,7 +123,7 @@ namespace relaxed_a_star
         this->goal_ = goal;
 
         plan.clear(); // Clear path in case anything is already in it
-        this->initializeOccupancyMap(); // Costmap can change so the occupancy map must be updated bevor making plan
+        this->createOccupancyMap(); // Costmap can change so the occupancy map must be updated bevor making plan
 
         // Check with tf that goal and start frame is the global frame and not any other
         if(tf::resolve(tf_prefix_, goal.header.frame_id) != tf::resolve(tf_prefix_, global_frame_)){
@@ -436,6 +434,110 @@ namespace relaxed_a_star
         return array_start_to_goal_plan;
     }
 
+    std::vector<int> RelaxedAStar::getFreeNeighborCells(int array_current_cell)
+    {
+        int map_cell[2];
+        std::vector<int> map_neighbor_cell_list;
+        this->getCostmapPointByArrayIndex(array_current_cell, map_cell);
+
+        for(int counter_x = -1; counter_x <= 1; counter_x++)
+        {
+            for(int counter_y = -1; counter_y <= 1; counter_y++)
+            {
+                if(counter_x == 0 && counter_y == 0)
+                    continue;
+
+                if (this->neighbor_type_ == general_types::NeighborType::EightWay ||
+                    (this->neighbor_type_ == general_types::NeighborType::FourWay &&
+                     ((counter_x == 0 && counter_y == -1) ||
+                      (counter_x == -1 && counter_y == 0) ||
+                      (counter_x == 1 && counter_y == 0) ||
+                      (counter_x == 0 && counter_y == 1))))
+                {
+
+                    int cell_index = this->getArrayIndexByCostmapCell(map_cell[0] + counter_x,
+                                                                       map_cell[1] + counter_y); 
+                    if (this->isCellFree(cell_index))
+                    {
+                        map_neighbor_cell_list.push_back(cell_index);
+                    }
+                }
+            }
+        }
+
+        return map_neighbor_cell_list;
+    }
+
+    int RelaxedAStar::getMinGScoreNeighborCell(int current_cell_index, std::shared_ptr<float[]> g_score)
+    {
+        int min_g_score_cell_index = current_cell_index;
+        std::vector<int> free_neighbor_cell_indexes = this->getFreeNeighborCells(current_cell_index);
+        for(int cell_index: free_neighbor_cell_indexes)
+        {
+            if(g_score.get()[min_g_score_cell_index] > g_score.get()[cell_index])
+            {
+                min_g_score_cell_index = cell_index;
+            }
+        }
+        return min_g_score_cell_index;
+    }
+
+    void RelaxedAStar::createOccupancyMap()
+    {
+        this->occupancy_map_ = std::shared_ptr<bool[]>(new bool[this->array_size_]);
+
+        // Check every cell of the costmap and if 
+        for(int cell_counter_x = 0; cell_counter_x < this->costmap_->getSizeInCellsX(); cell_counter_x++)
+        {
+            for(int cell_counter_y = 0; cell_counter_y < this->costmap_->getSizeInCellsY(); cell_counter_y++)
+            {
+                unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
+
+                if(cell_cost == 0) // Cell is free
+                {
+                    this->occupancy_map_[this->getArrayIndexByCostmapCell(cell_counter_x, cell_counter_y)] = false; // False because cell is not occupied
+                }
+                else
+                {
+                    this->occupancy_map_[this->getArrayIndexByCostmapCell(cell_counter_x, cell_counter_y)] = true;  // True because cell is occupied
+                }
+            }
+        }
+    }
+
+    void RelaxedAStar::publishPlan(std::vector<geometry_msgs::PoseStamped> &plan)
+    {
+        nav_msgs::Path path_to_publish;
+        path_to_publish.header.stamp = ros::Time::now();
+        path_to_publish.header.frame_id = plan[0].header.frame_id;
+
+        path_to_publish.poses = plan;
+
+        this->plan_publisher_.publish(path_to_publish);
+    }
+
+    float RelaxedAStar::calcMoveCost(int array_current_cell, int array_target_cell)
+    {
+        int map_current_cell[2];
+        int map_target_cell[2];
+        this->getCostmapPointByArrayIndex(array_current_cell, map_current_cell);
+        this->getCostmapPointByArrayIndex(array_target_cell, map_target_cell);
+        return this->calcMoveCost(map_current_cell, map_target_cell);
+    }
+
+    float RelaxedAStar::calcMoveCost(int* map_current_cell, int* map_target_cell)
+    {
+        return this->calcMoveCost(map_current_cell[0],
+                                  map_current_cell[1],
+                                  map_target_cell[0],
+                                  map_target_cell[1]);
+    }
+
+    float RelaxedAStar::calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y)
+    {
+        return sqrt(pow(map_current_cell_x - map_target_cell_x, 2) + pow(map_current_cell_y - map_target_cell_y, 2));
+    }
+
     float RelaxedAStar::calcGCost(float current_cell_g_cost, int array_current_cell, int array_target_cell)
     {
         return current_cell_g_cost + this->calcMoveCost(array_current_cell, array_target_cell);
@@ -488,102 +590,25 @@ namespace relaxed_a_star
         map_cell_y = map_cell[1];
     }
 
-    std::vector<int> RelaxedAStar::getFreeNeighborCells(int array_current_cell)
-    {
-        int map_cell[2];
-        std::vector<int> map_neighbor_cell_list;
-        this->getCostmapPointByArrayIndex(array_current_cell, map_cell);
-
-        for(int counter_x = -1; counter_x <= 1; counter_x++)
-        {
-            for(int counter_y = -1; counter_y <= 1; counter_y++)
-            {
-                if(counter_x == 0 && counter_y == 0)
-                    continue;
-
-                if (this->neighbor_type_ == general_types::NeighborType::EightWay ||
-                    (this->neighbor_type_ == general_types::NeighborType::FourWay &&
-                     ((counter_x == 0 && counter_y == -1) ||
-                      (counter_x == -1 && counter_y == 0) ||
-                      (counter_x == 1 && counter_y == 0) ||
-                      (counter_x == 0 && counter_y == 1))))
-                {
-
-                    int cell_index = this->getArrayIndexByCostmapCell(map_cell[0] + counter_x,
-                                                                       map_cell[1] + counter_y); 
-                    if (this->isCellFree(cell_index))
-                    {
-                        map_neighbor_cell_list.push_back(cell_index);
-                    }
-                }
-            }
-        }
-
-        return map_neighbor_cell_list;
-    }
-    
-    int RelaxedAStar::getMinGScoreNeighborCell(int current_cell_index, std::shared_ptr<float[]> g_score)
-    {
-        int min_g_score_cell_index = current_cell_index;
-        std::vector<int> free_neighbor_cell_indexes = this->getFreeNeighborCells(current_cell_index);
-        for(int cell_index: free_neighbor_cell_indexes)
-        {
-            if(g_score.get()[min_g_score_cell_index] > g_score.get()[cell_index])
-            {
-                min_g_score_cell_index = cell_index;
-            }
-        }
-        return min_g_score_cell_index;
-    }
-
-    void RelaxedAStar::initializeOccupancyMap()
-    {
-        this->occupancy_map_ = std::shared_ptr<bool[]>(new bool[this->array_size_]);
-
-        // Check every cell of the costmap and if 
-        for(int cell_counter_x = 0; cell_counter_x < this->costmap_->getSizeInCellsX(); cell_counter_x++)
-        {
-            for(int cell_counter_y = 0; cell_counter_y < this->costmap_->getSizeInCellsY(); cell_counter_y++)
-            {
-                unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
-
-                if(cell_cost == 0) // Cell is free
-                {
-                    this->occupancy_map_[this->getArrayIndexByCostmapCell(cell_counter_x, cell_counter_y)] = false; // False because cell is not occupied
-                }
-                else
-                {
-                    this->occupancy_map_[this->getArrayIndexByCostmapCell(cell_counter_x, cell_counter_y)] = true;  // True because cell is occupied
-                }
-            }
-        }
-    }
-
     bool RelaxedAStar::isCellFree(int array_cell_index)
     {
         return !this->occupancy_map_[array_cell_index]; // Negate because function is "isFree" but occupancy_map_ defines with true where it is blocked
     }
 
-    float RelaxedAStar::calcMoveCost(int array_current_cell, int array_target_cell)
+    geometry_msgs::Pose RelaxedAStar::createGeometryPose(int array_cell)
     {
-        int map_current_cell[2];
-        int map_target_cell[2];
-        this->getCostmapPointByArrayIndex(array_current_cell, map_current_cell);
-        this->getCostmapPointByArrayIndex(array_target_cell, map_target_cell);
-        return this->calcMoveCost(map_current_cell, map_target_cell);
-    }
+        geometry_msgs::Pose pose_to_return;
+        geometry_msgs::Quaternion default_quaternion;
+        tf::Quaternion default_tf_quaternion;
+        default_tf_quaternion.setRPY(0.0, 0.0, 0.0);
+        tf::quaternionTFToMsg(default_tf_quaternion, default_quaternion);
+        pose_to_return.orientation = default_quaternion;
+        int map_cell[2];
+        this->getCostmapPointByArrayIndex(array_cell, map_cell);
+        this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose_to_return.position.x, pose_to_return.position.y);
+        pose_to_return.position.z = 0.0;
 
-    float RelaxedAStar::calcMoveCost(int* map_current_cell, int* map_target_cell)
-    {
-        return this->calcMoveCost(map_current_cell[0],
-                                  map_current_cell[1],
-                                  map_target_cell[0],
-                                  map_target_cell[1]);
-    }
-
-    float RelaxedAStar::calcMoveCost(int map_current_cell_x, int map_current_cell_y, int map_target_cell_x, int map_target_cell_y)
-    {
-        return sqrt(pow(map_current_cell_x - map_target_cell_x, 2) + pow(map_current_cell_y - map_target_cell_y, 2));
+        return pose_to_return;
     }
 
     void RelaxedAStar::createMarkersForGScoreArray(std::shared_ptr<float[]> g_score)
@@ -609,35 +634,5 @@ namespace relaxed_a_star
         }
     }
 
-    void RelaxedAStar::publishPlan(std::vector<geometry_msgs::PoseStamped> &plan)
-    {
-        nav_msgs::Path path_to_publish;
-        path_to_publish.header.stamp = ros::Time::now();
-        path_to_publish.header.frame_id = plan[0].header.frame_id;
-
-        path_to_publish.poses = plan;
-
-        this->plan_publisher_.publish(path_to_publish);
-    }
-
-    void RelaxedAStar::publishOccupancyGrid()
-    {
-        nav_msgs::OccupancyGrid debug;
-        debug.header.stamp = ros::Time::now();
-        debug.header.frame_id = "map";
-        for(int i=0; i<this->array_size_; i++)
-        {
-            debug.data.push_back(this->occupancy_map_[i]);
-        }
-        debug.info.map_load_time = ros::Time::now();
-        debug.info.width = this->costmap_->getSizeInCellsX();
-        debug.info.height = this->costmap_->getSizeInCellsY();
-        debug.info.resolution = this->costmap_->getResolution();
-        geometry_msgs::Pose pose;
-        pose.position.x = this->costmap_->getOriginX();
-        pose.position.y = this->costmap_->getOriginY();
-        debug.info.origin = pose;
-
-        this->debug_publisher_.publish(debug);
-    }
+    
 }

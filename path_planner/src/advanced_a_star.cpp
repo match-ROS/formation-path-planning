@@ -319,36 +319,6 @@ namespace advanced_a_star
                             valid_cell = true;
                         }
 
-                        // DEBUGGING AND VISUALIZING
-                        // ROS_INFO("Angle: %f, valid: %i", yaw_angle, std::abs(yaw_angle) < this->maximal_curvature_);
-                        // geometry_msgs::Pose first_pose, second_pose, third_pose;
-                        // geometry_msgs::Quaternion quaternion;
-                        // tf::Quaternion tf_quaternion;
-                        // tf_quaternion.setRPY(0.0, 0.0, 0.0);
-                        // tf::quaternionTFToMsg(tf_quaternion, quaternion);
-                        // first_pose.orientation = quaternion;
-                        // second_pose.orientation = quaternion;
-                        // third_pose.orientation = quaternion;
-                        // int map_cell[2];
-                        // this->getCostmapPointByArrayIndex(array_current_cell, map_cell);
-                        // this->costmap_->mapToWorld(map_cell[0], map_cell[1], first_pose.position.x, first_pose.position.y);
-                        // first_pose.position.z = 0.0;
-                        // this->getCostmapPointByArrayIndex(array_first_vector_start_cell, map_cell);
-                        // this->costmap_->mapToWorld(map_cell[0], map_cell[1], second_pose.position.x, second_pose.position.y);
-                        // second_pose.position.z = 0.0;
-                        // this->getCostmapPointByArrayIndex(array_last_cell, map_cell);
-                        // this->costmap_->mapToWorld(map_cell[0], map_cell[1], third_pose.position.x, third_pose.position.y);
-                        // third_pose.position.z = 0.0;
-
-                        // this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
-                        //                                                 first_pose,
-                        //                                                 this->theoretical_path_marker_template_id_);
-                        // this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
-                        //                                                 second_pose,
-                        //                                                 this->theoretical_path_marker_template_id_);                                                                      
-                        // this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
-                        //                                                 third_pose,
-                        //                                                 this->theoretical_path_marker_template_id_);
                         this->visu_helper_.visualizeMarkerArray(this->theoretical_path_marker_array_id_);
                         this->visu_helper_.clearMarkerArray(this->theoretical_path_marker_array_id_);
                         // DEBUGGING AND VISUALIZING
