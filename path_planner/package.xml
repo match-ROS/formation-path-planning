@@ -78,8 +78,8 @@
   <export>
     <!-- Other tools can request additional information be placed here -->
     
-    <mbf_costmap_core plugin="${prefix}/mbf_plugin.xml" />
-    <nav_core plugin="${prefix}/mbf_plugin.xml" />
+    <mbf_costmap_core plugin="${prefix}/relaxed_a_star_plugin.xml" />
+    <nav_core plugin="${prefix}/relaxed_a_star_plugin.xml" />
 
     <mbf_costmap_core plugin="${prefix}/advanced_a_star_plugin.xml" />
     <nav_core plugin="${prefix}/advanced_a_star_plugin.xml" />
