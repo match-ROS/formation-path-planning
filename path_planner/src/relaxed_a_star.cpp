@@ -275,8 +275,8 @@ namespace relaxed_a_star
                 // Third row
                 A_x(2,0) = std::pow(pose_counter, 2);
                 A_x(2,1) = pose_counter;
-                A_x(2,2) = ;
-                A_x(2,3) = ;
+                // A_x(2,2) = ;
+                // A_x(2,3) = ;
                 // Fourth row
                 A_x(3,0) = 3 * std::pow(pose_counter + 1, 2);
                 A_x(3,1) = 2 * (pose_counter + 1);
