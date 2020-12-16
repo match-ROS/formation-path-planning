@@ -4,6 +4,7 @@
 
 #include <geometry_msgs/Pose.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <tf/tf.h>
 
 namespace visualization_helper
 {
@@ -78,6 +79,8 @@ namespace visualization_helper
             visualization_msgs::Marker createMarker();
 
             int addMarkerTemplate(visualization_msgs::Marker marker_template);
+
+            geometry_msgs::Pose createGeometryPose(float x_coord, float y_coord);
 
         private:
             /**

@@ -129,6 +129,21 @@ namespace visualization_helper
         return (this->marker_template_list_.size() - 1);
     }
 
+    geometry_msgs::Pose VisualizationHelper::createGeometryPose(float x_coord, float y_coord)
+    {
+        geometry_msgs::Pose pose_to_return;
+        geometry_msgs::Quaternion default_quaternion;
+        tf::Quaternion default_tf_quaternion;
+        default_tf_quaternion.setRPY(0.0, 0.0, 0.0);
+        tf::quaternionTFToMsg(default_tf_quaternion, default_quaternion);
+        pose_to_return.orientation = default_quaternion;
+        pose_to_return.position.x = x_coord;
+        pose_to_return.position.y = y_coord;
+        pose_to_return.position.z = 0.0;
+
+        return pose_to_return;
+    }
+
     //PRIVATE METHODS
     bool VisualizationHelper::isMarkerArrayExisting(int marker_array_index)
     {
