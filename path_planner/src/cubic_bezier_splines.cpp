@@ -80,9 +80,19 @@ namespace bezier_splines
         return this->start_pose_;
     }
 
+    Eigen::Matrix<float, 2, 1> CubicBezierSplines::getEndPose()
+    {
+        return this->end_pose_;
+    }
+
     Eigen::Matrix<float, 2, 1> CubicBezierSplines::getStartTangent()
     {
         return this->start_pose_tangent_;
+    }
+
+    Eigen::Matrix<float, 2, 1> CubicBezierSplines::getEndTangent()
+    {
+        return this->end_pose_tangent_;
     }
 
 

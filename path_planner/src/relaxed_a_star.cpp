@@ -253,14 +253,15 @@ namespace relaxed_a_star
             tf::Quaternion start_quaternion;
             tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
             spline_list[0].setStartTangent(start_quaternion);
-            spline_list[0].setEndTangent(spline_list[1].getStartPose());
+            spline_list[0].setEndTangent(spline_list[1].getEndPose());
             for(int spline_counter = 1; spline_counter < (spline_list.size() - 1); spline_counter++)
             {
-                spline_list[spline_counter].setStartTangent(spline_list[spline_counter - 1].getStartTangent());
-                spline_list[spline_counter].setEndTangent(spline_list[spline_counter + 1].getStartPose());
+                spline_list[spline_counter].setStartTangent(spline_list[spline_counter - 1].getEndTangent());
+                spline_list[spline_counter].setEndTangent(spline_list[spline_counter + 1].getEndPose());
             }
             tf::Quaternion end_quaternion;
             tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
+            spline_list.end()->setStartTangent((spline_list.end() - 1)->getEndTangent());
             spline_list.end()->setEndTangent(end_quaternion);
             // Create splines end
 

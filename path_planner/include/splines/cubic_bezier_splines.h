@@ -35,7 +35,9 @@ namespace bezier_splines
             void addTangentsToVisuHelper();
 
             Eigen::Matrix<float, 2, 1> getStartPose();
+            Eigen::Matrix<float, 2, 1> getEndPose();
             Eigen::Matrix<float, 2, 1> getStartTangent();
+            Eigen::Matrix<float, 2, 1> getEndTangent();
 
             // CubicBezierSplines(Eigen::Matrix<float, 2, 1> start_pose, float start_first_derivative_value, Eigen::Matrix<float, 2, 1> end_pose);
 
