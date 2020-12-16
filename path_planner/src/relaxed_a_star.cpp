@@ -222,91 +222,58 @@ namespace relaxed_a_star
             // Select pose very so often
             int cell_distance = 10; // Make this to a param later
             std::vector<geometry_msgs::PoseStamped> selected_poses;
-            for(int pose_counter = 0; pose_counter < plan.size(); pose_counter++)
+            for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
             {
                 if(pose_counter % cell_distance == 0)
                 {
                     selected_poses.push_back(plan[pose_counter]);
                 }
             }
+
+            // Add goal position if it was not already added
+            geometry_msgs::PoseStamped last;
+            last.header = plan.end()->header;
+            last.pose = plan.end()->pose;
+            selected_poses.push_back(last);
             // end
 
             // Create splines
-            for(int pose_counter = 0; pose_counter < selected_poses.size(); pose_counter++)
+            ROS_INFO("Start End Point");
+            std::vector<bezier_splines::CubicBezierSplines> spline_list;
+            for(int pose_counter = 0; pose_counter < (selected_poses.size()-1); pose_counter++)
             {
-                geometry_msgs::PoseStamped first_pose;
-                geometry_msgs::PoseStamped first_support_pose;
-                geometry_msgs::PoseStamped second_support_pose;
-                geometry_msgs::PoseStamped second_pose;
-
-                geometry_msgs::PoseStamped first_direction_pose;
-                geometry_msgs::PoseStamped second_direction_pose;
-
-                // Calculation of the supporting poses to define the orientation in first_pose and second_pose
-                // Use the resolution from the map to get the support pose
-                tf::Vector3 first_pose_support_vector(this->costmap_->getResolution(),0,0);
-                tf::Quaternion tf_first_pose_orientation;
-                tf::quaternionMsgToTF(first_pose.pose.orientation, tf_first_pose_orientation);
-                tf::quatRotate(tf_first_pose_orientation, first_pose_support_vector);
-                first_support_pose.pose.position.x = first_support_pose.pose.position.x + first_pose_support_vector.getX();
-                first_support_pose.pose.position.y = first_support_pose.pose.position.y + first_pose_support_vector.getY();
-                tf::Vector3 second_pose_support_vector(this->costmap_->getResolution(),0,0);
-                tf::Quaternion tf_second_pose_orientation;
-                tf::quaternionMsgToTF(second_pose.pose.orientation, tf_second_pose_orientation);
-                tf::quatRotate(tf_second_pose_orientation, second_pose_support_vector);
-                second_support_pose.pose.position.x = second_support_pose.pose.position.x + second_pose_support_vector.getX();
-                second_support_pose.pose.position.y = second_support_pose.pose.position.y + second_pose_support_vector.getY();
-
-                Eigen::Matrix<float, 4, 4> A_x;
-                Eigen::Matrix<float, 4, 1> b_x;
-                Eigen::Matrix<float, 4, 4> A_y;
-                Eigen::Matrix<float, 4, 1> b_y;
-
-                // First row
-                A_x(0,0) = std::pow(pose_counter, 3);
-                A_x(0,1) = std::pow(pose_counter, 2);
-                A_x(0,2) = pose_counter;
-                A_x(0,3) = 1;
-                // Second row
-                A_x(1,0) = std::pow(pose_counter + 1, 3);
-                A_x(1,1) = std::pow(pose_counter + 1, 2);
-                A_x(1,2) = pose_counter + 1;
-                A_x(1,3) = 1;
-                // Third row
-                A_x(2,0) = std::pow(pose_counter, 2);
-                A_x(2,1) = pose_counter;
-                // A_x(2,2) = ;
-                // A_x(2,3) = ;
-                // Fourth row
-                A_x(3,0) = 3 * std::pow(pose_counter + 1, 2);
-                A_x(3,1) = 2 * (pose_counter + 1);
-                A_x(3,2) = 1;
-                A_x(3,3) = 0;
-                
-                b_x(0,0) = selected_poses[pose_counter].pose.position.x;
-                b_x(1,0) = selected_poses[pose_counter + 1].pose.position.x;
-                b_x(2,0) = std::tan(tf::getYaw(selected_poses[pose_counter].pose.orientation));
-                b_x(3,0) = std::tan(tf::getYaw(selected_poses[pose_counter + 1].pose.orientation));
-
-                // A_y only differs in the results in the vector b_y
-                A_y = A_x;
-                
-                b_y(0,0) = selected_poses[pose_counter].pose.position.y;
-                b_y(1,0) = selected_poses[pose_counter + 1].pose.position.y;
-                b_y(2,0) = std::tan(tf::getYaw(selected_poses[pose_counter].pose.orientation));
-                b_y(3,0) = std::tan(tf::getYaw(selected_poses[pose_counter + 1].pose.orientation));
+                Eigen::Matrix<float, 2, 1> start_pose;
+                Eigen::Matrix<float, 2, 1> end_pose;
+                start_pose << selected_poses[pose_counter].pose.position.x, selected_poses[pose_counter].pose.position.y;
+                end_pose << selected_poses[pose_counter + 1].pose.position.x, selected_poses[pose_counter + 1].pose.position.y;
+                bezier_splines::CubicBezierSplines spline(&this->visu_helper_, start_pose, end_pose);    
+                spline_list.push_back(spline);
             }
-            // end
+            ROS_INFO("Tangent");
+            tf::Quaternion start_quaternion;
+            tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
+            spline_list[0].setStartTangent(start_quaternion);
+            spline_list[0].setEndTangent(spline_list[1].getStartPose());
+            for(int spline_counter = 1; spline_counter < (spline_list.size() - 1); spline_counter++)
+            {
+                spline_list[spline_counter].setStartTangent(spline_list[spline_counter - 1].getStartTangent());
+                spline_list[spline_counter].setEndTangent(spline_list[spline_counter + 1].getStartPose());
+            }
+            tf::Quaternion end_quaternion;
+            tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
+            spline_list.end()->setEndTangent(end_quaternion);
+            // Create splines end
 
-            // Visualize splines
-            // end
-
-            // Check for hitting obstacles
-            // end
-
-            // Create new poses for plan
-
-            // end
+            // Visualize Splines
+            ROS_INFO("VISU");
+            for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
+            {
+                spline_list[spline_counter].addStartEndPointToVisuHelper();
+                spline_list[spline_counter].addTangentsToVisuHelper();
+                spline_list[spline_counter].visualizeData();
+                ros::Duration(0.5).sleep();
+            }
+            // Visualize Splines End
         }
         ROS_INFO("Planning finished %i", plan.size());
         this->publishPlan(plan);
@@ -368,7 +335,6 @@ namespace relaxed_a_star
             int array_next_cell = this->getMinGScoreNeighborCell(array_current_cell, g_score);
             array_goal_to_start_plan.push_back(array_next_cell);
             array_current_cell = array_next_cell;
-            ROS_INFO("array_goal_to_start_plan size: %i", array_start_to_goal_plan.size());
         }
 
         // <= is necessary as we go backwards through the list. And first elment from the back is found with size()-1 until we match the size, thats the first array.

@@ -27,6 +27,7 @@
 
 #include <general_types/general_types.h>
 #include <debug_helper/visualization_helper.h>
+#include <splines/cubic_bezier_splines.h>
 
 namespace relaxed_a_star
 {
@@ -157,7 +158,7 @@ namespace relaxed_a_star
              */
             std::vector<int> createPlan(int array_start_cell, int array_goal_cell, std::shared_ptr<float[]> g_score);
 
-            void RelaxedAStar::createPoseArrayForPlan(std::vector<int> array_plan, std::vector<geometry_msgs::PoseStamped>& plan);
+            void createPoseArrayForPlan(std::vector<int> array_plan, std::vector<geometry_msgs::PoseStamped>& plan);
 
             /**
              * @brief Gets all free neighbor cells adjacent to the current cell
@@ -321,7 +322,7 @@ namespace relaxed_a_star
              */
             void createMarkersForGScoreArray(std::shared_ptr<float[]> g_score);
 
-            geometry_msgs::PoseArray RelaxedAStar::createPoseArrayForOrientationVisu(std::vector<geometry_msgs::PoseStamped>& plan);
+            geometry_msgs::PoseArray createPoseArrayForOrientationVisu(std::vector<geometry_msgs::PoseStamped>& plan);
 
             /**
              * @brief Global frame of the robot
