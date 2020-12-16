@@ -139,6 +139,7 @@ include_directories(
 add_library(general_types include/general_types/general_types.h)
 add_library(relaxed_a_star src/relaxed_a_star.cpp)
 add_library(advanced_a_star src/advanced_a_star.cpp)
+add_library(cubic_bezier_splines src/cubic_bezier_splines.cpp)
 add_library(visualization_helper src/visualization_helper.cpp)
 
 ## Add cmake target dependencies of the library
@@ -166,8 +167,9 @@ set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(relaxed_a_star general_types visualization_helper  ${catkin_LIBRARIES})
-target_link_libraries(advanced_a_star general_types visualization_helper ${catkin_LIBRARIES})
+target_link_libraries(relaxed_a_star general_types cubic_bezier_splines visualization_helper  ${catkin_LIBRARIES})
+target_link_libraries(advanced_a_star general_types cubic_bezier_splines visualization_helper ${catkin_LIBRARIES})
+target_link_libraries(cubic_bezier_splines visualization_helper  ${catkin_LIBRARIES})
 
 #############
 ## Install ##
