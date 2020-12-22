@@ -130,12 +130,10 @@ namespace relaxed_a_star
 
             // Helper object for the marker visualization in RVIZ
             visualization_helper::VisualizationHelper visu_helper_;
-            // Helper variables for storing the index for the g score markers
-            int g_score_marker_array_id_;
-            int g_score_marker_template_id_;
-            // Helper variable for storing the index for the theoretical path markers
-            int theoretical_path_marker_array_id_;
-            int theoretical_path_marker_template_id_;
+            // Helper variables for storing the identificator for the g score markers
+            std::string g_score_marker_identificator_;
+            // Helper variable for storing the identificator for the theoretical path markers
+            std::string theoretical_path_marker_identificator_;
             
         private:
             /**

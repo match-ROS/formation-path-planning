@@ -43,8 +43,16 @@ namespace visualization_helper
             std::string addMarkerTemplate(visualization_msgs::Marker marker_template);
             bool addMarkerTemplate(std::string marker_template_identifier, visualization_msgs::Marker marker_template);
 
+            /**
+             * @brief Checks if the marker array with the specified index is existing
+             * 
+             * @param marker_array_identifier Identificator of the marker array
+             * @return true Marker array is existing
+             * @return false Marker array is existing
+             */
+            bool isMarkerArrayExisting(std::string marker_array_identifier);
 
-            bool isMarkerArrayIdentExisting(std::string marker_array_identificator);
+            bool isMarkerTemplateExisting(std::string marker_template_identifier);
 
             /**
              * @brief Add an additional marker from to the marker array that index was also handed through a parameter
@@ -93,17 +101,6 @@ namespace visualization_helper
             geometry_msgs::Pose createGeometryPose(float x_coord, float y_coord);
 
         private:
-            /**
-             * @brief Checks if the marker array with the specified index is existing
-             * 
-             * @param marker_array_identifier Identificator of the marker array
-             * @return true Marker array is existing
-             * @return false Marker array is existing
-             */
-            bool isMarkerArrayExisting(std::string marker_array_identifier);
-
-            bool isMarkerTemplateExisting(std::string marker_template_identifier);
-
             /**
              * @brief Sets the time stamps of all markers in the specified marker array
              * 

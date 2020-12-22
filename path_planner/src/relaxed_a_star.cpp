@@ -52,7 +52,10 @@ namespace relaxed_a_star
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
 
             this->visu_helper_ = visualization_helper::VisualizationHelper(name);
-            this->g_score_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+            this->g_score_marker_identificator_ = "g_score";
+            this->theoretical_path_marker_identificator_ = "theoretical_path";
+
+            this->visu_helper_.addNewMarkerArray(this->g_score_marker_identificator_);
             visualization_msgs::Marker marker_template_g_score;
             marker_template_g_score.action = visualization_msgs::Marker::ADD;
             marker_template_g_score.color.a = 1.0;
@@ -64,9 +67,9 @@ namespace relaxed_a_star
             marker_template_g_score.scale.y = 0.1;
             marker_template_g_score.scale.z = 0.1;
             marker_template_g_score.type = visualization_msgs::Marker::SPHERE;
-            this->g_score_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_g_score);
+            this->visu_helper_.addMarkerTemplate(this->g_score_marker_identificator_, marker_template_g_score);
             
-            this->theoretical_path_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+            this->visu_helper_.addNewMarkerArray(this->theoretical_path_marker_identificator_);
             visualization_msgs::Marker marker_template_theoretical_path;
             marker_template_theoretical_path.action = visualization_msgs::Marker::ADD;
             marker_template_theoretical_path.color.a = 1.0;
@@ -78,8 +81,9 @@ namespace relaxed_a_star
             marker_template_theoretical_path.scale.y = 0.1;
             marker_template_theoretical_path.scale.z = 0.1;
             marker_template_theoretical_path.type = visualization_msgs::Marker::SPHERE;
-            this->theoretical_path_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_theoretical_path);
-            
+            this->visu_helper_.addMarkerTemplate(this->theoretical_path_marker_identificator_,
+                                                 marker_template_theoretical_path);
+
             // Get the tf prefix
             ros::NodeHandle nh;
             this->tf_prefix_ = tf::getPrefixParam(nh);
@@ -232,8 +236,8 @@ namespace relaxed_a_star
 
             // Add goal position if it was not already added
             geometry_msgs::PoseStamped last;
-            last.header = plan.end()->header;
-            last.pose = plan.end()->pose;
+            last.header = (plan.end() - 1)->header;
+            last.pose = (plan.end() - 1)->pose;
             selected_poses.push_back(last);
             // end
 
@@ -272,7 +276,6 @@ namespace relaxed_a_star
                 spline_list[spline_counter].addStartEndPointToVisuHelper();
                 spline_list[spline_counter].addTangentsToVisuHelper();
                 spline_list[spline_counter].visualizeData();
-                ros::Duration(0.5).sleep();
             }
             // Visualize Splines End
         }
@@ -318,7 +321,7 @@ namespace relaxed_a_star
             }
             // this->createMarkersForGScoreArray(g_score);
             // this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
-            this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
+            // this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
             // ros::Duration(0.3).sleep();
         }
     }
@@ -574,9 +577,9 @@ namespace relaxed_a_star
                 this->getCostmapPointByArrayIndex(counter, map_cell);
                 this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.position.x, pose.position.y);
                 pose.position.z = 0.0;
-                this->visu_helper_.addMarkerToExistingMarkerArray(this->g_score_marker_array_id_,
+                this->visu_helper_.addMarkerToExistingMarkerArray(this->g_score_marker_identificator_,
                                                                   pose,
-                                                                  this->g_score_marker_template_id_);
+                                                                  this->g_score_marker_identificator_);
             }
         }
     }

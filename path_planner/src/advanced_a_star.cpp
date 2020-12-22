@@ -59,7 +59,12 @@ namespace advanced_a_star
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
 
             this->visu_helper_ = visualization_helper::VisualizationHelper(name);
-            this->g_score_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+
+            this->g_score_marker_identificator_ = "g_score";
+            this->theoretical_path_marker_identificator_ = "theoretical_path";
+            this->open_cell_marker_identificator_ = "open_cell";
+
+            this->visu_helper_.addNewMarkerArray(this->g_score_marker_identificator_);
             visualization_msgs::Marker marker_template_g_score;
             marker_template_g_score.action = visualization_msgs::Marker::ADD;
             marker_template_g_score.color.a = 1.0;
@@ -71,9 +76,9 @@ namespace advanced_a_star
             marker_template_g_score.scale.y = 0.1;
             marker_template_g_score.scale.z = 0.1;
             marker_template_g_score.type = visualization_msgs::Marker::SPHERE;
-            this->g_score_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_g_score);
+            this->visu_helper_.addMarkerTemplate(this->g_score_marker_identificator_, marker_template_g_score);
             
-            this->theoretical_path_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+            this->visu_helper_.addNewMarkerArray(this->theoretical_path_marker_identificator_);
             visualization_msgs::Marker marker_template_theoretical_path;
             marker_template_theoretical_path.action = visualization_msgs::Marker::ADD;
             marker_template_theoretical_path.color.a = 1.0;
@@ -85,9 +90,9 @@ namespace advanced_a_star
             marker_template_theoretical_path.scale.y = 0.1;
             marker_template_theoretical_path.scale.z = 0.1;
             marker_template_theoretical_path.type = visualization_msgs::Marker::SPHERE;
-            this->theoretical_path_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_theoretical_path);
+            this->visu_helper_.addMarkerTemplate(this->theoretical_path_marker_identificator_, marker_template_theoretical_path);
 
-            this->open_cell_marker_array_id_ = this->visu_helper_.addNewMarkerArray();
+            this->visu_helper_.addNewMarkerArray(this->open_cell_marker_identificator_);
             visualization_msgs::Marker marker_template_open_cell;
             marker_template_open_cell.action = visualization_msgs::Marker::ADD;
             marker_template_open_cell.color.a = 1.0;
@@ -99,7 +104,7 @@ namespace advanced_a_star
             marker_template_open_cell.scale.y = 0.1;
             marker_template_open_cell.scale.z = 0.1;
             marker_template_open_cell.type = visualization_msgs::Marker::SPHERE;
-            this->open_cell_marker_template_id_ = this->visu_helper_.addMarkerTemplate(marker_template_open_cell);
+            this->visu_helper_.addMarkerTemplate(this->open_cell_marker_identificator_, marker_template_open_cell);
 
              // Get the tf prefix
             ros::NodeHandle nh;
@@ -244,15 +249,15 @@ namespace advanced_a_star
                     case general_types::FreeNeighborMode::CostmapAndMinimalCurveRadius:
                         // Get first vector for angle calculation
                         int array_last_cell = array_neighbor_cell;
-                        this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                        this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_identificator_,
                                                                           this->createGeometryPose(array_neighbor_cell),
-                                                                          this->theoretical_path_marker_template_id_);
+                                                                          this->theoretical_path_marker_identificator_);
                         for(int counter = 0; counter < this->curvature_calculation_cell_distance_; counter++)
                         {
                             array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
-                            this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                            this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_identificator_,
                                                                               this->createGeometryPose(array_last_cell),
-                                                                              this->theoretical_path_marker_template_id_);
+                                                                              this->theoretical_path_marker_identificator_);
                             if(array_last_cell == array_start_cell)
                             {
                                 break;
@@ -279,9 +284,9 @@ namespace advanced_a_star
                             counter++)
                             {
                                 array_last_cell = this->getMinGScoreNeighborCell(array_last_cell, g_score);
-                                this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_array_id_,
+                                this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_identificator_,
                                                                                   this->createGeometryPose(array_last_cell),
-                                                                                  this->theoretical_path_marker_template_id_);
+                                                                                  this->theoretical_path_marker_identificator_);
                                 if(array_last_cell == array_start_cell)
                                 {
                                     break;
@@ -319,8 +324,8 @@ namespace advanced_a_star
                             valid_cell = true;
                         }
 
-                        this->visu_helper_.visualizeMarkerArray(this->theoretical_path_marker_array_id_);
-                        this->visu_helper_.clearMarkerArray(this->theoretical_path_marker_array_id_);
+                        this->visu_helper_.visualizeMarkerArray(this->theoretical_path_marker_identificator_);
+                        this->visu_helper_.clearMarkerArray(this->theoretical_path_marker_identificator_);
                         // DEBUGGING AND VISUALIZING
                         break;
                 }
@@ -647,9 +652,9 @@ namespace advanced_a_star
                 this->getCostmapPointByArrayIndex(counter, map_cell);
                 this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.position.x, pose.position.y);
                 pose.position.z = 0.0;
-                this->visu_helper_.addMarkerToExistingMarkerArray(this->g_score_marker_array_id_,
+                this->visu_helper_.addMarkerToExistingMarkerArray(this->g_score_marker_identificator_,
                                                                   pose,
-                                                                  this->g_score_marker_template_id_);
+                                                                  this->g_score_marker_identificator_);
             }
         }
     }
@@ -670,9 +675,9 @@ namespace advanced_a_star
             this->getCostmapPointByArrayIndex(iterator->cell_index, map_cell);
             this->costmap_->mapToWorld(map_cell[0], map_cell[1], pose.position.x, pose.position.y);
             pose.position.z = 0.0;
-            this->visu_helper_.addMarkerToExistingMarkerArray(this->open_cell_marker_array_id_,
+            this->visu_helper_.addMarkerToExistingMarkerArray(this->open_cell_marker_identificator_,
                                                               pose,
-                                                              this->open_cell_marker_template_id_);
+                                                              this->open_cell_marker_identificator_);
         }
     }
 }

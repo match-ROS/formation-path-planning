@@ -112,16 +112,14 @@ namespace visualization_helper
         }
     }
 
-    bool VisualizationHelper::isMarkerArrayIdentExisting(std::string marker_array_identificator)
+    bool VisualizationHelper::isMarkerArrayExisting(std::string marker_array_identificator)
     {
-        if(this->marker_array_list_.find(marker_array_identificator) != this->marker_array_list_.end())
-        {
-            return true;
-        }
-        else
-        {
-            false;
-        }
+        return this->marker_array_list_.find(marker_array_identificator) != this->marker_array_list_.end();
+    }
+
+    bool VisualizationHelper::isMarkerTemplateExisting(std::string marker_template_identificator)
+    {
+        return this->marker_template_list_.find(marker_template_identificator) != this->marker_template_list_.end();
     }
 
     bool VisualizationHelper::addMarkerToExistingMarkerArray(std::string marker_array_identificator,
@@ -205,16 +203,6 @@ namespace visualization_helper
     }
 
     //PRIVATE METHODS
-    bool VisualizationHelper::isMarkerArrayExisting(std::string marker_array_identificator)
-    {
-        return this->marker_array_list_.find(marker_array_identificator) != this->marker_array_list_.end();
-    }
-
-    bool VisualizationHelper::isMarkerTemplateExisting(std::string marker_template_identificator)
-    {
-        return this->marker_template_list_.find(marker_template_identificator) != this->marker_template_list_.end();
-    }
-
     void VisualizationHelper::setTimeStamps(std::string marker_array_identificator)
     {
         for(int marker_counter = 0; marker_counter < (this->marker_array_list_[marker_array_identificator].markers.size() - 1); marker_counter++)

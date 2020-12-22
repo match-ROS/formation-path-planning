@@ -108,12 +108,9 @@ namespace advanced_a_star
             ros::Publisher planning_points_orientation_publisher_;
 
             visualization_helper::VisualizationHelper visu_helper_;
-            int g_score_marker_array_id_;
-            int g_score_marker_template_id_;
-            int theoretical_path_marker_array_id_;
-            int theoretical_path_marker_template_id_;
-            int open_cell_marker_array_id_;
-            int open_cell_marker_template_id_;
+            std::string g_score_marker_identificator_;
+            std::string theoretical_path_marker_identificator_;
+            std::string open_cell_marker_identificator_;
 
         private:
             std::vector<int> getFreeNeighborCells(int array_current_cell);

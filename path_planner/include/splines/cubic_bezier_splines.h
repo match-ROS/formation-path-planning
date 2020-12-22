@@ -64,14 +64,9 @@ namespace bezier_splines
 
             visualization_helper::VisualizationHelper* visu_helper_;
 
-            int start_end_marker_array_id_;
-            int start_end_marker_template_id_;
-
-            int control_point_marker_array_id_;
-            int control_point_marker_template_id_;
-
-            int tangent_marker_array_id_;
-            int tangent_marker_template_id_;
+            std::string start_end_marker_identificator_;
+            std::string control_point_marker_identificator_;
+            std::string tangent_marker_identificator_;
 
             Eigen::Matrix<float, 2, 1> start_pose_;
             Eigen::Matrix<float, 2, 1> end_pose_;
