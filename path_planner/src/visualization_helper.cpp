@@ -7,9 +7,9 @@ namespace visualization_helper
         this->max_marker_index_ = 0;
     }
     
-    VisualizationHelper::VisualizationHelper(std::string name) : VisualizationHelper()
+    VisualizationHelper::VisualizationHelper(std::string topic_prefix) : VisualizationHelper()
     {
-        ros::NodeHandle private_nh("~/" + name);
+        ros::NodeHandle private_nh("~/" + topic_prefix);
         this->marker_array_publisher_ = private_nh.advertise<visualization_msgs::MarkerArray>("marker_array", 1);
         this->marker_publisher_ = private_nh.advertise<visualization_msgs::Marker>("marker", 1);
     }
@@ -18,13 +18,11 @@ namespace visualization_helper
     {
         if(this->marker_array_list_.size() > 0)
         {
-            for (int marker_array_counter = 0;
-                 marker_array_counter < this->marker_array_list_.size() - 1;
-                 marker_array_counter++)
+            for(std::pair<std::string, visualization_msgs::MarkerArray> const& marker_array: this->marker_array_list_)
             {
-                this->setTimeStamps(marker_array_counter);
-                this->setMarkerIds(marker_array_counter);
-                this->marker_array_publisher_.publish(this->marker_array_list_[marker_array_counter]);
+                this->setTimeStamps(marker_array.first);
+                this->setMarkerIds(marker_array.first);
+                this->marker_array_publisher_.publish(this->marker_array_list_[marker_array.first]);
             }
             return true;
         }
@@ -36,47 +34,114 @@ namespace visualization_helper
         
     }
 
-    bool VisualizationHelper::visualizeMarkerArray(int marker_array_index)
+    bool VisualizationHelper::visualizeMarkerArray(std::string marker_array_identificator)
     {
-        if(this->isMarkerArrayExisting(marker_array_index))
+        if(this->isMarkerArrayExisting(marker_array_identificator))
         {
-            this->setTimeStamps(marker_array_index);
-            this->setMarkerIds(marker_array_index);
-            this->marker_array_publisher_.publish(this->marker_array_list_[marker_array_index]);
+            this->setTimeStamps(marker_array_identificator);
+            this->setMarkerIds(marker_array_identificator);
+            this->marker_array_publisher_.publish(this->marker_array_list_[marker_array_identificator]);
             ros::Duration(0.1); // Wait for markers to be shown, maybe this helps to visualize them every time
             return true;
         }
         else
         {
-            ROS_ERROR("VisualizationHelper: Index of marker_array was not found. Please check the given indexes that were handed to this method.");
+            ROS_ERROR("VisualizationHelper: Identificator of marker_array was not found. Please check the given identificators that were handed to this method.");
             return false;
         }
     }
 
-    int VisualizationHelper::addNewMarkerArray()
+    std::string VisualizationHelper::addNewMarkerArray()
     {
-        visualization_msgs::MarkerArray marker_array;
-        this->marker_array_list_.push_back(marker_array);
-        // this->max_marker_index_list_.push_back(0);
-        return (this->marker_array_list_.size() - 1); // -1 so the index points to the right element (vector starts at 0)
+        std::string unnamed_marker_array = "UnnamedMarkerArray" + std::to_string(this->marker_array_list_.size() - 1);
+        if(this->addNewMarkerArray(unnamed_marker_array))
+        {
+            return unnamed_marker_array;
+        }
+        else
+        {
+            ROS_ERROR("VisualizationHelper: Something went wrong when adding an unnamed marker array with the index %i",
+                      this->marker_array_list_.size() - 1);
+            return "";
+        }
     }
 
-    bool VisualizationHelper::addMarkerToExistingMarkerArray(int marker_array_index, visualization_msgs::Marker marker_to_add)
+    bool VisualizationHelper::addNewMarkerArray(std::string marker_array_identificator)
+    {
+        if(!this->isMarkerArrayExisting(marker_array_identificator))
+        {
+            visualization_msgs::MarkerArray marker_array;
+            this->marker_array_list_[marker_array_identificator] = marker_array;
+            return true;
+        }
+        else
+        {
+            ROS_ERROR("VisualizationHelper: Marker array identificator was already existing. Error while inserting new marker array with indentificator: %s",
+                      marker_array_identificator);
+            return false;
+        }
+    }
+
+    std::string VisualizationHelper::addMarkerTemplate(visualization_msgs::Marker marker_template)
+    {
+        std::string unnamed_marker_template = "UnnamedMarkerTemplate" + std::to_string(this->marker_array_list_.size() - 1);
+        if(this->addMarkerTemplate(unnamed_marker_template, marker_template))
+        {
+            return unnamed_marker_template;
+        }
+        else
+        {
+            ROS_ERROR("VisualizationHelper: Something went wrong when adding an unnamed marker templare with the index %i",
+                      this->marker_template_list_.size() - 1);
+            return "";
+        }
+    }
+
+    bool VisualizationHelper::addMarkerTemplate(std::string marker_template_identifier, visualization_msgs::Marker marker_template)
+    {
+        if(!this->isMarkerTemplateExisting(marker_template_identifier))
+        {
+            this->marker_template_list_[marker_template_identifier] = marker_template;
+            return true;
+        }
+        else
+        {
+            ROS_ERROR("VisualizationHelper: Marker array identificator was already existing. Error while inserting new marker array with indentificator: %s",
+                      marker_template_identifier);
+            return false;
+        }
+    }
+
+    bool VisualizationHelper::isMarkerArrayIdentExisting(std::string marker_array_identificator)
+    {
+        if(this->marker_array_list_.find(marker_array_identificator) != this->marker_array_list_.end())
+        {
+            return true;
+        }
+        else
+        {
+            false;
+        }
+    }
+
+    bool VisualizationHelper::addMarkerToExistingMarkerArray(std::string marker_array_identificator,
+                                                             visualization_msgs::Marker marker_to_add)
     {
         // Check if marker array exists
-        if (!this->isMarkerArrayExisting(marker_array_index))
+        if (!this->isMarkerArrayExisting(marker_array_identificator))
         {
             return false;
         }
 
         // No further checks for the content of the marker
-        this->marker_array_list_[marker_array_index].markers.push_back(marker_to_add);
+        this->marker_array_list_[marker_array_identificator].markers.push_back(marker_to_add);
     }
 
-    bool VisualizationHelper::addMarkersToExistingMarkerArray(int marker_array_index, std::vector<visualization_msgs::Marker> marker_list_to_add)
+    bool VisualizationHelper::addMarkersToExistingMarkerArray(std::string marker_array_identificator,
+                                                              std::vector<visualization_msgs::Marker> marker_list_to_add)
     {
         // Check if marker array exists
-        if (!this->isMarkerArrayExisting(marker_array_index))
+        if (!this->isMarkerArrayExisting(marker_array_identificator))
         {
             return false;
         }
@@ -84,49 +149,44 @@ namespace visualization_helper
         for (visualization_msgs::Marker marker: marker_list_to_add)
         {
             // No further checks for the content of the marker
-            this->marker_array_list_[marker_array_index].markers.push_back(marker);
+            this->marker_array_list_[marker_array_identificator].markers.push_back(marker);
         }
 
         return true;
     }
 
-    bool VisualizationHelper::addMarkerToExistingMarkerArray(int marker_array_index, geometry_msgs::Pose pose, int marker_template_index)
+    bool VisualizationHelper::addMarkerToExistingMarkerArray(std::string marker_array_identificator,
+                                                             geometry_msgs::Pose pose,
+                                                             std::string marker_template_identificator)
     {
         // Check if marker array exists
-        if (!this->isMarkerArrayExisting(marker_array_index) ||
-            !this->isMarkerTemplateExisting(marker_template_index))
+        if (!this->isMarkerArrayExisting(marker_array_identificator) ||
+            !this->isMarkerTemplateExisting(marker_template_identificator))
         {
             return false;
         }
 
-        visualization_msgs::Marker marker_to_add = this->marker_template_list_[marker_template_index];
+        visualization_msgs::Marker marker_to_add = this->marker_template_list_[marker_template_identificator];
         marker_to_add.pose = pose;
 
-        this->marker_array_list_[marker_array_index].markers.push_back(marker_to_add);
-
+        this->marker_array_list_[marker_array_identificator].markers.push_back(marker_to_add);
         return true;
     }
     
-    bool VisualizationHelper::clearMarkerArray(int marker_array_index)
+    bool VisualizationHelper::clearMarkerArray(std::string marker_array_identificator)
     {
         // Check if marker array exists
-        if (!this->isMarkerArrayExisting(marker_array_index))
+        if (!this->isMarkerArrayExisting(marker_array_identificator))
         {
             return false;
         }
 
-        this->marker_array_list_[marker_array_index].markers.clear();
+        this->marker_array_list_[marker_array_identificator].markers.clear();
     }
 
     void VisualizationHelper::publishMarker(visualization_msgs::Marker marker_to_publish)
     {
         this->marker_publisher_.publish(marker_to_publish);
-    }
-
-    int VisualizationHelper::addMarkerTemplate(visualization_msgs::Marker marker_template)
-    {
-        this->marker_template_list_.push_back(marker_template);
-        return (this->marker_template_list_.size() - 1);
     }
 
     geometry_msgs::Pose VisualizationHelper::createGeometryPose(float x_coord, float y_coord)
@@ -145,45 +205,33 @@ namespace visualization_helper
     }
 
     //PRIVATE METHODS
-    bool VisualizationHelper::isMarkerArrayExisting(int marker_array_index)
+    bool VisualizationHelper::isMarkerArrayExisting(std::string marker_array_identificator)
     {
-        return this->marker_array_list_.size() > marker_array_index;
+        return this->marker_array_list_.find(marker_array_identificator) != this->marker_array_list_.end();
     }
 
-    bool VisualizationHelper::isMarkerExisting(int marker_array_index, int marker_index)
+    bool VisualizationHelper::isMarkerTemplateExisting(std::string marker_template_identificator)
     {
-        if (this->isMarkerArrayExisting(marker_array_index))
-        {
-            return this->marker_array_list_[marker_array_index].markers.size() > marker_index;
-        }
-        else
-        {
-            return false;
-        }
+        return this->marker_template_list_.find(marker_template_identificator) != this->marker_template_list_.end();
     }
 
-    bool VisualizationHelper::isMarkerTemplateExisting(int marker_template_index)
+    void VisualizationHelper::setTimeStamps(std::string marker_array_identificator)
     {
-        return this->marker_template_list_.size() > marker_template_index;
-    }
-
-    void VisualizationHelper::setTimeStamps(int marker_array_index)
-    {
-        for(int marker_counter = 0; marker_counter < (this->marker_array_list_[marker_array_index].markers.size() - 1); marker_counter++)
+        for(int marker_counter = 0; marker_counter < (this->marker_array_list_[marker_array_identificator].markers.size() - 1); marker_counter++)
         {
-            this->marker_array_list_[marker_array_index].markers[marker_counter].header.stamp = ros::Time::now();
+            this->marker_array_list_[marker_array_identificator].markers[marker_counter].header.stamp = ros::Time::now();
         }
     }
 
-    void VisualizationHelper::setMarkerIds(int marker_array_index)
+    void VisualizationHelper::setMarkerIds(std::string marker_array_identificator)
     {
         double max_id = this->max_marker_index_;
         for (int marker_counter = 0;
-             marker_counter < (this->marker_array_list_[marker_array_index].markers.size() - 1);
+             marker_counter < (this->marker_array_list_[marker_array_identificator].markers.size() - 1);
              marker_counter++)
         {
             max_id = max_id + marker_counter;
-            this->marker_array_list_[marker_array_index].markers[marker_counter].id = max_id;
+            this->marker_array_list_[marker_array_identificator].markers[marker_counter].id = max_id;
         }
         this->max_marker_index_ = max_id;
     }
