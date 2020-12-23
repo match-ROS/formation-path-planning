@@ -224,7 +224,7 @@ namespace relaxed_a_star
             this->createPoseArrayForPlan(array_plan, plan);
 
             // Select pose very so often
-            int cell_distance = 10; // Make this to a param later
+            int cell_distance = 20; // Make this to a param later
             std::vector<geometry_msgs::PoseStamped> selected_poses;
             for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
             {
@@ -265,8 +265,14 @@ namespace relaxed_a_star
             }
             tf::Quaternion end_quaternion;
             tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
-            spline_list.end()->setStartTangent((spline_list.end() - 1)->getEndTangent());
-            spline_list.end()->setEndTangent(end_quaternion);
+            (spline_list.end() - 1)->setStartTangent((spline_list.end() - 2)->getEndTangent());
+            (spline_list.end() - 1)->setEndTangent(end_quaternion);
+
+            for(int spline_counter = 1; spline_counter < (spline_list.size() - 1); spline_counter++)
+            {
+                ROS_INFO("CALC CONTROL POINTS");
+                spline_list[spline_counter].calcControlPoints();
+            }
             // Create splines end
 
             // Visualize Splines
@@ -275,6 +281,7 @@ namespace relaxed_a_star
             {
                 spline_list[spline_counter].addStartEndPointToVisuHelper();
                 spline_list[spline_counter].addTangentsToVisuHelper();
+                spline_list[spline_counter].addControlPointsToVisuHelper();
                 spline_list[spline_counter].visualizeData();
             }
             // Visualize Splines End

@@ -50,29 +50,23 @@ namespace bezier_splines
         diff_vector_start_to_end = this->end_pose_ - this->start_pose_;
         diff_vector_end_to_next = next_pose - this->end_pose_;
 
-        tf::Quaternion first_quaternion;
-        tf::Quaternion second_quaternion;
-        first_quaternion.setRPY(0, 0, atan2(diff_vector_start_to_end[0], diff_vector_start_to_end[1]));
-        second_quaternion.setRPY(0, 0, atan2(diff_vector_end_to_next[0], diff_vector_end_to_next[1]));
+        Eigen::Matrix<float, 2, 1> normalized_diff_vector_start_to_end = diff_vector_start_to_end;
+        normalized_diff_vector_start_to_end.normalize();
+        Eigen::Matrix<float, 2, 1> normalized_diff_vector_end_to_next = diff_vector_end_to_next;
+        normalized_diff_vector_end_to_next.normalize();
 
-        tf::Quaternion second_quaternion_inv = second_quaternion;
-        second_quaternion_inv[3] = -second_quaternion_inv[3];
-        tf::Quaternion diff_quaternion = first_quaternion * second_quaternion_inv;
-
-        // Currently for debugging
-        tf::Matrix3x3 m(diff_quaternion);
-        double roll, pitch, yaw;
-        m.getRPY(roll, pitch, yaw);
-        double yaw_angle = ((180/M_PI)*yaw);
-        ROS_INFO("Yaw_angle: %f", yaw_angle);
-        // end
+        Eigen::Matrix<float, 2, 1> angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
+        angular_bisector.normalize();
+        float length_diff_vector_end_to_next = angular_bisector.norm();
+        this->end_pose_tangent_ = 0.5 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper
     }
 
     void CubicBezierSplines::visualizeData()
     {
         this->visu_helper_->visualizeMarkerArray(this->start_end_marker_identificator_);
-        // this->visu_helper_->visualizeMarkerArray(this->control_point_marker_identificator_);
-        // this->visu_helper_->visualizeMarkerArray(this->tangent_marker_identificator_);
+        this->visu_helper_->visualizeMarkerArray(this->control_point_marker_identificator_);
+        this->visu_helper_->visualizeMarkerArray(this->tangent_marker_identificator_);
+        // this->visu_helper_->visualizeMarkerArray(this->debug_marker_identificator_);
     }
 
     Eigen::Matrix<float, 2, 1> CubicBezierSplines::getStartPose()
@@ -103,11 +97,27 @@ namespace bezier_splines
         return std::sqrt(std::pow((this->end_pose_[0] - this->start_pose_[0]), 2) + std::pow((this->end_pose_[1] - this->start_pose_[1]), 2));
     }
 
+    void CubicBezierSplines::calcControlPoints()
+    {
+        this->cp1_ = (1.0 / 3.0) * this->start_pose_tangent_ + this->start_pose_;
+        this->cp2_ = -(1.0 / 3.0) * this->end_pose_tangent_ + this->end_pose_;
+        if(this->cp1_[1] >= 0.05 || this->cp2_[1] >= 0.05)
+        {
+            ROS_INFO("start_pose: x: %f , y: %f", this->start_pose_[0], this->start_pose_[1]);
+            ROS_INFO("start_pose_tangent_: x: %f , y: %f", this->start_pose_tangent_[0], this->start_pose_tangent_[1]);
+            ROS_INFO("end_pose_: x: %f , y: %f", this->end_pose_[0], this->end_pose_[1]);
+            ROS_INFO("end_pose_tangent_: x: %f , y: %f", this->end_pose_tangent_[0], this->end_pose_tangent_[1]);
+            ROS_INFO("cp1_: x: %f , y: %f", this->cp1_[0], this->cp1_[1]);
+            ROS_INFO("cp2_: x: %f , y: %f", this->cp2_[0], this->cp2_[1]);
+        }
+    }
+
     void CubicBezierSplines::initVisuHelper()
     {
         this->start_end_marker_identificator_ = "start_end";
         this->control_point_marker_identificator_ = "control_points";
         this->tangent_marker_identificator_ = "tangents";
+        this->debug_marker_identificator_ = "bezier_debug";
 
         if(!this->visu_helper_->isMarkerArrayExisting(this->start_end_marker_identificator_))
         {
@@ -138,7 +148,6 @@ namespace bezier_splines
             marker_template_control_point.action = visualization_msgs::Marker::ADD;
             marker_template_control_point.color.a = 1.0;
             marker_template_control_point.color.b = 1.0;
-            marker_template_control_point.color.g = 1.0;
             marker_template_control_point.header.frame_id = "map";
             marker_template_control_point.ns = "control_points";
             marker_template_control_point.scale.x = 0.1;
@@ -161,9 +170,27 @@ namespace bezier_splines
             marker_template_tangents.color.g = 1.0;
             marker_template_tangents.header.frame_id = "map";
             marker_template_tangents.ns = "tangents";
-            marker_template_tangents.scale.x = 1.0;
+            marker_template_tangents.scale.x = 0.03;
             marker_template_tangents.type = visualization_msgs::Marker::LINE_LIST;
             this->visu_helper_->addMarkerTemplate(this->tangent_marker_identificator_, marker_template_tangents);
+        }
+
+        if(!this->visu_helper_->isMarkerArrayExisting(this->debug_marker_identificator_))
+        {
+            this->visu_helper_->addNewMarkerArray(this->debug_marker_identificator_);
+        }
+        if(!this->visu_helper_->isMarkerTemplateExisting(this->debug_marker_identificator_))
+        {
+            visualization_msgs::Marker marker_template_debug;
+            marker_template_debug.action = visualization_msgs::Marker::ADD;
+            marker_template_debug.color.a = 1.0;
+            marker_template_debug.color.r = 1.0;
+            marker_template_debug.color.b = 1.0;
+            marker_template_debug.header.frame_id = "map";
+            marker_template_debug.ns = "bezier_debug";
+            marker_template_debug.scale.x = 0.05;
+            marker_template_debug.type = visualization_msgs::Marker::LINE_LIST;
+            this->visu_helper_->addMarkerTemplate(this->debug_marker_identificator_, marker_template_debug);
         }
     }
 
@@ -179,30 +206,46 @@ namespace bezier_splines
 
     void CubicBezierSplines::addControlPointsToVisuHelper()
     {
-        // this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_array_id_,
-        // this->visu_helper_->createGeometryPose(this->control))
+        ROS_INFO("adding");
+        this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_identificator_,
+                                                           this->visu_helper_->createGeometryPose(this->cp1_[0], this->cp1_[1]),
+                                                           this->control_point_marker_identificator_);
+        this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_identificator_,
+                                                           this->visu_helper_->createGeometryPose(this->cp2_[0], this->cp2_[1]),
+                                                           this->control_point_marker_identificator_);     
     }
 
     void CubicBezierSplines::addTangentsToVisuHelper()
     {
-        // ROS_INFO("start_pose: %f | %f", this->start_pose_[0], this->start_pose_[1]);
-        // ROS_INFO("start_pose_tangent: %f | %f", this->start_pose_tangent_[0], this->start_pose_tangent_[1]);
-        // ROS_INFO("end_pose: %f | %f", this->end_pose_[0], this->end_pose_[1]);
-        // ROS_INFO("end_pose_tangent: %f | %f", this->end_pose_tangent_[0], this->end_pose_tangent_[1]);
         this->addTangentToVisuHelper(this->start_pose_, this->start_pose_tangent_);
         this->addTangentToVisuHelper(this->end_pose_, this->end_pose_tangent_);
     }
 
     void CubicBezierSplines::addTangentToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> tangent)
     {
-        this->visu_helper_->addMarkerToExistingMarkerArray(this->tangent_marker_identificator_,
-                                                           this->visu_helper_->createGeometryPose(start_point[0], start_point[1]),
-                                                           this->tangent_marker_identificator_);
+        std::vector<geometry_msgs::Point> line;
         Eigen::Matrix<float, 2, 1> end_point;
         end_point = start_point + tangent;
-        this->visu_helper_->addMarkerToExistingMarkerArray(this->tangent_marker_identificator_,
-                                                           this->visu_helper_->createGeometryPose(end_point[0], end_point[1]),
-                                                           this->tangent_marker_identificator_);
+
+        line.push_back(this->visu_helper_->createGeometryPoint(start_point[0], start_point[1]));
+        line.push_back(this->visu_helper_->createGeometryPoint(end_point[0], end_point[1]));
+
+        this->visu_helper_->addMarkerLineToMarkerArray(this->tangent_marker_identificator_,
+                                                       line,
+                                                       this->tangent_marker_identificator_);
+    }
+
+    void CubicBezierSplines::addDebugVectorToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> vector)
+    {
+        std::vector<geometry_msgs::Point> line;
+        Eigen::Matrix<float, 2, 1> end_point;
+        end_point = start_point + vector;
+
+        line.push_back(this->visu_helper_->createGeometryPoint(start_point[0], start_point[1]));
+        line.push_back(this->visu_helper_->createGeometryPoint(end_point[0], end_point[1]));
+        this->visu_helper_->addMarkerLineToMarkerArray(this->debug_marker_identificator_,
+                                                       line,
+                                                       this->debug_marker_identificator_);
     }
 
     // CubicBezierSplines::CubicBezierSplines(Eigen::Matrix<float, 2, 1> start_pose,

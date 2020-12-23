@@ -29,6 +29,9 @@ namespace bezier_splines
             void setEndTangent(tf::Quaternion robot_end_orientation);
             void setEndTangent(Eigen::Matrix<float, 2, 1> next_pose);
 
+            void calcControlPoints();
+            void calcBezierSpline();
+
             void visualizeData();
             void addStartEndPointToVisuHelper();
             void addControlPointsToVisuHelper();
@@ -59,17 +62,25 @@ namespace bezier_splines
         private:
             float calcStartToEndLength();
 
+            
+
             void initVisuHelper();
             void addTangentToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> tangent);
-
+            void addDebugVectorToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> vector);
+            
             visualization_helper::VisualizationHelper* visu_helper_;
 
             std::string start_end_marker_identificator_;
             std::string control_point_marker_identificator_;
             std::string tangent_marker_identificator_;
 
+            std::string debug_marker_identificator_;
+
             Eigen::Matrix<float, 2, 1> start_pose_;
             Eigen::Matrix<float, 2, 1> end_pose_;
+
+            Eigen::Matrix<float, 2, 1> cp1_;
+            Eigen::Matrix<float, 2, 1> cp2_;
 
             Eigen::Matrix<float, 2, 1> start_pose_tangent_;
             Eigen::Matrix<float, 2, 1> end_pose_tangent_;

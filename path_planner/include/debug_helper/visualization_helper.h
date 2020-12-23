@@ -25,11 +25,11 @@ namespace visualization_helper
             /**
              * @brief Publish the marker array with the specified index
              * 
-             * @param marker_array_identificator Identificator of the marker array that should be published
+             * @param marker_array_identifier identifier of the marker array that should be published
              * @return true Marker array exists and was published
              * @return false Marker array with the specified index was not existing
              */
-            bool visualizeMarkerArray(std::string marker_array_identificator);
+            bool visualizeMarkerArray(std::string marker_array_identifier);
 
             /**
              * @brief Add new marker array to the internal list
@@ -38,7 +38,7 @@ namespace visualization_helper
              */
             std::string addNewMarkerArray();
 
-            bool addNewMarkerArray(std::string marker_array_identificator);
+            bool addNewMarkerArray(std::string marker_array_identifier);
 
             std::string addMarkerTemplate(visualization_msgs::Marker marker_template);
             bool addMarkerTemplate(std::string marker_template_identifier, visualization_msgs::Marker marker_template);
@@ -46,7 +46,7 @@ namespace visualization_helper
             /**
              * @brief Checks if the marker array with the specified index is existing
              * 
-             * @param marker_array_identifier Identificator of the marker array
+             * @param marker_array_identifier identifier of the marker array
              * @return true Marker array is existing
              * @return false Marker array is existing
              */
@@ -57,7 +57,7 @@ namespace visualization_helper
             /**
              * @brief Add an additional marker from to the marker array that index was also handed through a parameter
              * 
-             * @param marker_array_identifier Identificator of the marker array where the marker should be added
+             * @param marker_array_identifier identifier of the marker array where the marker should be added
              * @param marker_to_add Marker that should be added to the marker array
              * @return true Marker array existed and marker was successfluyy added
              * @return false Marker array does not exist
@@ -68,7 +68,7 @@ namespace visualization_helper
             /**
              * @brief Add additional markers from a list to the marker array that index was also handed through a parameter
              * 
-             * @param marker_array_identifier Identificator of the marker array where the marker should be added
+             * @param marker_array_identifier identifier of the marker array where the marker should be added
              * @param marker_list_to_add List of markers that should be added to the marker array
              * @return true Marker array existed and marker was successfluyy added
              * @return false Marker array does not exist
@@ -78,12 +78,16 @@ namespace visualization_helper
 
             bool addMarkerToExistingMarkerArray(std::string marker_array_identifier,
                                                 geometry_msgs::Pose pose,
-                                                std::string marker_template_identificator);
+                                                std::string marker_template_identifier);
+
+            bool addMarkerLineToMarkerArray(std::string marker_array_identifier,
+                                            std::vector<geometry_msgs::Point> points,
+                                            std::string marker_template_identifier);
 
             /**
              * @brief Clear the marker array with the specified index to not publish some points again
              * 
-             * @param marker_array_identifier Identificator of the marker array
+             * @param marker_array_identifier identifier of the marker array
              * @return true Marker array exists and was cleared
              * @return false Marker array with the specified index was not existing
              */
@@ -99,12 +103,13 @@ namespace visualization_helper
             visualization_msgs::Marker createMarker();
 
             geometry_msgs::Pose createGeometryPose(float x_coord, float y_coord);
+            geometry_msgs::Point createGeometryPoint(float x_coord, float y_coord);
 
         private:
             /**
              * @brief Sets the time stamps of all markers in the specified marker array
              * 
-             * @param marker_array_identifier Identificator of the marker array
+             * @param marker_array_identifier identifier of the marker array
              */
             void setTimeStamps(std::string marker_array_identifier);
 
