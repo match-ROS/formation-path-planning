@@ -36,13 +36,20 @@ namespace visualization_helper
 
     bool VisualizationHelper::visualizeMarkerArray(std::string marker_array_identifier)
     {
+        // ROS_INFO("Ident: %s", marker_array_identifier.c_str());
+
         if(this->isMarkerArrayExisting(marker_array_identifier))
         {
+            // for(visualization_msgs::Marker marker: this->marker_array_list_[marker_array_identifier].markers)
+            // {
+            //     ROS_INFO("x: %f | y: %f", marker.pose.position.x, marker.pose.position.y);
+            // }
+
             this->setTimeStamps(marker_array_identifier);
             this->setMarkerIds(marker_array_identifier);
 
             this->marker_array_publisher_.publish(this->marker_array_list_[marker_array_identifier]);
-            ros::Duration(0.1); // Wait for markers to be shown, maybe this helps to visualize them every time
+            // ros::Duration(0.1).sleep(); // Wait for markers to be shown, maybe this helps to visualize them every time
             return true;
         }
         else
@@ -169,7 +176,6 @@ namespace visualization_helper
         marker_to_add.pose = pose;
         
         this->marker_array_list_[marker_array_identifier].markers.push_back(marker_to_add);
-        ROS_INFO("%s: %i", marker_array_identifier.c_str(), this->marker_array_list_[marker_array_identifier].markers.size());
         return true;
     }
 
@@ -234,22 +240,28 @@ namespace visualization_helper
     //PRIVATE METHODS
     void VisualizationHelper::setTimeStamps(std::string marker_array_identifier)
     {
-        for(int marker_counter = 0; marker_counter < (this->marker_array_list_[marker_array_identifier].markers.size() - 1); marker_counter++)
+        if(this->marker_array_list_[marker_array_identifier].markers.size() != 0)
         {
-            this->marker_array_list_[marker_array_identifier].markers[marker_counter].header.stamp = ros::Time::now();
+            for(int marker_counter = 0; marker_counter < (this->marker_array_list_[marker_array_identifier].markers.size() - 1); marker_counter++)
+            {
+                this->marker_array_list_[marker_array_identifier].markers[marker_counter].header.stamp = ros::Time::now();
+            }
         }
     }
 
     void VisualizationHelper::setMarkerIds(std::string marker_array_identifier)
     {
-        double max_id = this->max_marker_index_;
-        for (int marker_counter = 0;
-             marker_counter < (this->marker_array_list_[marker_array_identifier].markers.size() - 1);
-             marker_counter++)
+        if(this->marker_array_list_[marker_array_identifier].markers.size())
         {
-            max_id = max_id + marker_counter;
-            this->marker_array_list_[marker_array_identifier].markers[marker_counter].id = max_id;
+            double max_id = this->max_marker_index_;
+            for (int marker_counter = 0;
+                marker_counter < (this->marker_array_list_[marker_array_identifier].markers.size() - 1);
+                marker_counter++)
+            {
+                max_id = max_id + marker_counter;
+                this->marker_array_list_[marker_array_identifier].markers[marker_counter].id = max_id;
+            }
+            this->max_marker_index_ = max_id;
         }
-        this->max_marker_index_ = max_id;
     }
 }

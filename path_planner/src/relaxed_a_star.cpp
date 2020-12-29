@@ -233,8 +233,6 @@ namespace relaxed_a_star
                     selected_poses.push_back(plan[pose_counter]);
                 }
             }
-
-            // Add goal position if it was not already added
             geometry_msgs::PoseStamped last;
             last.header = (plan.end() - 1)->header;
             last.pose = (plan.end() - 1)->pose;
@@ -253,6 +251,7 @@ namespace relaxed_a_star
                 bezier_splines::CubicBezierSplines spline(&this->visu_helper_, start_pose, end_pose);    
                 spline_list.push_back(spline);
             }
+
             ROS_INFO("Tangent");
             tf::Quaternion start_quaternion;
             tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
@@ -268,23 +267,62 @@ namespace relaxed_a_star
             (spline_list.end() - 1)->setStartTangent((spline_list.end() - 2)->getEndTangent());
             (spline_list.end() - 1)->setEndTangent(end_quaternion);
 
-            for(int spline_counter = 1; spline_counter < (spline_list.size() - 1); spline_counter++)
+            ROS_INFO("Control Points");
+            for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
             {
-                ROS_INFO("CALC CONTROL POINTS");
                 spline_list[spline_counter].calcControlPoints();
             }
             // Create splines end
 
             // Visualize Splines
-            ROS_INFO("VISU");
             for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
             {
                 spline_list[spline_counter].addStartEndPointToVisuHelper();
                 spline_list[spline_counter].addTangentsToVisuHelper();
                 spline_list[spline_counter].addControlPointsToVisuHelper();
+                spline_list[spline_counter].addBezierSplineToVisuHelper();
                 spline_list[spline_counter].visualizeData();
             }
             // Visualize Splines End
+
+            // Create plan by splines
+            plan.clear();
+            std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
+            for(bezier_splines::CubicBezierSplines spline: spline_list)
+            {
+                std::vector<Eigen::Matrix<float, 2, 1>> points;
+                points = spline.calcBezierSpline(0.1);
+                points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
+            }
+            geometry_msgs::PoseStamped last_pose;
+            // < is necessary because we just copy elements from one vector (0 until size()) to the other
+            for(uint path_counter = 0; path_counter < points_of_plan.size(); path_counter++)
+            {
+                geometry_msgs::PoseStamped pose;
+                pose.header.stamp = ros::Time::now();
+                pose.header.frame_id = this->global_frame_;
+
+                pose.pose.position.x = points_of_plan[path_counter][0];
+                pose.pose.position.y = points_of_plan[path_counter][1];
+
+                // Calculate orientation for each point of the plan with the current position and the last one
+                if(path_counter == 0) // No previous point so orientation of start will be taken
+                {
+                    pose.pose.orientation = this->start_.pose.orientation;
+                }
+                else // Some other points are before, so orientation can be calculated
+                {
+                    float delta_x = pose.pose.position.x - last_pose.pose.position.x;
+                    float delta_y = pose.pose.position.y - last_pose.pose.position.y;
+                    double yaw_angle = std::atan2(delta_y, delta_x);
+                    pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
+                }
+
+                last_pose = pose; // Safe pose for next iteration
+                plan.insert(plan.begin() + plan.size(), pose);
+                ROS_INFO("plan size: %i", plan.size());
+            }
+            // Create plan by splines End
         }
         ROS_INFO("Planning finished %i", plan.size());
         this->publishPlan(plan);

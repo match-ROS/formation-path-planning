@@ -30,11 +30,13 @@ namespace bezier_splines
             void setEndTangent(Eigen::Matrix<float, 2, 1> next_pose);
 
             void calcControlPoints();
-            void calcBezierSpline();
+            Eigen::Matrix<float, 2, 1> calcPointOnBezierSpline(float iterator);
+            std::vector<Eigen::Matrix<float, 2, 1>> calcBezierSpline(float resolution);
 
             void visualizeData();
             void addStartEndPointToVisuHelper();
             void addControlPointsToVisuHelper();
+            void addBezierSplineToVisuHelper();
             void addTangentsToVisuHelper();
 
             Eigen::Matrix<float, 2, 1> getStartPose();
@@ -73,6 +75,7 @@ namespace bezier_splines
             std::string start_end_marker_identificator_;
             std::string control_point_marker_identificator_;
             std::string tangent_marker_identificator_;
+            std::string bezier_spline_identificator_;
 
             std::string debug_marker_identificator_;
 

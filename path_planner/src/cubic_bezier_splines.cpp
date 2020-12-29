@@ -58,7 +58,7 @@ namespace bezier_splines
         Eigen::Matrix<float, 2, 1> angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
         angular_bisector.normalize();
         float length_diff_vector_end_to_next = angular_bisector.norm();
-        this->end_pose_tangent_ = 0.5 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper
+        this->end_pose_tangent_ = 2.0 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper
     }
 
     void CubicBezierSplines::visualizeData()
@@ -66,7 +66,10 @@ namespace bezier_splines
         this->visu_helper_->visualizeMarkerArray(this->start_end_marker_identificator_);
         this->visu_helper_->visualizeMarkerArray(this->control_point_marker_identificator_);
         this->visu_helper_->visualizeMarkerArray(this->tangent_marker_identificator_);
+        this->visu_helper_->visualizeMarkerArray(this->bezier_spline_identificator_);
         // this->visu_helper_->visualizeMarkerArray(this->debug_marker_identificator_);
+
+        ros::Duration(0.2).sleep(); // Wait for markers to be shown, maybe this helps to visualize them every time
     }
 
     Eigen::Matrix<float, 2, 1> CubicBezierSplines::getStartPose()
@@ -101,15 +104,41 @@ namespace bezier_splines
     {
         this->cp1_ = (1.0 / 3.0) * this->start_pose_tangent_ + this->start_pose_;
         this->cp2_ = -(1.0 / 3.0) * this->end_pose_tangent_ + this->end_pose_;
-        if(this->cp1_[1] >= 0.05 || this->cp2_[1] >= 0.05)
+    }
+
+    Eigen::Matrix<float, 2, 1> CubicBezierSplines::calcPointOnBezierSpline(float iterator)
+    {
+        Eigen::Matrix<float, 4, 4> bezier_basis_matrix;
+        Eigen::Matrix<float, 1, 4> iterator_matrix;
+        
+        bezier_basis_matrix << -1, 3, -3, 1, 3, -6, 3, 0, -3, 3, 0, 0, 1, 0, 0, 0;
+        iterator_matrix << std::pow(iterator, 3), std::pow(iterator, 2), iterator, 1;
+
+        Eigen::Matrix<Eigen::Matrix<float, 2, 1>, 4, 1> point_matrix;
+        point_matrix[0] = this->start_pose_;
+        point_matrix[1] = this->cp1_;
+        point_matrix[2] = this->cp2_;
+        point_matrix[3] = this->end_pose_;
+
+        Eigen::Matrix<float, 4, 1> matrix_multi = iterator_matrix * bezier_basis_matrix;
+        Eigen::Matrix<float , 2, 1> result_vector;
+        result_vector << 0, 0;
+        for(int counter = 0; counter <= 3; counter++)
         {
-            ROS_INFO("start_pose: x: %f , y: %f", this->start_pose_[0], this->start_pose_[1]);
-            ROS_INFO("start_pose_tangent_: x: %f , y: %f", this->start_pose_tangent_[0], this->start_pose_tangent_[1]);
-            ROS_INFO("end_pose_: x: %f , y: %f", this->end_pose_[0], this->end_pose_[1]);
-            ROS_INFO("end_pose_tangent_: x: %f , y: %f", this->end_pose_tangent_[0], this->end_pose_tangent_[1]);
-            ROS_INFO("cp1_: x: %f , y: %f", this->cp1_[0], this->cp1_[1]);
-            ROS_INFO("cp2_: x: %f , y: %f", this->cp2_[0], this->cp2_[1]);
+            result_vector = result_vector + (matrix_multi[counter] * point_matrix[counter]);
         }
+        return result_vector;
+    }
+
+    std::vector<Eigen::Matrix<float, 2, 1>> CubicBezierSplines::calcBezierSpline(float resolution)
+    {
+        std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
+        for(float counter = 0; counter <= 1.0; counter = counter + resolution)
+        {
+            bezier_spline.push_back(this->calcPointOnBezierSpline(counter));
+        }
+
+        return bezier_spline;
     }
 
     void CubicBezierSplines::initVisuHelper()
@@ -117,6 +146,8 @@ namespace bezier_splines
         this->start_end_marker_identificator_ = "start_end";
         this->control_point_marker_identificator_ = "control_points";
         this->tangent_marker_identificator_ = "tangents";
+        this->bezier_spline_identificator_ = "bezier_spline";
+
         this->debug_marker_identificator_ = "bezier_debug";
 
         if(!this->visu_helper_->isMarkerArrayExisting(this->start_end_marker_identificator_))
@@ -175,6 +206,23 @@ namespace bezier_splines
             this->visu_helper_->addMarkerTemplate(this->tangent_marker_identificator_, marker_template_tangents);
         }
 
+        if(!this->visu_helper_->isMarkerArrayExisting(this->bezier_spline_identificator_))
+        {
+            this->visu_helper_->addNewMarkerArray(this->bezier_spline_identificator_);
+        }
+        if(!this->visu_helper_->isMarkerTemplateExisting(this->bezier_spline_identificator_))
+        {
+            visualization_msgs::Marker bezier_spline_template;
+            bezier_spline_template.action = visualization_msgs::Marker::ADD;
+            bezier_spline_template.color.a = 1.0;
+            bezier_spline_template.color.r = 1.0;
+            bezier_spline_template.header.frame_id = "map";
+            bezier_spline_template.ns = "bezier_spline";
+            bezier_spline_template.scale.x = 0.03;
+            bezier_spline_template.type = visualization_msgs::Marker::LINE_STRIP;
+            this->visu_helper_->addMarkerTemplate(this->bezier_spline_identificator_, bezier_spline_template);
+        }
+
         if(!this->visu_helper_->isMarkerArrayExisting(this->debug_marker_identificator_))
         {
             this->visu_helper_->addNewMarkerArray(this->debug_marker_identificator_);
@@ -206,7 +254,6 @@ namespace bezier_splines
 
     void CubicBezierSplines::addControlPointsToVisuHelper()
     {
-        ROS_INFO("adding");
         this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_identificator_,
                                                            this->visu_helper_->createGeometryPose(this->cp1_[0], this->cp1_[1]),
                                                            this->control_point_marker_identificator_);
@@ -233,6 +280,23 @@ namespace bezier_splines
         this->visu_helper_->addMarkerLineToMarkerArray(this->tangent_marker_identificator_,
                                                        line,
                                                        this->tangent_marker_identificator_);
+    }
+
+    void CubicBezierSplines::addBezierSplineToVisuHelper()
+    {
+        std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
+        std::vector<geometry_msgs::Point> line;
+
+        bezier_spline = this->calcBezierSpline(0.1);
+
+        for(Eigen::Matrix<float, 2, 1> point_on_spline: bezier_spline)
+        {
+            line.push_back(this->visu_helper_->createGeometryPoint(point_on_spline[0], point_on_spline[1]));
+        }
+
+        this->visu_helper_->addMarkerLineToMarkerArray(this->bezier_spline_identificator_,
+                                                       line, 
+                                                       this->bezier_spline_identificator_);
     }
 
     void CubicBezierSplines::addDebugVectorToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> vector)
