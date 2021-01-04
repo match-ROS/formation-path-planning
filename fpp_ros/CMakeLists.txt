@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 3.0.2)
 project(fpp_ros)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(catkin REQUIRED)
+
+## System dependencies are found with CMake's conventions
 find_package(
-    catkin REQUIRED COMPONENTS
+    catkin REQUIRED COMPONENTS 
     roscpp
     mbf_costmap_core
     mbf_msgs
@@ -16,7 +19,9 @@ find_package(
     nav_msgs
     geometry_msgs
     visualization_msgs
+    std_srvs
     costmap_2d)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -134,9 +139,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/fpp_ros.cpp
-# )
+add_library(fpp_ros src/fpp_ros.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -159,9 +162,7 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+# target_link_libraries(fpp_ros ${catkin_LIBRARIES})
 
 #############
 ## Install ##
