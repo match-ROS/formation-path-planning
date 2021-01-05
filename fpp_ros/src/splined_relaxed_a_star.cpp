@@ -1,5 +1,4 @@
 #include <fpp_ros/path_planner/splined_relaxed_a_star.h>
-#include <pluginlib/class_list_macros.h>
 
 namespace splined_relaxed_a_star
 {
@@ -42,8 +41,6 @@ namespace splined_relaxed_a_star
             int neighbor_type;
             private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(general_types::NeighborType::FourWay));
             this->neighbor_type_ = (general_types::NeighborType)neighbor_type;
-            private_nh.param<float>("maximal_curvature", this->maximal_curvature_, 20);
-            private_nh.param<int>("curvature_calculation_cell_distance", this->curvature_calculation_cell_distance_, 4);
 
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);

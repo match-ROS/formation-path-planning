@@ -4,6 +4,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/Polygon.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -16,6 +17,13 @@
 #include <mbf_msgs/GetPathResult.h>
 #include <nav_core/base_global_planner.h>
 
+#include <iostream>
+#include <string>
+#include <memory> // Usage of smart pointers
+#include <vector>
+#include <list>
+#include <set>
+#include <map>
 
 namespace fpp
 {
@@ -110,6 +118,7 @@ namespace fpp
 
             void getParams();
 
+            std::string robot_name_;
             /**
              * @brief Global frame of the robot
              * 
@@ -120,6 +129,15 @@ namespace fpp
              * 
              */
             std::string tf_prefix_;
+
+            // Parameter list
+            // The default tolerance that is used if the tolerance of the received goal is not valid
+            // Default: 0.2
+            float default_tolerance_;
+
+            // This list is initialized through the path planner config file
+            // Contains all positions of every robot that is part of the formation
+            std::map<std::string, geometry_msgs::Pose> robot_positions_;
 
             // Process information
             /**

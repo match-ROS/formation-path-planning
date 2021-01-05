@@ -38,14 +38,39 @@ namespace fpp
             this->global_frame_ = global_frame;
             this->array_size_ = this->costmap_->getSizeInCellsX() * this->costmap_->getSizeInCellsY();
 
+            std::string robot_namespace = ros::this_node::getNamespace();
+            robot_namespace = robot_namespace.erase(robot_namespace.find("_ns"), 3);
+            this->robot_name_ = robot_namespace.erase(robot_namespace.find("/"), 1);
+
             // Get parameter of planner
-            // ros::NodeHandle private_nh("~/" + name);
-            // private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
-            // int neighbor_type;
-            // private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(general_types::NeighborType::FourWay));
-            // this->neighbor_type_ = (general_types::NeighborType)neighbor_type;
-            // private_nh.param<float>("maximal_curvature", this->maximal_curvature_, 20);
-            // private_nh.param<int>("curvature_calculation_cell_distance", this->curvature_calculation_cell_distance_, 4);
+            ros::NodeHandle private_nh("~/" + name);
+            private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
+
+            //First check for formation_config and robot0 config
+            if(!private_nh.hasParam("formation_config") || !private_nh.hasParam("formation_config/robot0"))
+            {
+                ROS_ERROR("FormationPathPlanner: Error during initialization. formation_config or robot0 config is missing.");
+                return;
+            }
+            std::string default_robot_name = "robot";
+            int default_last_robot = 100;
+            for(int robot_counter = 0; robot_counter <= default_last_robot; robot_counter++)
+            {
+                std::string robot_position_namespace = "formation_config/" + default_robot_name + std::to_string(robot_counter);
+                if(private_nh.hasParam(robot_position_namespace))
+                {
+                    geometry_msgs::Pose robot_position;
+                    private_nh.param<double>(robot_position_namespace + "x", robot_position.position.x, 0.0);
+                    private_nh.param<double>(robot_position_namespace + "y", robot_position.position.y, 0.0);
+                    private_nh.param<double>(robot_position_namespace + "z", robot_position.position.z, 0.0);
+                    double yaw;
+                    private_nh.param<double>(robot_position_namespace + "yaw", yaw, 0.0);
+                    tf::quaternionTFToMsg(tf::Quaternion(yaw, 0.0, 0.0), robot_position.orientation);
+
+                    this->robot_positions_.insert(std::pair<std::string, geometry_msgs::Pose>(default_robot_name + std::to_string(robot_counter),
+                                                                                              robot_position));
+                }
+            }
 
             // Get the tf prefix
             ros::NodeHandle nh;
