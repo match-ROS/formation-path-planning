@@ -22,13 +22,13 @@ namespace fpp_helper
             void updateCircle();
             void findNewSmallestCircle();        
             Eigen::Vector2d calcCentreOfVector(Eigen::Vector2d first_point, Eigen::Vector2d second_point);
-            Eigen::Vector2d calcCentreOfVector(Eigen::Vector2d start_point, Eigen::Vector2d vector_to_end_point);
             Eigen::Vector2d calcOrthogonalVector(Eigen::Vector2d vector);
-            Eigen::Vector2d MinimalEnclosingCircle::calcVectorLineIntersectionPoint(Eigen::Vector2d lead_vector1,
-                                                                                    Eigen::Vector2d direction_vector1,
-                                                                                    Eigen::Vector2d lead_vector2,
-                                                                                    Eigen::Vector2d direction_vector2);
+            Eigen::Vector2d calcVectorLineIntersectionPoint(Eigen::Vector2d lead_vector1,
+                                                            Eigen::Vector2d direction_vector1,
+                                                            Eigen::Vector2d lead_vector2,
+                                                            Eigen::Vector2d direction_vector2);
             double calcDistance(Eigen::Vector2d first_point, Eigen::Vector2d second_point);
+            bool hasCircleAllPointsEnclosed();
 
             std::vector<Eigen::Vector2d> enclosed_points_;
             std::vector<Eigen::Vector2d> circle_defining_points_;

@@ -28,9 +28,6 @@
     <arg name="robot2_y_pos" default="-1.0"/>
     <arg name="robot2_yaw_rot" default="0.0"/>
 
-    <!--Load parameter for formation path planner-->
-    <rosparam file="$(find fpp_ros)/config/robot_formation_config.yaml" command="load"/>  
-
     <!--Start complete system-->
     <include file="$(find mur205_launch)/launch/system_sim.launch">
         <arg name="open_navigation_rviz" value="$(arg open_navigation_rviz)"/>

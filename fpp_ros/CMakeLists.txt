@@ -20,7 +20,8 @@ find_package(
     geometry_msgs
     visualization_msgs
     std_srvs
-    costmap_2d)
+    costmap_2d
+    dynamic_reconfigure)
 
 
 ## System dependencies are found with CMake's conventions
@@ -125,6 +126,7 @@ catkin_package(
     nav_core
     geometry_msgs
     tf
+    dynamic_reconfigure
 )
 
 ###########
@@ -140,6 +142,10 @@ include_directories(
 
 ## Declare a C++ library
 add_library(fpp_ros src/fpp_ros.cpp)
+# add_library(general_types include/general_types/general_types.h)
+# add_library(splined_relaxed_a_star src/splined_relaxed_a_star.cpp)
+# add_library(cubic_bezier_splines src/cubic_bezier_splines.cpp)
+add_library(minimal_enclosing_circle src/minimal_enclosing_circle.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -157,12 +163,17 @@ add_library(fpp_ros src/fpp_ros.cpp)
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
 
+## This setting of properties is so that I can only use a .h file without a .cpp file
+## cpp would be empty as these files only contain types
+# set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(fpp_ros ${catkin_LIBRARIES})
+target_link_libraries(fpp_ros minimal_enclosing_circle ${catkin_LIBRARIES})
+# target_link_libraries(splined_relaxed_a_star general_types cubic_bezier_splines debug_helper  ${catkin_LIBRARIES})
 
 #############
 ## Install ##

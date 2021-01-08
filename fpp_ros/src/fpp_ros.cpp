@@ -9,13 +9,13 @@ namespace fpp
     FormationPathPlanner::FormationPathPlanner()
         : initialized_(false)
     {
-        ROS_ERROR("RELAXED A STAR DEFAULT CONSTRUCTOR");
+        ROS_ERROR("FORMATION PATH PLANNER DEFAULT CONSTRUCTOR");
     }
 
     FormationPathPlanner::FormationPathPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
         : initialized_(false)
     {
-        ROS_ERROR("RELAXED A STAR OVERLOADED CONSTRUCTOR");
+        ROS_ERROR("FORMATION PATH PLANNER OVERLOADED CONSTRUCTOR");
         this->initialize(name, costmap_ros);
     }
 
@@ -56,7 +56,7 @@ namespace fpp
             int default_last_robot = 100;
             for(int robot_counter = 0; robot_counter <= default_last_robot; robot_counter++)
             {
-                std::string robot_position_namespace = "formation_config/" + default_robot_name + std::to_string(robot_counter);
+                std::string robot_position_namespace = "formation_config/" + default_robot_name + std::to_string(robot_counter) + "/";
                 if(private_nh.hasParam(robot_position_namespace))
                 {
                     geometry_msgs::Pose robot_position;
@@ -65,7 +65,9 @@ namespace fpp
                     private_nh.param<double>(robot_position_namespace + "z", robot_position.position.z, 0.0);
                     double yaw;
                     private_nh.param<double>(robot_position_namespace + "yaw", yaw, 0.0);
-                    tf::quaternionTFToMsg(tf::Quaternion(yaw, 0.0, 0.0), robot_position.orientation);
+                    tf::Quaternion robot_orientation;
+                    robot_orientation.setEuler(yaw, 0.0, 0.0);
+                    tf::quaternionTFToMsg(robot_orientation, robot_position.orientation);
 
                     this->robot_positions_.insert(std::pair<std::string, geometry_msgs::Pose>(default_robot_name + std::to_string(robot_counter),
                                                                                               robot_position));
@@ -75,6 +77,40 @@ namespace fpp
             // Get the tf prefix
             ros::NodeHandle nh;
             this->tf_prefix_ = tf::getPrefixParam(nh);
+
+            this->formation_outline_circle_ = fpp_helper::MinimalEnclosingCircle();
+            std::vector<Eigen::Vector2d> robot_positions;
+            for(std::pair<std::string, geometry_msgs::Pose> robot_position: this->robot_positions_)
+            {
+                Eigen::Vector2d position;
+                position << robot_position.second.position.x, robot_position.second.position.y;
+                robot_positions.push_back(position);
+            }
+            this->formation_outline_circle_.calcMinimalEnclosingCircle(robot_positions);
+            this->temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters");
+            this->temp_.waitForExistence();
+
+            ROS_INFO("1");
+            dynamic_reconfigure::Reconfigure rec;
+            dynamic_reconfigure::ReconfigureRequest reconf_req;
+            ROS_INFO("2");
+            dynamic_reconfigure::DoubleParameter param_to_reconfig;
+            ROS_INFO("3");
+            param_to_reconfig.name = "inflation_radius";
+            ROS_INFO("4");
+            param_to_reconfig.value = 5.0;
+            ROS_INFO("5");
+            reconf_req.config.doubles.resize(1);
+            reconf_req.config.doubles.at(0) = param_to_reconfig;
+            ROS_INFO("6");
+            dynamic_reconfigure::ReconfigureResponse reconf_res;
+            ROS_INFO("7");
+            rec.request = reconf_req;
+            this->temp_.call(rec);
+            
+            //ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
+            ROS_INFO("8");
+            ROS_INFO("%i", rec.response.config.doubles.size());
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 

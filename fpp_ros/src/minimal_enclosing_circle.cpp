@@ -36,6 +36,8 @@ namespace fpp_helper
                 }
             }
         }
+
+        std::cout << "Minimal Circle | x: " << this->circle_centre_[0] << " , y: " << this->circle_centre_[1] << " , radius: " << this->circle_radius_ << "\n";
     }
 
     void MinimalEnclosingCircle::findNewSmallestCircle()
@@ -78,6 +80,7 @@ namespace fpp_helper
         }
         else if(this->circle_defining_points_.size() == 4)
         {
+            std::vector<Eigen::Vector2d> saved_circle_defining_points = this->circle_defining_points_;
             Eigen::Vector2d new_point = this->circle_defining_points_.back();
             
             std::vector<Eigen::Vector2d> best_circle_defining_points;
@@ -87,15 +90,47 @@ namespace fpp_helper
             smallest_circle_radius = this->calcDistance(new_point, this->circle_defining_points_[0]);
 
             // First try forming smallest circle with new point and one of the old points
-            for(Eigen::Vector2d point: this->circle_defining_points_)
+            for(Eigen::Vector2d point: saved_circle_defining_points)
             {
                 if(point != new_point)
                 {
-                    
+                    this->circle_defining_points_.clear();
+                    this->circle_defining_points_.push_back(point);
+                    this->circle_defining_points_.push_back(new_point);
+                    this->updateCircle();
+                    if(this->hasCircleAllPointsEnclosed() && this->circle_radius_ < smallest_circle_radius)
+                    {
+                        best_circle_defining_points = this->circle_defining_points_;
+                        smallest_circle_radius = this->circle_radius_;
+                    }
                 }
             }
 
             // Then try forming smallest circle with new point and two of the old points
+            for(int point_counter = 0; point_counter < 3; point_counter++)
+            {
+                this->circle_defining_points_.clear();
+                this->circle_defining_points_.push_back(saved_circle_defining_points[point_counter]);
+                if(point_counter == 2)
+                {
+                    this->circle_defining_points_.push_back(saved_circle_defining_points[0]);
+                }
+                else
+                {
+                    this->circle_defining_points_.push_back(saved_circle_defining_points[point_counter+1]);
+                }
+                this->circle_defining_points_.push_back(new_point);
+                this->updateCircle();
+
+                if(this->hasCircleAllPointsEnclosed() && this->circle_radius_ < smallest_circle_radius)
+                {
+                    best_circle_defining_points = this->circle_defining_points_;
+                    smallest_circle_radius = this->circle_radius_;
+                }
+            }
+
+            this->circle_defining_points_ = best_circle_defining_points;
+            this->updateCircle();
         }
     }
 
@@ -103,11 +138,16 @@ namespace fpp_helper
     {
         if(this->circle_defining_points_.size() == 2)
         {
+            std::cout << "2" << "\n";
+            std::cout << this->enclosed_points_[0][0] << " " << this->enclosed_points_[0][1] << "\n";
+            std::cout << this->enclosed_points_[1][0] << " " << this->enclosed_points_[1][1] << "\n";
             this->circle_centre_ = this->calcCentreOfVector(this->enclosed_points_[0], this->enclosed_points_[1]);
             this->circle_radius_ = 0.5 * this->calcDistance(this->enclosed_points_[0], this->enclosed_points_[1]);
+            std::cout << this->circle_centre_[0] << " " << this->circle_centre_[1] << " " << this->circle_radius_ << "\n";
         }
         else if(this->circle_defining_points_.size() == 3)
         {
+            std::cout << "3";
             Eigen::Vector2d vector_centre1 = this->calcCentreOfVector(this->circle_defining_points_[1], this->circle_defining_points_[0]);
             Eigen::Vector2d orthogonal_vector1 = this->calcOrthogonalVector(this->circle_defining_points_[0] - this->circle_defining_points_[1]);
             Eigen::Vector2d vector_centre2 = this->calcCentreOfVector(this->circle_defining_points_[1], this->circle_defining_points_[2]);
@@ -128,11 +168,6 @@ namespace fpp_helper
         Eigen::Vector2d diff_vector = second_point - first_point;
         Eigen::Vector2d relative_circle_centre = 0.5 * diff_vector;
         return first_point + relative_circle_centre;
-    }
-
-    Eigen::Vector2d MinimalEnclosingCircle::calcCentreOfVector(Eigen::Vector2d start_point, Eigen::Vector2d vector_to_end_point)
-    {
-        return start_point + 0.5 * vector_to_end_point;
     }
 
     Eigen::Vector2d MinimalEnclosingCircle::calcOrthogonalVector(Eigen::Vector2d vector)
@@ -163,5 +198,20 @@ namespace fpp_helper
     {
         Eigen::Vector2d diff_vector = second_point - first_point;
         return diff_vector.norm();
+    }
+
+    bool MinimalEnclosingCircle::hasCircleAllPointsEnclosed()
+    {
+        for(Eigen::Vector2d point : this->enclosed_points_)
+        {
+            if(std::find(this->circle_defining_points_.begin(), this->circle_defining_points_.end(), point) == this->circle_defining_points_.end())
+            {
+                if(this->calcDistance(this->circle_centre_, point) > this->circle_radius_)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

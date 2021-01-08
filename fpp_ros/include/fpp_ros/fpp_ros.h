@@ -13,6 +13,10 @@
 #include <costmap_2d/costmap_2d.h>
 #include <tf/transform_listener.h>
 
+#include <dynamic_reconfigure/client.h>
+#include <dynamic_reconfigure/Reconfigure.h>
+#include <dynamic_reconfigure/DoubleParameter.h>
+
 #include <mbf_costmap_core/costmap_planner.h>
 #include <mbf_msgs/GetPathResult.h>
 #include <nav_core/base_global_planner.h>
@@ -24,6 +28,9 @@
 #include <list>
 #include <set>
 #include <map>
+#include <boost/bind.hpp>
+
+#include <fpp_ros/path_planner/minimal_enclosing_circle.h>
 
 namespace fpp
 {
@@ -114,9 +121,9 @@ namespace fpp
             costmap_2d::Costmap2D *costmap_;
 
         private:
-            bool initialized_;
-
             void getParams();
+            
+            bool initialized_;
 
             std::string robot_name_;
             /**
@@ -156,6 +163,9 @@ namespace fpp
              * 
              */
             geometry_msgs::PoseStamped goal_;
-            
+
+            fpp_helper::MinimalEnclosingCircle formation_outline_circle_;
+
+            ros::ServiceClient temp_;
     };
 }
