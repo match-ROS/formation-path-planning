@@ -87,30 +87,65 @@ namespace fpp
                 robot_positions.push_back(position);
             }
             this->formation_outline_circle_.calcMinimalEnclosingCircle(robot_positions);
-            this->temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters");
-            this->temp_.waitForExistence();
+
+            // this->temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters");
+            // this->temp_.waitForExistence();
+
+            // ROS_INFO("1");
+            // dynamic_reconfigure::Reconfigure rec;
+            // ROS_INFO("2");
+            // dynamic_reconfigure::DoubleParameter param_to_reconfig;
+            // dynamic_reconfigure::BoolParameter test_param;
+            // ROS_INFO("3");
+            // // param_to_reconfig.name = "inflation_radiusss";
+            // // param_to_reconfig.value = 5.0;
+            // test_param.name="enabled";
+            // test_param.value = true;
+            // ROS_INFO("5");
+            // rec.request.config.bools.push_back(test_param);
+            // // rec.request.config.doubles.push_back(param_to_reconfig);
+            // // ROS_INFO("size: %i", rec.request.config.doubles.size());
+            // ROS_INFO("6");
+            // this->temp_.call(rec);
+            // //ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
+            // ROS_INFO("7");
+            // ROS_INFO("%i", rec.response.config.doubles.size());
+
+            // ROS_INFO("1");
+            // dynamic_reconfigure::Client<costmap_2d::InflationPluginConfig> client("/robot1_ns/move_base_flex/global_costmap/inflation");
+            // ROS_INFO("2");
+            // costmap_2d::InflationPluginConfig cfg;
+            // ROS_INFO("3");
+            // cfg = costmap_2d::InflationPluginConfig::__getMax__();
+            // ROS_INFO("4");
+            // client.setConfiguration(cfg);
+            // ROS_INFO("5");
+
+            ROS_INFO("%s, 0", nh.getNamespace().c_str());
+            
+            temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters");
+            temp_.waitForExistence();
 
             ROS_INFO("1");
             dynamic_reconfigure::Reconfigure rec;
-            dynamic_reconfigure::ReconfigureRequest reconf_req;
             ROS_INFO("2");
             dynamic_reconfigure::DoubleParameter param_to_reconfig;
             ROS_INFO("3");
             param_to_reconfig.name = "inflation_radius";
-            ROS_INFO("4");
             param_to_reconfig.value = 5.0;
             ROS_INFO("5");
-            reconf_req.config.doubles.resize(1);
-            reconf_req.config.doubles.at(0) = param_to_reconfig;
+            rec.request.config.doubles.push_back(param_to_reconfig);
+            ROS_INFO("size: %i", rec.request.config.doubles.size());
             ROS_INFO("6");
-            dynamic_reconfigure::ReconfigureResponse reconf_res;
-            ROS_INFO("7");
-            rec.request = reconf_req;
-            this->temp_.call(rec);
-            
+            // temp_.call(rec);
             //ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
-            ROS_INFO("8");
-            ROS_INFO("%i", rec.response.config.doubles.size());
+            ROS_INFO("7");
+            ROS_INFO("size: %i", rec.response.config.doubles.size());
+            ROS_INFO("LIST:");
+            for(dynamic_reconfigure::DoubleParameter param: rec.response.config.doubles)
+            {
+                ROS_INFO("name: %s, value: %f", param.name.c_str(), param.value);
+            }
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 

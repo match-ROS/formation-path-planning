@@ -16,6 +16,8 @@
 #include <dynamic_reconfigure/client.h>
 #include <dynamic_reconfigure/Reconfigure.h>
 #include <dynamic_reconfigure/DoubleParameter.h>
+#include <dynamic_reconfigure/BoolParameter.h>
+#include <costmap_2d/InflationPluginConfig.h>
 
 #include <mbf_costmap_core/costmap_planner.h>
 #include <mbf_msgs/GetPathResult.h>
