@@ -18,6 +18,8 @@ namespace fpp_helper
             MinimalEnclosingCircle();
 
             void calcMinimalEnclosingCircle(std::vector<Eigen::Vector2d> points_to_enclose);
+
+            double getCircleRadius();
         private:
             void updateCircle();
             void findNewSmallestCircle();        

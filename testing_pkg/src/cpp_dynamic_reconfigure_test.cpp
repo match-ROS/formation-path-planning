@@ -24,9 +24,9 @@ bool empty(std_srvs::Empty::Request& request, std_srvs::Empty::Response& respons
     rec.request.config.doubles.push_back(param_to_reconfig);
     ROS_INFO("size: %i", rec.request.config.doubles.size());
     ROS_INFO("6");
-    bool b = temp_.call(rec);
-    ROS_INFO("%i", b);
-    //ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
+    //bool b = temp_.call(rec);
+    // ROS_INFO("%i", b);
+    ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", rec.request, rec.response);
     ROS_INFO("7");
     ROS_INFO("size: %i", rec.response.config.doubles.size());
     ROS_INFO("LIST:");

@@ -40,6 +40,11 @@ namespace fpp_helper
         std::cout << "Minimal Circle | x: " << this->circle_centre_[0] << " , y: " << this->circle_centre_[1] << " , radius: " << this->circle_radius_ << "\n";
     }
 
+    double MinimalEnclosingCircle::getCircleRadius()
+    {
+        return this->circle_radius_;
+    }
+
     void MinimalEnclosingCircle::findNewSmallestCircle()
     {
         if(this->circle_defining_points_.size() == 3)

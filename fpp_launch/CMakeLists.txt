@@ -1,29 +1,15 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(fpp_ros)
+project(fpp_launch)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
-
-## System dependencies are found with CMake's conventions
-find_package(
-    catkin REQUIRED COMPONENTS 
-    roscpp
-    mbf_costmap_core
-    mbf_msgs
-    fpp_msgs
-    nav_core
-    nav_msgs
-    geometry_msgs
-    visualization_msgs
-    std_srvs
-    costmap_2d
-    dynamic_reconfigure)
-
+find_package(catkin REQUIRED
+    rospy
+    )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -115,20 +101,10 @@ find_package(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    INCLUDE_DIRS 
-    include
-  LIBRARIES 
-    fpp_ros
-  CATKIN_DEPENDS 
-    roscpp
-    pluginlib
-    mbf_costmap_core
-    mbf_msgs
-    fpp_msgs
-    nav_core
-    geometry_msgs
-    tf
-    dynamic_reconfigure
+#  INCLUDE_DIRS include
+#  LIBRARIES fpp_general
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
 )
 
 ###########
@@ -138,16 +114,14 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
+# include
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-add_library(fpp_ros src/fpp_ros.cpp)
-# add_library(general_types include/general_types/general_types.h)
-# add_library(splined_relaxed_a_star src/splined_relaxed_a_star.cpp)
-# add_library(cubic_bezier_splines src/cubic_bezier_splines.cpp)
-add_library(minimal_enclosing_circle src/minimal_enclosing_circle.cpp)
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/fpp_general.cpp
+# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -157,26 +131,22 @@ add_library(minimal_enclosing_circle src/minimal_enclosing_circle.cpp)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(dyn_reconfig_relay_node src/nodes/dyn_reconfig_relay_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/fpp_general_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
-
-## This setting of properties is so that I can only use a .h file without a .cpp file
-## cpp would be empty as these files only contain types
-# set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(fpp_ros minimal_enclosing_circle ${catkin_LIBRARIES})
-target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
-# target_link_libraries(splined_relaxed_a_star general_types cubic_bezier_splines debug_helper  ${catkin_LIBRARIES})
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -187,10 +157,10 @@ target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  scripts/move_ur5_to_home_pose.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
@@ -225,7 +195,7 @@ target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_fpp_ros.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_fpp_general.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

@@ -77,6 +77,7 @@ namespace fpp
             // Get the tf prefix
             ros::NodeHandle nh;
             this->tf_prefix_ = tf::getPrefixParam(nh);
+            this->robot_ns_ = nh.getNamespace();
 
             this->formation_outline_circle_ = fpp_helper::MinimalEnclosingCircle();
             std::vector<Eigen::Vector2d> robot_positions;
@@ -87,65 +88,13 @@ namespace fpp
                 robot_positions.push_back(position);
             }
             this->formation_outline_circle_.calcMinimalEnclosingCircle(robot_positions);
-
-            // this->temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters");
-            // this->temp_.waitForExistence();
-
-            // ROS_INFO("1");
-            // dynamic_reconfigure::Reconfigure rec;
-            // ROS_INFO("2");
-            // dynamic_reconfigure::DoubleParameter param_to_reconfig;
-            // dynamic_reconfigure::BoolParameter test_param;
-            // ROS_INFO("3");
-            // // param_to_reconfig.name = "inflation_radiusss";
-            // // param_to_reconfig.value = 5.0;
-            // test_param.name="enabled";
-            // test_param.value = true;
-            // ROS_INFO("5");
-            // rec.request.config.bools.push_back(test_param);
-            // // rec.request.config.doubles.push_back(param_to_reconfig);
-            // // ROS_INFO("size: %i", rec.request.config.doubles.size());
-            // ROS_INFO("6");
-            // this->temp_.call(rec);
-            // //ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
-            // ROS_INFO("7");
-            // ROS_INFO("%i", rec.response.config.doubles.size());
-
-            // ROS_INFO("1");
-            // dynamic_reconfigure::Client<costmap_2d::InflationPluginConfig> client("/robot1_ns/move_base_flex/global_costmap/inflation");
-            // ROS_INFO("2");
-            // costmap_2d::InflationPluginConfig cfg;
-            // ROS_INFO("3");
-            // cfg = costmap_2d::InflationPluginConfig::__getMax__();
-            // ROS_INFO("4");
-            // client.setConfiguration(cfg);
-            // ROS_INFO("5");
-
-            ROS_INFO("%s, 0", nh.getNamespace().c_str());
             
-            temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters");
-            temp_.waitForExistence();
-
-            ROS_INFO("1");
-            dynamic_reconfigure::Reconfigure rec;
-            ROS_INFO("2");
-            dynamic_reconfigure::DoubleParameter param_to_reconfig;
-            ROS_INFO("3");
-            param_to_reconfig.name = "inflation_radius";
-            param_to_reconfig.value = 5.0;
-            ROS_INFO("5");
-            rec.request.config.doubles.push_back(param_to_reconfig);
-            ROS_INFO("size: %i", rec.request.config.doubles.size());
-            ROS_INFO("6");
-            // temp_.call(rec);
-            //ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
-            ROS_INFO("7");
-            ROS_INFO("size: %i", rec.response.config.doubles.size());
-            ROS_INFO("LIST:");
-            for(dynamic_reconfigure::DoubleParameter param: rec.response.config.doubles)
-            {
-                ROS_INFO("name: %s, value: %f", param.name.c_str(), param.value);
-            }
+            this->dyn_rec_inflation_srv_client_ = nh.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
+            this->dyn_rec_inflation_srv_client_.waitForExistence();
+            fpp_msgs::DynReconfigure dyn_reconfig_msg;
+            dyn_reconfig_msg.request.new_inflation_radius = this->formation_outline_circle_.getCircleRadius();
+            dyn_reconfig_msg.request.robot_namespace = this->robot_ns_ ;
+            this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 

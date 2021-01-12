@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-    <!--Launch rviz-->
-    <node type="rviz" name="rviz2" pkg="rviz" args="-d $(find fpp_general)/rviz/advanced_a_star.rviz"/>
-</launch>

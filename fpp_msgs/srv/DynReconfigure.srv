@@ -1,0 +1,6 @@
+string robot_namespace
+float64 new_inflation_radius 
+geometry_msgs/Polygon new_footprint
+---
+bool result
+string message

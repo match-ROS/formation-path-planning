@@ -33,6 +33,7 @@
 #include <boost/bind.hpp>
 
 #include <fpp_ros/path_planner/minimal_enclosing_circle.h>
+#include <fpp_msgs/DynReconfigure.h>
 
 namespace fpp
 {
@@ -125,18 +126,19 @@ namespace fpp
         private:
             void getParams();
             
+            // Boolean flag that defines if the path planner was initialized correctly (initialize method was executed successfully)
             bool initialized_;
 
+            // Namespace the robot is located in (f.e. robot1_ns)
+            std::string robot_ns_;
+
+            // Name of the robot
             std::string robot_name_;
-            /**
-             * @brief Global frame of the robot
-             * 
-             */
+
+            // Global frame of the robot
             std::string global_frame_;
-            /**
-             * @brief tf_prefix that was defined in the launch files for the robot
-             * 
-             */
+
+            // tf_prefix that was defined in the launch files for the robot
             std::string tf_prefix_;
 
             // Parameter list
@@ -155,19 +157,16 @@ namespace fpp
              * 
              */
             int array_size_;
-            /**
-             * @brief Storing the start position as pose from where the robot is starting
-             * 
-             */
+            // Storing the start position as pose from where the robot is starting
             geometry_msgs::PoseStamped start_;
-            /**
-             * @brief Storing the goal position as pose where the robot should arrive after following the calculated path
-             * 
-             */
+            // Storing the goal position as pose where the robot should arrive after following the calculated path
             geometry_msgs::PoseStamped goal_;
 
             fpp_helper::MinimalEnclosingCircle formation_outline_circle_;
 
-            ros::ServiceClient temp_;
+            // Because I was not able to dynamically reconfigure the costmap from this class
+            // I had to create a relay node that would get a service (this one) and forward
+            // it to the dynamic reconfigure server
+            ros::ServiceClient dyn_rec_inflation_srv_client_;
     };
 }
