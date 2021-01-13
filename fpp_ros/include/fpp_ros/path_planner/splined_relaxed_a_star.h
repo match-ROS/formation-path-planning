@@ -29,7 +29,7 @@
 #include <debug_helper/visualization_helper.h>
 #include <splines/cubic_bezier_splines.h>
 
-namespace splined_relaxed_a_star
+namespace path_planner
 {
     class SplinedRelaxedAStar
     {

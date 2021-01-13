@@ -13,7 +13,7 @@
 #include <debug_helper/visualization_helper.h>
 
 
-namespace bezier_splines
+namespace path_planner
 {
     class CubicBezierSplines
     {

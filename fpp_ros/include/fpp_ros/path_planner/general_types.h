@@ -1,4 +1,4 @@
-namespace general_types
+namespace path_planner
 {
     /**
      * @brief Struct that acts as a container for storing the call with the according f_cost value
