@@ -107,4 +107,7 @@
         <!--Typically you copy this node to where you need a changed path planner. This one should stay default.-->
         <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/>
     </group>
+
+    <!--Record the data of the formation path planner so failures can be comprehended afterwards-->
+    <include file="$(find fpp_launch)/launch/record_fpp.launch"/>
 </launch>
