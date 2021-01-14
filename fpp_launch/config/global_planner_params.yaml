@@ -14,7 +14,7 @@ FormationPathPlanner:
   # Default: 0.2
   default_tolerance: 0.2
 
-  robot_footprint: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
+  robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
 
   formation_config:
     robot0:
