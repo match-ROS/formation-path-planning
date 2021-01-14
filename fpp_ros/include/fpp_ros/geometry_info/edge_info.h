@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory> // Usage of smart pointers
 #include <vector>
 #include <list>

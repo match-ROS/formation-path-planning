@@ -37,6 +37,17 @@
 
 namespace fpp
 {
+    /**
+     * @brief Struct for storing the information about one mobile robot that is necessary for the fpp
+     * 
+     */
+    struct MuR205FormationInfo
+    {
+        std::string robot_name;
+        geometry_msgs::Pose base_link_pose;
+        geometry_msgs::Polygon robot_outline;
+    };
+
     class FormationPathPlanner : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public: 
@@ -124,44 +135,47 @@ namespace fpp
             costmap_2d::Costmap2D *costmap_;
 
         private:
-            void getParams();
-            
-            // Boolean flag that defines if the path planner was initialized correctly (initialize method was executed successfully)
-            bool initialized_;
-
-            // Namespace the robot is located in (f.e. robot1_ns)
-            std::string robot_ns_;
-
-            // Name of the robot
-            std::string robot_name_;
-
-            // Global frame of the robot
-            std::string global_frame_;
-
-            // tf_prefix that was defined in the launch files for the robot
-            std::string tf_prefix_;
-
-            // Parameter list
-            // The default tolerance that is used if the tolerance of the received goal is not valid
-            // Default: 0.2
-            float default_tolerance_;
-
-            // This list is initialized through the path planner config file
-            // Contains all positions of every robot that is part of the formation
-            std::map<std::string, geometry_msgs::Pose> robot_positions_;
-
-            // Process information
             /**
-             * @brief This value defines the size of the arrays that are the 1D-representation of the costmap
-             * This is calculated by multiplying the width and height of the costmap
+             * @brief Helper method for reading all parameters from the global_planner_params.yaml
              * 
              */
+            void getParams();
+
+            void calcFormationEnclosingCircle();
+
+            Eigen::Vector2d MsgsPoseToEigenVector2d(geometry_msgs::Pose pose_to_convert);
+            
+            //! Boolean flag that defines if the path planner was initialized correctly
+            bool initialized_;
+
+            //! Name of the path planner
+            std::string path_planner_name_; 
+            //! Namespace the robot is located in
+            std::string robot_ns_;
+            //! Name of the robot
+            std::string robot_name_; 
+            //! Global frame of the robot
+            std::string global_frame_; 
+            //! tf_prefix that was defined in the launch files for the robot
+            std::string tf_prefix_; 
+
+            // Parameter list
+
+            //! The default tolerance that is used if the tolerance of the received goal is not valid
+            float default_tolerance_;
+            //! Contains all positions of every robot that is part of the formation
+            std::map<std::string, fpp::MuR205FormationInfo> robot_info_list_;
+
+            // Process information
+
+            //! @brief This value defines the size of the arrays that are the 1D-representation of the costmap
             int array_size_;
-            // Storing the start position as pose from where the robot is starting
+            //! Storing the start position as pose from where the robot is starting
             geometry_msgs::PoseStamped start_;
-            // Storing the goal position as pose where the robot should arrive after following the calculated path
+            //! Storing the goal position as pose where the robot should arrive after following the calculated path
             geometry_msgs::PoseStamped goal_;
 
+            //! Helper object for getting the smallest circle around the formation
             fpp_helper::MinimalEnclosingCircle formation_outline_circle_;
 
             // Because I was not able to dynamically reconfigure the costmap from this class
