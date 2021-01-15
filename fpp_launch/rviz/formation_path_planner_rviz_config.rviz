@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
+        - /Formation Footprint1
       Splitter Ratio: 0.5736514329910278
     Tree Height: 1153
   - Class: rviz/Selection
@@ -1241,6 +1242,14 @@ Visualization Manager:
       Radius: 0.009999999776482582
       Reference Frame: map
       Value: true
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Formation Footprint
+      Topic: /robot0_ns/formation_footprint
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -1272,25 +1281,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 9.458313941955566
+      Distance: 7.375543594360352
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.7673512697219849
-        Y: 0.7978365421295166
-        Z: 6.585018127225339e-6
+        X: 0.10499083995819092
+        Y: 1.0932419300079346
+        Z: 6.108180969022214e-6
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9697980284690857
+      Pitch: 0.7647974491119385
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.330394744873047
+      Yaw: 0.9535723328590393
     Saved: ~
 Window Geometry:
   Displays:

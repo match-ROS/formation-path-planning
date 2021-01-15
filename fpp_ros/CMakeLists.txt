@@ -148,6 +148,9 @@ add_library(fpp_ros src/fpp_ros.cpp)
 # add_library(splined_relaxed_a_star src/splined_relaxed_a_star.cpp)
 # add_library(cubic_bezier_splines src/cubic_bezier_splines.cpp)
 add_library(minimal_enclosing_circle src/minimal_enclosing_circle.cpp)
+add_library(edge_info src/geometry_info/edge_info.cpp)
+add_library(geometry_contour src/geometry_info/geometry_contour.cpp)
+add_library(formation_contour src/geometry_info/formation_contour.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -174,8 +177,12 @@ add_executable(dyn_reconfig_relay_node src/nodes/dyn_reconfig_relay_node.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(fpp_ros minimal_enclosing_circle ${catkin_LIBRARIES})
+target_link_libraries(fpp_ros minimal_enclosing_circle edge_info geometry_contour formation_contour ${catkin_LIBRARIES})
+
 target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
+
+target_link_libraries(geometry_contour edge_info)
+target_link_libraries(formation_contour geometry_contour)
 # target_link_libraries(splined_relaxed_a_star general_types cubic_bezier_splines debug_helper  ${catkin_LIBRARIES})
 
 #############

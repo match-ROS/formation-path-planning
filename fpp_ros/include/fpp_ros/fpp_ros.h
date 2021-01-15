@@ -5,6 +5,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/PolygonStamped.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -31,23 +32,16 @@
 #include <set>
 #include <map>
 #include <boost/bind.hpp>
+#include <XmlRpc.h>
 
 #include <fpp_ros/path_planner/minimal_enclosing_circle.h>
 #include <fpp_msgs/DynReconfigure.h>
 
+#include <fpp_ros/geometry_info/geometry_contour.h>
+#include <fpp_ros/geometry_info/formation_contour.h>
+
 namespace fpp
 {
-    /**
-     * @brief Struct for storing the information about one mobile robot that is necessary for the fpp
-     * 
-     */
-    struct MuR205FormationInfo
-    {
-        std::string robot_name;
-        geometry_msgs::Pose base_link_pose;
-        geometry_msgs::Polygon robot_outline;
-    };
-
     class FormationPathPlanner : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public: 
@@ -143,7 +137,7 @@ namespace fpp
 
             void calcFormationEnclosingCircle();
 
-            Eigen::Vector2d MsgsPoseToEigenVector2d(geometry_msgs::Pose pose_to_convert);
+            Eigen::Vector2f MsgsPoseToEigenVector2f(geometry_msgs::Pose pose_to_convert);
             
             //! Boolean flag that defines if the path planner was initialized correctly
             bool initialized_;
@@ -164,7 +158,7 @@ namespace fpp
             //! The default tolerance that is used if the tolerance of the received goal is not valid
             float default_tolerance_;
             //! Contains all positions of every robot that is part of the formation
-            std::map<std::string, fpp::MuR205FormationInfo> robot_info_list_;
+            std::map<std::string, geometry_info::GeometryContour> robot_info_list_;
 
             // Process information
 
@@ -175,6 +169,8 @@ namespace fpp
             //! Storing the goal position as pose where the robot should arrive after following the calculated path
             geometry_msgs::PoseStamped goal_;
 
+            geometry_info::FormationContour formation_contour_;
+
             //! Helper object for getting the smallest circle around the formation
             fpp_helper::MinimalEnclosingCircle formation_outline_circle_;
 
@@ -182,5 +178,7 @@ namespace fpp
             // I had to create a relay node that would get a service (this one) and forward
             // it to the dynamic reconfigure server
             ros::ServiceClient dyn_rec_inflation_srv_client_;
+
+            ros::Publisher formation_footprint_pub_;
     };
 }

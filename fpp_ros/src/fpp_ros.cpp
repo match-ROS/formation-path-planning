@@ -6,14 +6,14 @@ PLUGINLIB_EXPORT_CLASS(fpp::FormationPathPlanner, nav_core::BaseGlobalPlanner)
 
 namespace fpp
 {
-    FormationPathPlanner::FormationPathPlanner()
-        : initialized_(false)
+    FormationPathPlanner::FormationPathPlanner() : 
+        initialized_(false)
     {
         ROS_ERROR("FORMATION PATH PLANNER DEFAULT CONSTRUCTOR");
     }
 
-    FormationPathPlanner::FormationPathPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
-        : initialized_(false)
+    FormationPathPlanner::FormationPathPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros) : 
+        initialized_(false)
     {
         ROS_ERROR("FORMATION PATH PLANNER OVERLOADED CONSTRUCTOR");
         this->initialize(name, costmap_ros);
@@ -44,6 +44,10 @@ namespace fpp
             robot_namespace = robot_namespace.erase(robot_namespace.find("_ns"), 3);
             this->robot_name_ = robot_namespace.erase(robot_namespace.find("/"), 1);
 
+            Eigen::Vector2f lead_vector_world_cs;
+            lead_vector_world_cs << 0, 0;
+            this->formation_contour_ = geometry_info::FormationContour(lead_vector_world_cs, 0.0);
+            
             this->getParams();
 
             // Get the tf prefix
@@ -51,18 +55,39 @@ namespace fpp
             this->tf_prefix_ = tf::getPrefixParam(nh);
             this->robot_ns_ = nh.getNamespace();
 
-
-
-            
-            
-
-
             this->dyn_rec_inflation_srv_client_ = nh.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
             this->dyn_rec_inflation_srv_client_.waitForExistence();
             fpp_msgs::DynReconfigure dyn_reconfig_msg;
             dyn_reconfig_msg.request.new_inflation_radius = this->formation_outline_circle_.getCircleRadius();
             dyn_reconfig_msg.request.robot_namespace = this->robot_ns_ ;
-            this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
+            ROS_INFO("1");
+            ros::Duration(0.1).sleep();
+            ROS_INFO("2");
+            if(this->robot_name_ == "robot0")
+            {
+                this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
+            }
+            
+            ROS_INFO("3");
+
+            this->formation_footprint_pub_ = nh.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
+            while(this->formation_footprint_pub_.getNumSubscribers() < 1) 
+            {
+                ros::Duration(0.01).sleep();
+            }
+            
+            geometry_msgs::PolygonStamped formation_footprint_msg;
+            formation_footprint_msg.header.frame_id = "map";
+            formation_footprint_msg.header.stamp = ros::Time::now();
+            for(Eigen::Vector2f corner: this->formation_contour_.getCornerPointsWorldCS())
+            {
+                geometry_msgs::Point32 corner_point;
+                corner_point.x = corner[0];
+                corner_point.y = corner[1];
+                corner_point.z = 0.0;
+                formation_footprint_msg.polygon.points.push_back(corner_point);
+            }
+            this->formation_footprint_pub_.publish(formation_footprint_msg);
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 
@@ -92,7 +117,9 @@ namespace fpp
             return mbf_msgs::GetPathResult::NOT_INITIALIZED;
         }
 
-        ROS_ERROR("RELAXED A STAR MAKEPLAN");
+
+        
+
 
         this->start_ = start;
         this->goal_ = goal;
@@ -110,12 +137,21 @@ namespace fpp
     void FormationPathPlanner::getParams()
     {
         // Temp variables
-        geometry_msgs::Polygon robot_outline;
+        std::vector<Eigen::Vector2f> robot_outline;
+        // Make this step dynamical with XmlRpc.h
+        Eigen::Vector2f corner;
+        corner << 0.506, -0.32;
+        robot_outline.push_back(corner);
+        corner << 0.506, 0.32;
+        robot_outline.push_back(corner);
+        corner << -0.454, 0.32;
+        robot_outline.push_back(corner);
+        corner << -0.454, -0.32;
+        robot_outline.push_back(corner);
 
         // Get parameter of planner
         ros::NodeHandle private_nh("~/" + this->path_planner_name_);
         private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
-        private_nh.param<geometry_msgs::Polygon>("robot_outline", robot_outline, geometry_msgs::Polygon());
 
         // First check for formation_config and robot0 config
         if(!private_nh.hasParam("formation_config") || !private_nh.hasParam("formation_config/robot0"))
@@ -130,40 +166,39 @@ namespace fpp
             std::string robot_position_namespace = "formation_config/" + default_robot_name + std::to_string(robot_counter) + "/";
             if(private_nh.hasParam(robot_position_namespace))
             {
-                fpp::MuR205FormationInfo robot_info;
-                robot_info.robot_name = default_robot_name + std::to_string(robot_counter);
-                private_nh.param<double>(robot_position_namespace + "x", robot_info.base_link_pose.position.x, 0.0);
-                private_nh.param<double>(robot_position_namespace + "y", robot_info.base_link_pose.position.y, 0.0);
-                private_nh.param<double>(robot_position_namespace + "z", robot_info.base_link_pose.position.z, 0.0);
-                double yaw;
-                private_nh.param<double>(robot_position_namespace + "yaw", yaw, 0.0);
-                tf::Quaternion robot_orientation;
-                robot_orientation.setEuler(yaw, 0.0, 0.0);
-                tf::quaternionTFToMsg(robot_orientation, robot_info.base_link_pose.orientation);
+                std::string robot_name = default_robot_name + std::to_string(robot_counter);
+                Eigen::Vector2f robot_position_world_cs;
+                private_nh.param<float>(robot_position_namespace + "x", robot_position_world_cs[0], 0.0);
+                private_nh.param<float>(robot_position_namespace + "y", robot_position_world_cs[1], 0.0);
+                float yaw;
+                private_nh.param<float>(robot_position_namespace + "yaw", yaw, 0.0);
                 
-                robot_info.robot_outline = robot_outline;
+                geometry_info::GeometryContour mur205 = geometry_info::GeometryContour(robot_position_world_cs, yaw);
+                for(Eigen::Vector2f corner_geometry_cs : robot_outline)
+                {
+                    mur205.addContourCornerGeometryCS(corner_geometry_cs);
+                }
+                this->formation_contour_.addRobotToFormation(mur205);
+                // this->formation_contour_.addContourCornersWorldCS(mur205.getCornerPointsWorldCS());
 
-                this->robot_info_list_.insert(std::pair<std::string, fpp::MuR205FormationInfo>(
-                    robot_info.robot_name, robot_info));
+                this->robot_info_list_.insert(std::pair<std::string, geometry_info::GeometryContour>(robot_name, mur205));
             }
         }
+        this->formation_contour_.exeGiftWrappingAlg();
+
+        this->calcFormationEnclosingCircle();
     }
 
     void FormationPathPlanner::calcFormationEnclosingCircle()
     {
         this->formation_outline_circle_ = fpp_helper::MinimalEnclosingCircle();
-        std::vector<Eigen::Vector2d> robot_positions;
-        for(std::pair<std::string, MuR205FormationInfo> robot_info: this->robot_info_list_)
-        {
-            
-            
-        }
-        this->formation_outline_circle_.calcMinimalEnclosingCircle(robot_positions);
+        std::vector<Eigen::Vector2f> robot_positions;
+        this->formation_outline_circle_.calcMinimalEnclosingCircle(this->formation_contour_.getCornerPointsWorldCS());
     }
 
-    Eigen::Vector2d FormationPathPlanner::MsgsPoseToEigenVector2d(geometry_msgs::Pose pose_to_convert)
+    Eigen::Vector2f FormationPathPlanner::MsgsPoseToEigenVector2f(geometry_msgs::Pose pose_to_convert)
     {
-        Eigen::Vector2d converted_position;
+        Eigen::Vector2f converted_position;
         converted_position << pose_to_convert.position.x, pose_to_convert.position.y;
         return converted_position;
     }

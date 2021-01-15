@@ -17,25 +17,25 @@ namespace fpp_helper
         public:
             MinimalEnclosingCircle();
 
-            void calcMinimalEnclosingCircle(std::vector<Eigen::Vector2d> points_to_enclose);
+            void calcMinimalEnclosingCircle(std::vector<Eigen::Vector2f> points_to_enclose);
 
             double getCircleRadius();
         private:
             void updateCircle();
             void findNewSmallestCircle();        
-            Eigen::Vector2d calcCentreOfVector(Eigen::Vector2d first_point, Eigen::Vector2d second_point);
-            Eigen::Vector2d calcOrthogonalVector(Eigen::Vector2d vector);
-            Eigen::Vector2d calcVectorLineIntersectionPoint(Eigen::Vector2d lead_vector1,
-                                                            Eigen::Vector2d direction_vector1,
-                                                            Eigen::Vector2d lead_vector2,
-                                                            Eigen::Vector2d direction_vector2);
-            double calcDistance(Eigen::Vector2d first_point, Eigen::Vector2d second_point);
+            Eigen::Vector2f calcCentreOfVector(Eigen::Vector2f first_point, Eigen::Vector2f second_point);
+            Eigen::Vector2f calcOrthogonalVector(Eigen::Vector2f vector);
+            Eigen::Vector2f calcVectorLineIntersectionPoint(Eigen::Vector2f lead_vector1,
+                                                            Eigen::Vector2f direction_vector1,
+                                                            Eigen::Vector2f lead_vector2,
+                                                            Eigen::Vector2f direction_vector2);
+            double calcDistance(Eigen::Vector2f first_point, Eigen::Vector2f second_point);
             bool hasCircleAllPointsEnclosed();
 
-            std::vector<Eigen::Vector2d> enclosed_points_;
-            std::vector<Eigen::Vector2d> circle_defining_points_;
+            std::vector<Eigen::Vector2f> enclosed_points_;
+            std::vector<Eigen::Vector2f> circle_defining_points_;
 
-            Eigen::Vector2d circle_centre_;
+            Eigen::Vector2f circle_centre_;
             double circle_radius_;
     };
 }

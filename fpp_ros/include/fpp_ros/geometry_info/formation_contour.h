@@ -1,26 +1,37 @@
 #pragma once
 
+//delete later
+#include "ros/ros.h"
+
 #include <memory> // Usage of smart pointers
+#include <algorithm>
 #include <vector>
 #include <list>
 #include <Eigen/Dense>
 
-#include <geometry_info/edge_info.h>
-#include <geometry_info/geometry_contour.h>
+#include <fpp_ros/geometry_info/edge_info.h>
+#include <fpp_ros/geometry_info/geometry_contour.h>
 
 namespace geometry_info
 {
-    class FormationContour : GeometryContour
+    class FormationContour : public GeometryContour
     {
         public:
-            FormationContour(Eigen::Vector2d lead_vector_world_cs, float world_to_geometry_cs_rotation);
+            FormationContour() {};
+            FormationContour(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation);
 
             void exeGiftWrappingAlg();
-        private:
-            int calcNextWrappingPoint(Eigen::Vector2d current_wrapping_point_geometry_cs,
-                                      std::vector<Eigen::Vector2d> corners_to_wrap_geometry_cs,
-                                      Eigen::Vector2d &next_wrapping_point_geometry_cs);
 
-            float calcTan2(Eigen::Vector2d start_point_geometry_cs, Eigen::Vector2d end_point_geometry_cs);
+            void addRobotToFormation(geometry_info::GeometryContour robot_to_add);
+
+        private:
+            std::vector<geometry_info::GeometryContour> robot_contours_;
+
+            int calcNextWrappingPoint(Eigen::Vector2f current_wrapping_point_geometry_cs,
+                                      std::vector<Eigen::Vector2f> corners_to_wrap_geometry_cs,
+                                      Eigen::Vector2f &next_wrapping_point_geometry_cs,
+                                      float &max_radian);
+
+            float calcTan2(Eigen::Vector2f start_point_geometry_cs, Eigen::Vector2f end_point_geometry_cs);
     };
 }

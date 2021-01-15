@@ -1,39 +1,39 @@
-#include <geometry_info/edge_info.h>
+#include <fpp_ros/geometry_info/edge_info.h>
 
 namespace geometry_info
 {
-    EdgeInfo::EdgeInfo(Eigen::Vector2d start_point, Eigen::Vector2d end_point)
+    EdgeInfo::EdgeInfo(Eigen::Vector2f start_point, Eigen::Vector2f end_point)
         : start_point_(nullptr), end_point_(nullptr), edge_vector_(nullptr)
     {
-        this->start_point_ = std::make_shared<Eigen::Vector2d>(start_point);
-        this->end_point_ = std::make_shared<Eigen::Vector2d>(end_point);
+        this->start_point_ = std::make_shared<Eigen::Vector2f>(start_point);
+        this->end_point_ = std::make_shared<Eigen::Vector2f>(end_point);
 
         this->calculateEdgeVector();
     }   
 
-    void EdgeInfo::setStartPoint(Eigen::Vector2d start_point)
+    void EdgeInfo::setStartPoint(Eigen::Vector2f start_point)
     {
-        this->start_point_ = std::make_shared<Eigen::Vector2d>(start_point);
+        this->start_point_ = std::make_shared<Eigen::Vector2f>(start_point);
         this->calculateEdgeVector();
     }
 
-    Eigen::Vector2d EdgeInfo::getStartPoint()
+    Eigen::Vector2f EdgeInfo::getStartPoint()
     {
         return *this->start_point_.get();
     }
 
-    void EdgeInfo::setEndPoint(Eigen::Vector2d end_point)
+    void EdgeInfo::setEndPoint(Eigen::Vector2f end_point)
     {
-        this->end_point_ = std::make_shared<Eigen::Vector2d>(end_point);
+        this->end_point_ = std::make_shared<Eigen::Vector2f>(end_point);
         this->calculateEdgeVector();
     }
 
-    Eigen::Vector2d EdgeInfo::getEndPoint()
+    Eigen::Vector2f EdgeInfo::getEndPoint()
     {
         return *this->end_point_.get();
     }
 
-    Eigen::Vector2d EdgeInfo::getEdgeVector()
+    Eigen::Vector2f EdgeInfo::getEdgeVector()
     {
         return *this->edge_vector_.get();
     }
@@ -42,7 +42,7 @@ namespace geometry_info
     {
         if(this->start_point_ && !this->end_point_)
         {
-            this->edge_vector_ = std::make_shared<Eigen::Vector2d>(*this->end_point_.get() - *this->start_point_.get());
+            this->edge_vector_ = std::make_shared<Eigen::Vector2f>(*this->end_point_.get() - *this->start_point_.get());
         }
     }
 }
