@@ -10,11 +10,9 @@
 #include <algorithm>
 #include <Eigen/Dense>
 
-#include <fpp_ros/base_fpp.h>
-
 namespace fpp
 {
-    class FormationPathPlannerMaster : BaseFormationPathPlanner
+    class BaseFormationPathPlanner
     {
         
     };
