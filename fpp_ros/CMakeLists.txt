@@ -144,10 +144,10 @@ include_directories(
 
 ## Declare a C++ library
 add_library(fpp_ros src/fpp_ros.cpp)
-# add_library(general_types include/general_types/general_types.h)
-# add_library(splined_relaxed_a_star src/splined_relaxed_a_star.cpp)
-# add_library(cubic_bezier_splines src/cubic_bezier_splines.cpp)
-add_library(minimal_enclosing_circle src/minimal_enclosing_circle.cpp)
+# add_library(general_types include/fpp_ros/path_planner/general_types.h)
+# add_library(splined_relaxed_a_star src/path_planner/splined_relaxed_a_star.cpp)
+# add_library(cubic_bezier_splines src/path_planner/cubic_bezier_splines.cpp)
+add_library(minimal_enclosing_circle src/path_planner/minimal_enclosing_circle.cpp)
 add_library(edge_info src/geometry_info/edge_info.cpp)
 add_library(geometry_contour src/geometry_info/geometry_contour.cpp)
 add_library(formation_contour src/geometry_info/formation_contour.cpp)
