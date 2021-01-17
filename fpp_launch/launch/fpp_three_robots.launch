@@ -6,7 +6,7 @@
     <arg name="robot0_name" value="robot0"/>
     <arg name="robot0_namespace" value="$(arg robot0_name)_ns"/>
     <arg name="robot0_tf_prefix" value="$(arg robot0_name)_tf/"/>
-    <arg name="robot0_x_pos" default="0.0"/>
+    <arg name="robot0_x_pos" default="-5.0"/>
     <arg name="robot0_y_pos" default="0.0"/>
     <arg name="robot0_yaw_rot" default="0.0"/>
 
@@ -14,7 +14,7 @@
     <arg name="robot1_name" value="robot1"/>
     <arg name="robot1_namespace" value="$(arg robot1_name)_ns"/>
     <arg name="robot1_tf_prefix" value="$(arg robot1_name)_tf/"/> 
-    <arg name="robot1_x_pos" default="-1.0"/>
+    <arg name="robot1_x_pos" default="-6.0"/>
     <arg name="robot1_y_pos" default="1.0"/>
     <arg name="robot1_yaw_rot" default="0.0"/>
 
@@ -22,7 +22,7 @@
     <arg name="robot2_name" value="robot2"/>
     <arg name="robot2_namespace" value="$(arg robot2_name)_ns"/>
     <arg name="robot2_tf_prefix" value="$(arg robot2_name)_tf/"/> 
-    <arg name="robot2_x_pos" default="-1.0"/>
+    <arg name="robot2_x_pos" default="-6.0"/>
     <arg name="robot2_y_pos" default="-1.0"/>
     <arg name="robot2_yaw_rot" default="0.0"/>
 
@@ -33,7 +33,7 @@
     <!--Start complete system-->
     <include file="$(find mur205_launch)/launch/system_sim.launch">
         <arg name="gazebo_gui" value="$(arg gazebo_gui)"/>
-        <arg name="world_name" value="$(find mir_gazebo)/maps/world/pp_test_5.world"/>
+        <arg name="world_name" value="$(find fpp_gazebo)/worlds/fpp_test_world.world"/>
         <arg name="map_file" value="$(find mir_gazebo)/maps/pp_test_5.yaml"/>
     </include>
 
@@ -46,6 +46,9 @@
 
     <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
     <group ns="$(arg robot0_namespace)">
+        <!--This parameter is necessary to define the name of the robot in this namespace-->
+        <param name="robot_name" type="str" value="$(arg robot0_name)"/> 
+
         <include file="$(find mur205_launch)/launch/spawn_mur205.launch">
             <arg name="robot_name" value="$(arg robot0_name)"/>
             <arg name="robot_namespace" value="$(arg robot0_namespace)"/>
@@ -66,6 +69,9 @@
 
     <!--Create namespace for robot1 and start everything that belongs in the namespace inside the group-->
     <group ns="$(arg robot1_namespace)">
+        <!--This parameter is necessary to define the name of the robot in this namespace-->
+        <param name="robot_name" type="str" value="$(arg robot1_name)"/> 
+
         <include file="$(find mur205_launch)/launch/spawn_mur205.launch">
             <arg name="robot_name" value="$(arg robot1_name)"/>
             <arg name="robot_namespace" value="$(arg robot1_namespace)"/>
@@ -88,6 +94,9 @@
 
     <!--Create namespace for robot2 and start everything that belongs in the namespace inside the group-->
     <group ns="$(arg robot2_namespace)">
+        <!--This parameter is necessary to define the name of the robot in this namespace-->
+        <param name="robot_name" type="str" value="$(arg robot2_name)"/> 
+
         <include file="$(find mur205_launch)/launch/spawn_mur205.launch">
             <arg name="robot_name" value="$(arg robot2_name)"/>
             <arg name="robot_namespace" value="$(arg robot2_namespace)"/>
