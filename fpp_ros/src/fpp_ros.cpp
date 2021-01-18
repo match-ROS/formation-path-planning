@@ -117,7 +117,11 @@ namespace fpp
             return mbf_msgs::GetPathResult::NOT_INITIALIZED;
         }
 
+        // Get parameter of planner
+        ros::NodeHandle private_nh("~/" + this->path_planner_name_);
+        private_nh.param<float>("default_tolerance", this->default_tolerance_, 1333.0);
 
+        
         
 
 
@@ -152,6 +156,34 @@ namespace fpp
         // Get parameter of planner
         ros::NodeHandle private_nh("~/" + this->path_planner_name_);
         private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
+
+        // // TEST
+        // XmlRpc::XmlRpcValue robot_list;
+        // private_nh.getParam("FormationPathPlanner/formation_config", robot_list);
+
+        // https://answers.ros.org/question/189299/getting-hierarchy-level-of-yaml-parameter/
+        // http://docs.ros.org/en/melodic/api/costmap_2d/html/costmap__2d__ros_8cpp_source.html
+        // https://github.com/strawlab/navigation/blob/master/costmap_2d/src/costmap_2d_ros.cpp
+
+        XmlRpc::XmlRpcValue robot_list;
+        private_nh.getParam("formation_config", robot_list);
+
+        if(robot_list.getType() == XmlRpc::XmlRpcValue::TypeStruct)
+        {
+            for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = robot_list.begin(); it != robot_list.end(); ++it)
+            {
+                ROS_INFO_STREAM("Found filter: " << (std::string)(it->first) << " ==> " << robot_list[it->first]);
+                XmlRpc::XmlRpcValue test = robot_list[it->first];
+                for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it2 = test.begin(); it2 != test.end(); ++it2)
+                {
+                    ROS_INFO_STREAM("Found filter: " << (std::string)(it2->first) << " ==> " << test[it2->first]);
+                    XmlRpc::XmlRpcValue test2 = test[it2->first];
+                    ROS_INFO_STREAM("Type: " << test2.getType());
+                }
+            }
+        }
+        // // TEST
+
 
         // First check for formation_config and robot0 config
         if(!private_nh.hasParam("formation_config") || !private_nh.hasParam("formation_config/robot0"))
