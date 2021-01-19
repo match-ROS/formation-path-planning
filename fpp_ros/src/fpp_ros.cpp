@@ -47,18 +47,18 @@ namespace fpp
             // Get all params from the config file for the global path planner            
             this->getParams();
             
-            // Init services
-            this->dyn_rec_inflation_srv_client_ = nh.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
-            this->dyn_rec_inflation_srv_client_.waitForExistence();
-
-            // Init topics
-            this->formation_footprint_pub_ = nh.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
-            while(this->formation_footprint_pub_.getNumSubscribers() < 1) 
-                ros::Duration(0.01).sleep();
-            
             // Das hier in den fpp_master auslagern? Weil das muss nur dort gecalled werden und dann brauche ich hier keine unnötige abfrage
             if(this->robot_name_ == "robot0")
             {
+                // Init services
+                this->dyn_rec_inflation_srv_client_ = nh.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
+                this->dyn_rec_inflation_srv_client_.waitForExistence();
+
+                // Init topics
+                this->formation_footprint_pub_ = nh.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
+                while(this->formation_footprint_pub_.getNumSubscribers() < 1) 
+                    ros::Duration(0.01).sleep();
+
                 // Initialize formation planner with default values. Set lead vector when all robots are added and centroid can be calculated
                 this->formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
 
