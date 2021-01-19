@@ -34,7 +34,7 @@
     <include file="$(find mur205_launch)/launch/system_sim.launch">
         <arg name="gazebo_gui" value="$(arg gazebo_gui)"/>
         <arg name="world_name" value="$(find fpp_gazebo)/worlds/fpp_test_world.world"/>
-        <arg name="map_file" value="$(find mir_gazebo)/maps/pp_test_5.yaml"/>
+        <arg name="map_file" value="$(find fpp_gazebo)/maps/fpp_test_world.yaml"/>
     </include>
 
     <node name="fpp_navigation_rviz" pkg="rviz" type="rviz" respawn="false" 
