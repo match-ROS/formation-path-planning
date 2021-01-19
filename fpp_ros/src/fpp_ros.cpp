@@ -44,47 +44,80 @@ namespace fpp
             this->tf_prefix_ = tf::getPrefixParam(nh);
             this->robot_ns_ = nh.getNamespace();
 
-            Eigen::Vector2f lead_vector_world_cs;
-            lead_vector_world_cs << 0, 0;
-            this->formation_contour_ = geometry_info::FormationContour(lead_vector_world_cs, 0.0);
-            
+            // Get all params from the config file for the global path planner            
             this->getParams();
-
             
-            // Init services and topics
+            // Init services
             this->dyn_rec_inflation_srv_client_ = nh.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
             this->dyn_rec_inflation_srv_client_.waitForExistence();
-            fpp_msgs::DynReconfigure dyn_reconfig_msg;
-            dyn_reconfig_msg.request.new_inflation_radius = this->formation_outline_circle_.getCircleRadius();
-            dyn_reconfig_msg.request.robot_namespace = this->robot_ns_ ;
-            ROS_INFO("1");
-            ros::Duration(0.1).sleep();
-            ROS_INFO("2");
-            if(this->robot_name_ == "robot0")
-            {
-                this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
-            }
-            
-            ROS_INFO("3");
 
+            // Init topics
             this->formation_footprint_pub_ = nh.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
             while(this->formation_footprint_pub_.getNumSubscribers() < 1) 
-            {
                 ros::Duration(0.01).sleep();
-            }
             
-            geometry_msgs::PolygonStamped formation_footprint_msg;
-            formation_footprint_msg.header.frame_id = "map";
-            formation_footprint_msg.header.stamp = ros::Time::now();
-            for(Eigen::Vector2f corner: this->formation_contour_.getCornerPointsWorldCS())
+            // Das hier in den fpp_master auslagern? Weil das muss nur dort gecalled werden und dann brauche ich hier keine unnötige abfrage
+            if(this->robot_name_ == "robot0")
             {
-                geometry_msgs::Point32 corner_point;
-                corner_point.x = corner[0];
-                corner_point.y = corner[1];
-                corner_point.z = 0.0;
-                formation_footprint_msg.polygon.points.push_back(corner_point);
+                // Initialize formation planner with default values. Set lead vector when all robots are added and centroid can be calculated
+                this->formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
+
+                for(RobotInfo robot_info: this->robot_info_list_)
+                {
+                    std::string amcl_pose_topic = robot_info.robot_namespace + "/amcl_pose";
+                    geometry_msgs::PoseWithCovarianceStampedConstPtr robot_pose_ptr;
+                    robot_pose_ptr = ros::topic::waitForMessage<geometry_msgs::PoseWithCovarianceStamped>(amcl_pose_topic);
+
+                    Eigen::Vector2f robot_pose;
+                    float yaw;
+                    if(robot_pose_ptr == nullptr)
+                    {
+                        ROS_ERROR_STREAM("FormationPathPlanner: No message was received from the topic: " << amcl_pose_topic);
+                        robot_pose << 0, 0;
+                        yaw = 0;
+                    }
+                    else
+                    {
+                        robot_pose << robot_pose_ptr->pose.pose.position.x, robot_pose_ptr->pose.pose.position.y;
+                        yaw = tf::getYaw(robot_pose_ptr->pose.pose.orientation);
+                    }
+
+                    geometry_info::GeometryContour robot_outline;
+                    robot_outline = geometry_info::GeometryContour(robot_pose, yaw);
+                    
+                    for(Eigen::Vector2f corner: robot_info.robot_outline)
+                    {
+                        robot_outline.addContourCornerGeometryCS(corner);
+                    }
+                    robot_outline.createContourEdges();
+
+                    this->robot_outline_list_.insert(std::pair<std::string, geometry_info::GeometryContour>(robot_info.robot_name, robot_outline));
+                    this->formation_contour_.addRobotToFormation(robot_outline);
+                }
+
+                // Call services
+                fpp_msgs::DynReconfigure dyn_reconfig_msg;
+                this->formation_contour_.exeGiftWrappingAlg();
+                this->formation_outline_circle_.calcMinimalEnclosingCircle(this->formation_contour_.getCornerPointsWorldCS());
+                dyn_reconfig_msg.request.new_inflation_radius = this->formation_outline_circle_.getCircleRadius();
+                dyn_reconfig_msg.request.robot_namespace = this->robot_ns_ ;
+                ros::Duration(0.1).sleep();
+                this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
+
+
+                geometry_msgs::PolygonStamped formation_footprint_msg;
+                formation_footprint_msg.header.frame_id = "map";
+                formation_footprint_msg.header.stamp = ros::Time::now();
+                for(Eigen::Vector2f corner: this->formation_contour_.getCornerPointsWorldCS())
+                {
+                    geometry_msgs::Point32 corner_point;
+                    corner_point.x = corner[0];
+                    corner_point.y = corner[1];
+                    corner_point.z = 0.0;
+                    formation_footprint_msg.polygon.points.push_back(corner_point);
+                }
+                this->formation_footprint_pub_.publish(formation_footprint_msg);
             }
-            this->formation_footprint_pub_.publish(formation_footprint_msg);
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 
@@ -168,13 +201,18 @@ namespace fpp
 
                 if(robot_info_xmlrpc.getType() == XmlRpc::XmlRpcValue::TypeStruct)
                 {
-                    if(robot_info_xmlrpc.hasMember("master"))
+                    if(robot_info_xmlrpc.hasMember("master") && robot_info_xmlrpc["master"].getType() == XmlRpc::XmlRpcValue::TypeBoolean)
                     {
-                        robot_info.fpp_master = robot_info_xmlrpc["master"];
+                        robot_info.fpp_master = (bool)robot_info_xmlrpc["master"];
                     }
                     else
                     {
                         robot_info.fpp_master = false;
+                    }
+
+                    if(robot_info_xmlrpc.hasMember("namespace") && robot_info_xmlrpc["namespace"].getType() == XmlRpc::XmlRpcValue::TypeString)
+                    {
+                        robot_info.robot_namespace = static_cast<std::string>(robot_info_xmlrpc["namespace"]);
                     }
                     
                     if(robot_info_xmlrpc.hasMember("robot_outline"))
@@ -189,63 +227,9 @@ namespace fpp
                     }
                 }
 
-                this->robot_info_list_.insert(std::pair<std::string, RobotInfo>(robot_info.robot_name, robot_info));
+                this->robot_info_list_.push_back(robot_info);
             }
         }
-
-
-        // // TEST
-        // XmlRpc::XmlRpcValue robot_param_list;
-        // planner_nh.getParam("formation_config", robot_param_list);
-
-        // if(robot_param_list.getType() == XmlRpc::XmlRpcValue::TypeStruct)
-        // {
-        //     for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = robot_param_list.begin(); it != robot_param_list.end(); ++it)
-        //     {
-        //         ROS_INFO_STREAM("Found filter: " << (std::string)(it->first) << " ==> " << robot_param_list[it->first]);
-        //         XmlRpc::XmlRpcValue test = robot_param_list[it->first];
-        //         for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it2 = test.begin(); it2 != test.end(); ++it2)
-        //         {
-        //             ROS_INFO_STREAM("Found filter: " << (std::string)(it2->first) << " ==> " << test[it2->first]);
-        //             XmlRpc::XmlRpcValue test2 = test[it2->first];
-        //             ROS_INFO_STREAM("Type: " << test2.getType());
-        //         }
-        //     }
-        // }
-        // // TEST
-
-
-        // First check for formation_config and robot0 config
-        // if(!planner_nh.hasParam("formation_config") || !planner_nh.hasParam("formation_config/robot0"))
-        // {
-        //     ROS_ERROR("FormationPathPlanner: Error during initialization. formation_config or robot0 config is missing.");
-        //     return;
-        // }
-        // std::string default_robot_name = "robot";
-        // int default_last_robot = 100;
-        // for(int robot_counter = 0; robot_counter <= default_last_robot; robot_counter++)
-        // {
-        //     std::string robot_position_namespace = "formation_config/" + default_robot_name + std::to_string(robot_counter) + "/";
-        //     if(planner_nh.hasParam(robot_position_namespace))
-        //     {
-        //         std::string robot_name = default_robot_name + std::to_string(robot_counter);
-        //         Eigen::Vector2f robot_position_world_cs;
-        //         planner_nh.param<float>(robot_position_namespace + "x", robot_position_world_cs[0], 0.0);
-        //         planner_nh.param<float>(robot_position_namespace + "y", robot_position_world_cs[1], 0.0);
-        //         float yaw;
-        //         planner_nh.param<float>(robot_position_namespace + "yaw", yaw, 0.0);
-                
-        //         geometry_info::GeometryContour mur205 = geometry_info::GeometryContour(robot_position_world_cs, yaw);
-        //         for(Eigen::Vector2f corner_geometry_cs : robot_outline)
-        //         {
-        //             mur205.addContourCornerGeometryCS(corner_geometry_cs);
-        //         }
-        //         this->formation_contour_.addRobotToFormation(mur205);
-        //         // this->formation_contour_.addContourCornersWorldCS(mur205.getCornerPointsWorldCS());
-
-        //         this->robot_position_list_.insert(std::pair<std::string, geometry_info::GeometryContour>(robot_name, mur205));
-        //     }
-        // }
     }
 
     void FormationPathPlanner::calcFormationEnclosingCircle()

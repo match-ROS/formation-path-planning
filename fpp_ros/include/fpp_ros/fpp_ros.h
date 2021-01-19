@@ -6,6 +6,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -45,6 +46,7 @@ namespace fpp
     struct RobotInfo
     {
         std::string robot_name;
+        std::string robot_namespace;
         bool fpp_master;
         std::vector<Eigen::Vector2f> robot_outline;
     };
@@ -152,6 +154,8 @@ namespace fpp
             std::vector<Eigen::Vector2f> createRobotOutlineFromXMLRPC(XmlRpc::XmlRpcValue footprint_xmlrpc,
                                                                       const std::string full_param_name);
 
+            void amclRobotPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg);
+
             //! Boolean flag that defines if the path planner was initialized correctly
             bool initialized_;
 
@@ -172,7 +176,7 @@ namespace fpp
             //! The default tolerance that is used if the tolerance of the received goal is not valid
             float default_tolerance_;
             //! Contains all positions of every robot that is part of the formation
-            std::map<std::string, RobotInfo> robot_info_list_;
+            std::vector<RobotInfo> robot_info_list_;
 
             // Process information
 
@@ -183,6 +187,7 @@ namespace fpp
             //! Storing the goal position as pose where the robot should arrive after following the calculated path
             geometry_msgs::PoseStamped goal_;
 
+            std::map<std::string, geometry_info::GeometryContour> robot_outline_list_;
             geometry_info::FormationContour formation_contour_;
 
             //! Helper object for getting the smallest circle around the formation
