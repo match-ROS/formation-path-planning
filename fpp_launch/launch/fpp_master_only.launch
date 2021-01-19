@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="gazebo_gui" default="true"/> <!--Start without Gazebo GUI, RVIZ is enough-->
+
+    <!--Variables for the robot0-->
+    <arg name="robot0_name" value="robot0"/>
+    <arg name="robot0_namespace" value="$(arg robot0_name)_ns"/>
+    <arg name="robot0_tf_prefix" value="$(arg robot0_name)_tf/"/>
+    <arg name="robot0_x_pos" default="-5.0"/>
+    <arg name="robot0_y_pos" default="0.0"/>
+    <arg name="robot0_yaw_rot" default="0.0"/>
+
+    <!--Constant values that cant be adjusted from outside the launch file-->
+    <!--For this example only the robot0 will get an -->
+    <arg name="navigation_rviz_command_args" value="-d $(find fpp_launch)/rviz/formation_path_planner_rviz_config.rviz"/>
+
+    <!--Start complete system-->
+    <include file="$(find mur205_launch)/launch/system_sim.launch">
+        <arg name="gazebo_gui" value="$(arg gazebo_gui)"/>
+        <arg name="world_name" value="$(find fpp_gazebo)/worlds/fpp_test_world.world"/>
+        <arg name="map_file" value="$(find fpp_gazebo)/maps/fpp_test_world.yaml"/>
+    </include>
+
+    <node name="fpp_navigation_rviz" pkg="rviz" type="rviz" respawn="false" 
+            args="$(arg navigation_rviz_command_args)" output="screen"/>
+    
+    <!--This node is necessary so the fpp is able to reconfigure the costmap inflation_radius-->
+    <node name="dyn_reconfig_relay_node" pkg="fpp_ros" type="dyn_reconfig_relay_node" 
+                  respawn="false" output="screen"/>
+
+    <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
+    <group ns="$(arg robot0_namespace)">
+        <!--This parameter is necessary to define the name of the robot in this namespace-->
+        <param name="robot_name" type="str" value="$(arg robot0_name)"/> 
+
+        <include file="$(find mur205_launch)/launch/spawn_mur205.launch">
+            <arg name="robot_name" value="$(arg robot0_name)"/>
+            <arg name="robot_namespace" value="$(arg robot0_namespace)"/>
+            <arg name="tf_prefix" value="$(arg robot0_tf_prefix)"/>
+            <arg name="x_pos" value="$(arg robot0_x_pos)"/>
+            <arg name="y_pos" value="$(arg robot0_y_pos)"/>
+            <arg name="yaw_rot" value="$(arg robot0_yaw_rot)"/>
+        </include>
+
+        <!--Override the existing global_planner params-->
+        <rosparam file="$(find fpp_launch)/config/global_planner_params.yaml" command="load" ns="move_base_flex"/>
+
+        <!--This node is necessary to easily set the target position for the move_base_flex package through rviz-->
+        <!--If a different path planner should be used, change the planner that is defined in the relay-->
+        <!--Typically you copy this node to where you need a changed path planner. This one should stay default.-->
+        <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/>
+    </group>
+
+    <!--Record the data of the formation path planner so failures can be comprehended afterwards-->
+    <include file="$(find fpp_launch)/launch/record_fpp.launch"/>
+</launch>

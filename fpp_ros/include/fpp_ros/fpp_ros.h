@@ -42,6 +42,14 @@
 
 namespace fpp
 {
+    struct RobotInfo
+    {
+        std::string robot_name;
+        bool fpp_master;
+        std::vector<Eigen::Vector2f> robot_outline;
+    };
+
+
     class FormationPathPlanner : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public: 
@@ -138,7 +146,12 @@ namespace fpp
             void calcFormationEnclosingCircle();
 
             Eigen::Vector2f MsgsPoseToEigenVector2f(geometry_msgs::Pose pose_to_convert);
-            
+
+
+            double getNumberFromXMLRPC(XmlRpc::XmlRpcValue value, const std::string full_param_name);
+            std::vector<Eigen::Vector2f> createRobotOutlineFromXMLRPC(XmlRpc::XmlRpcValue footprint_xmlrpc,
+                                                                      const std::string full_param_name);
+
             //! Boolean flag that defines if the path planner was initialized correctly
             bool initialized_;
 
@@ -153,12 +166,13 @@ namespace fpp
             //! tf_prefix that was defined in the launch files for the robot
             std::string tf_prefix_; 
 
+
             // Parameter list
 
             //! The default tolerance that is used if the tolerance of the received goal is not valid
             float default_tolerance_;
             //! Contains all positions of every robot that is part of the formation
-            std::map<std::string, geometry_info::GeometryContour> robot_info_list_;
+            std::map<std::string, RobotInfo> robot_info_list_;
 
             // Process information
 
