@@ -14,6 +14,11 @@ namespace fpp
 {
     class BaseFormationPathPlanner
     {
-        
+        public:
+            BaseFormationPathPlanner();
+            
+
+        protected:
+
     };
 }
