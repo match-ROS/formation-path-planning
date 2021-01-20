@@ -10,15 +10,14 @@
 #include <algorithm>
 #include <Eigen/Dense>
 
+#include <fpp_ros/fpp_controller_base.h>
+
 namespace fpp
 {
-    class BaseFormationPathPlanner
+    class FPPControllerSlave : public FPPControllerBase
     {
         public:
-            BaseFormationPathPlanner();
-            
-
-        protected:
-
+            FPPControllerSlave(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info);
+        private:
     };
 }

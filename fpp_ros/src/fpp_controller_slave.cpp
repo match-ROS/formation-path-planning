@@ -1,0 +1,11 @@
+#include <fpp_ros/fpp_controller_slave.h>
+
+namespace fpp
+{
+    FPPControllerSlave::FPPControllerSlave(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info) :
+        FPPControllerBase(robot_info)
+    {
+        
+    }
+
+}

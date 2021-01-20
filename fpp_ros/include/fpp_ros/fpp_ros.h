@@ -42,6 +42,10 @@
 #include <fpp_ros/geometry_info/formation_contour.h>
 #include <fpp_ros/data_classes/robot_info.h>
 
+#include <fpp_ros/fpp_controller_base.h>
+#include <fpp_ros/fpp_controller_master.h>
+#include <fpp_ros/fpp_controller_slave.h>
+
 namespace fpp
 {
     
@@ -172,6 +176,8 @@ namespace fpp
             float default_tolerance_;
             //! Contains all positions of every robot that is part of the formation
             std::vector<fpp_data_classes::RobotInfo> robot_info_list_;
+            //! This is a pointer to the RobotInfo object in the robot_info_list for easier access
+            std::shared_ptr<fpp_data_classes::RobotInfo> this_robots_robot_info_;
 
             // Process information
 
@@ -187,6 +193,8 @@ namespace fpp
 
             //! Helper object for getting the smallest circle around the formation
             fpp_helper::MinimalEnclosingCircle formation_outline_circle_;
+
+            std::shared_ptr<FPPControllerBase> fpp_controller_;
 
             // Because I was not able to dynamically reconfigure the costmap from this class
             // I had to create a relay node that would get a service (this one) and forward

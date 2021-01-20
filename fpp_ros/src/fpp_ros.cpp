@@ -47,6 +47,12 @@ namespace fpp
             // Get all params from the config file for the global path planner            
             this->getParams();
             
+            if(this->this_robots_robot_info_->fpp_master)
+            {
+                FPPControllerBase fpp_master_controller = FPPControllerMaster(this->this_robots_robot_info_);
+                this->fpp_controller_ = std::make_shared<FPPControllerBase>(fpp_master_controller);
+            }
+
             // Das hier in den fpp_master auslagern? Weil das muss nur dort gecalled werden und dann brauche ich hier keine unnötige abfrage
             if(this->robot_name_ == "robot0")
             {
@@ -237,6 +243,7 @@ namespace fpp
                 }
 
                 this->robot_info_list_.push_back(robot_info);
+                this->this_robots_robot_info_ = std::make_shared<fpp_data_classes::RobotInfo>(this->robot_info_list_.back());
             }
         }
     }

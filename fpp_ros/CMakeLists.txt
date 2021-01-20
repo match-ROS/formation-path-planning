@@ -155,9 +155,9 @@ add_library(formation_contour src/geometry_info/formation_contour.cpp)
 
 add_library(robot_info include/fpp_ros/data_classes/robot_info.h)
 
-add_library(fpp_base src/fpp_base.cpp)
-add_library(fpp_master src/fpp_master.cpp)
-add_library(fpp_slave src/fpp_slave.cpp)
+add_library(fpp_controller_base src/fpp_controller_base.cpp)
+add_library(fpp_controller_master src/fpp_controller_master.cpp)
+add_library(fpp_controller_slave src/fpp_controller_slave.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -189,7 +189,7 @@ target_link_libraries(fpp_ros
   minimal_enclosing_circle 
   edge_info geometry_contour formation_contour 
   robot_info 
-  fpp_base fpp_master fpp_slave
+  fpp_controller_base fpp_controller_master fpp_controller_slave
   ${catkin_LIBRARIES})
 
 target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
@@ -197,9 +197,9 @@ target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
 target_link_libraries(geometry_contour edge_info)
 target_link_libraries(formation_contour geometry_contour)
 
-target_link_libraries(fpp_base robot_info ${catkin_LIBRARIES})
-target_link_libraries(fpp_master fpp_base robot_info ${catkin_LIBRARIES})
-target_link_libraries(fpp_slave fpp_base robot_info ${catkin_LIBRARIES})
+target_link_libraries(fpp_controller_base robot_info ${catkin_LIBRARIES})
+target_link_libraries(fpp_controller_master fpp_controller_base robot_info ${catkin_LIBRARIES})
+target_link_libraries(fpp_controller_slave fpp_controller_base robot_info ${catkin_LIBRARIES})
 # target_link_libraries(splined_relaxed_a_star general_types cubic_bezier_splines debug_helper  ${catkin_LIBRARIES})
 
 #############
