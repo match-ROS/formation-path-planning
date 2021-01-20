@@ -40,16 +40,11 @@
 
 #include <fpp_ros/geometry_info/geometry_contour.h>
 #include <fpp_ros/geometry_info/formation_contour.h>
+#include <fpp_ros/data_classes/robot_info.h>
 
 namespace fpp
 {
-    struct RobotInfo
-    {
-        std::string robot_name;
-        std::string robot_namespace;
-        bool fpp_master;
-        std::vector<Eigen::Vector2f> robot_outline;
-    };
+    
 
 
     class FormationPathPlanner : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
@@ -176,7 +171,7 @@ namespace fpp
             //! The default tolerance that is used if the tolerance of the received goal is not valid
             float default_tolerance_;
             //! Contains all positions of every robot that is part of the formation
-            std::vector<RobotInfo> robot_info_list_;
+            std::vector<fpp_data_classes::RobotInfo> robot_info_list_;
 
             // Process information
 

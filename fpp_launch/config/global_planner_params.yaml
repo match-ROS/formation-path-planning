@@ -18,24 +18,14 @@ FormationPathPlanner:
     robot0:
       namespace: /robot0_ns
       master: true
-      x: 0.0
-      y: 0.0
-      z: 0.0
-      yaw: 0.0
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
     robot1:
       namespace: /robot1_ns
-      x: -1.0
-      y: 1.0
-      z: 0.0
-      yaw: 0.0
+      offset: [-1.0, 1.0] # Defines distance from master robot
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
     robot2:
       namespace: /robot2_ns
-      x: -1.0
-      y: -1.0
-      z: 0.0
-      yaw: 0.0
+      offset: [-1.0, -1.0] # Defines distance from master robot
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
 
 RelaxedAStar:

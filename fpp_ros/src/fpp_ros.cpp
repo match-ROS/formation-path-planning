@@ -56,13 +56,13 @@ namespace fpp
 
                 // Init topics
                 this->formation_footprint_pub_ = nh.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
-                while(this->formation_footprint_pub_.getNumSubscribers() < 1) 
+                while(this->formation_footprint_pub_.getNumSubscribers() < 1)
                     ros::Duration(0.01).sleep();
 
                 // Initialize formation planner with default values. Set lead vector when all robots are added and centroid can be calculated
                 this->formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
 
-                for(RobotInfo robot_info: this->robot_info_list_)
+                for(fpp_data_classes::RobotInfo robot_info: this->robot_info_list_)
                 {
                     std::string amcl_pose_topic = robot_info.robot_namespace + "/amcl_pose";
                     geometry_msgs::PoseWithCovarianceStampedConstPtr robot_pose_ptr;
@@ -87,6 +87,7 @@ namespace fpp
                     
                     for(Eigen::Vector2f corner: robot_info.robot_outline)
                     {
+                        // ROS_INFO_STREAM("Creating robot contour x: " << corner[0] << " y: " << corner[1]);
                         robot_outline.addContourCornerGeometryCS(corner);
                     }
                     robot_outline.createContourEdges();
@@ -104,7 +105,6 @@ namespace fpp
                 ros::Duration(0.1).sleep();
                 this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
 
-
                 geometry_msgs::PolygonStamped formation_footprint_msg;
                 formation_footprint_msg.header.frame_id = "map";
                 formation_footprint_msg.header.stamp = ros::Time::now();
@@ -113,6 +113,7 @@ namespace fpp
                     geometry_msgs::Point32 corner_point;
                     corner_point.x = corner[0];
                     corner_point.y = corner[1];
+                    ROS_INFO_STREAM("x: " << corner_point.x << " y: " << corner_point.y);
                     corner_point.z = 0.0;
                     formation_footprint_msg.polygon.points.push_back(corner_point);
                 }
@@ -194,7 +195,7 @@ namespace fpp
             XmlRpc::XmlRpcValue::ValueStruct::const_iterator robot_iterator;
             for(robot_iterator = formation_config.begin(); robot_iterator != formation_config.end(); robot_iterator++)
             {
-                RobotInfo robot_info;
+                fpp_data_classes::RobotInfo robot_info;
                 robot_info.robot_name = robot_iterator->first;
 
                 XmlRpc::XmlRpcValue robot_info_xmlrpc = robot_iterator->second;
@@ -208,6 +209,14 @@ namespace fpp
                     else
                     {
                         robot_info.fpp_master = false;
+
+                        // Only if the robot is not the master the offset param is existing
+                        if(robot_info_xmlrpc.hasMember("offset") && robot_info_xmlrpc["offset"].getType() == XmlRpc::XmlRpcValue::TypeArray)
+                        {
+                            Eigen::Vector2f offset;
+                            offset[0] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][0], "formation_config/" + robot_info.robot_name + "/offset");
+                            offset[1] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][1], "formation_config/" + robot_info.robot_name + "/offset");
+                        }
                     }
 
                     if(robot_info_xmlrpc.hasMember("namespace") && robot_info_xmlrpc["namespace"].getType() == XmlRpc::XmlRpcValue::TypeString)

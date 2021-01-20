@@ -10,12 +10,14 @@
 #include <algorithm>
 #include <Eigen/Dense>
 
-#include <fpp_ros/base_fpp.h>
+#include <fpp_ros/fpp_base.h>
 
 namespace fpp
 {
     class FormationPathPlannerSlave : BaseFormationPathPlanner
     {
-        
+        public:
+
+        private:
     };
 }
