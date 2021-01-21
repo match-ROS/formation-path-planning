@@ -21,7 +21,7 @@ namespace fpp
         public:
             FPPControllerMaster(std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list,
                                 std::shared_ptr<fpp_data_classes::RobotInfo> robot_info,
-                                std::shared_ptr<ros::NodeHandle> nh);
+                                ros::NodeHandle *nh);
 
             void execute() override;
 

@@ -28,7 +28,7 @@ namespace fpp
         public:
             FPPControllerBase(std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list,
                               std::shared_ptr<fpp_data_classes::RobotInfo> robot_info,
-                              std::shared_ptr<ros::NodeHandle> nh);
+                              ros::NodeHandle *nh);
 
             // ANDEREN NAMEN AUSDENKEN. AUCH IRGENDWAS MIT MAKE PLAN?
             /**
@@ -43,7 +43,7 @@ namespace fpp
 
         protected:
             //! NodeHandle from the node that initializes the fpp controller classes
-            std::shared_ptr<ros::NodeHandle> nh_;
+            ros::NodeHandle *nh_;
 
             //! This is all the information that was read from the config file about each robot
             std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_;
