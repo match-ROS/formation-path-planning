@@ -37,17 +37,22 @@ namespace fpp
             this->costmap_ = costmap;
             this->global_frame_ = global_frame;
             this->array_size_ = this->costmap_->getSizeInCellsX() * this->costmap_->getSizeInCellsY();
-            
+
+            // Initialize node handle that points to namespace of planner
+            this->planner_nh_ = ros::NodeHandle("~/" + this->path_planner_name_);
+
             // Get the tf prefix
-            ros::NodeHandle nh;
-            this->tf_prefix_ = tf::getPrefixParam(nh);
-            this->robot_ns_ = nh.getNamespace();
+            this->tf_prefix_ = tf::getPrefixParam(this->nh_);
+            this->robot_ns_ = this->nh_.getNamespace();
 
             // Get all params from the config file for the global path planner            
             this->getParams();
             ROS_INFO("Initializing Formation Path Planner in namespace: %s", this->this_robots_robot_info_->robot_name.c_str());
 
-            std::shared_ptr<ros::NodeHandle> nh_ptr = std::make_shared<ros::NodeHandle>(nh);
+            //TEST
+            this->test_timer = this->nh_.createTimer(ros::Duration(0.5), &FormationPathPlanner::footprintTimerCallback, this);
+
+            std::shared_ptr<ros::NodeHandle> nh_ptr = std::make_shared<ros::NodeHandle>(this->nh_);
             std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_ptr;
             robot_info_list_ptr = std::make_shared<std::vector<fpp_data_classes::RobotInfo>>(this->robot_info_list_);
             if(this->this_robots_robot_info_->fpp_master)
@@ -83,6 +88,12 @@ namespace fpp
         return 10 > this->makePlan(start, goal, 0.1, plan, cost, message);
     }  
 
+    void FormationPathPlanner::footprintTimerCallback(const ros::TimerEvent& e)
+    {
+        if(this->fpp_controller_ != nullptr)
+            ROS_INFO_STREAM("FPP TIMER" << this->fpp_controller_->robot_info_->robot_name);
+    }
+
     uint32_t FormationPathPlanner::makePlan(const geometry_msgs::PoseStamped &start, const geometry_msgs::PoseStamped &goal,
                                 double tolerance, std::vector<geometry_msgs::PoseStamped> &plan, double &cost,
                                 std::string &message)
@@ -93,9 +104,7 @@ namespace fpp
             return mbf_msgs::GetPathResult::NOT_INITIALIZED;
         }
 
-        // Get parameter of planner
-        ros::NodeHandle private_nh("~/" + this->path_planner_name_);
-        private_nh.param<float>("default_tolerance", this->default_tolerance_, 1333.0);
+        this->planner_nh_.param<float>("default_tolerance", this->default_tolerance_, 1333.0);
 
         
         this->fpp_controller_->execute();
@@ -116,14 +125,11 @@ namespace fpp
 
     void FormationPathPlanner::getParams()
     {
-        ros::NodeHandle planner_nh("~/" + this->path_planner_name_);
-        ros::NodeHandle nh;
-
         // Get robot name of the current robot
         std::string robot_name_key;
-        if(nh.searchParam("robot_name", robot_name_key))
+        if(this->nh_.searchParam("robot_name", robot_name_key))
         {
-            nh.getParam(robot_name_key, this->robot_name_);
+            this->nh_.getParam(robot_name_key, this->robot_name_);
         }
         else
         {
@@ -131,10 +137,10 @@ namespace fpp
         }
 
         // Get parameter of planner
-        planner_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
+        this->planner_nh_.param<float>("default_tolerance", this->default_tolerance_, 0.0);
 
         XmlRpc::XmlRpcValue formation_config;
-        planner_nh.getParam("formation_config", formation_config);
+        this->planner_nh_.getParam("formation_config", formation_config);
         if(formation_config.getType() == XmlRpc::XmlRpcValue::TypeStruct)
         {
             XmlRpc::XmlRpcValue::ValueStruct::const_iterator robot_iterator;

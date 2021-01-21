@@ -38,6 +38,9 @@ namespace fpp
              */
             virtual void execute() = 0;
 
+            // TEST
+            std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_;
+
         protected:
             //! NodeHandle from the node that initializes the fpp controller classes
             std::shared_ptr<ros::NodeHandle> nh_;
@@ -46,7 +49,7 @@ namespace fpp
             std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_;
 
             //! This points to the object in the robot_info_list_ that contains the information about this robot
-            std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_;
+            // std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_;
 
     };
 }
