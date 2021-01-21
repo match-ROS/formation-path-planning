@@ -29,6 +29,8 @@ namespace geometry_info
 
             std::vector<Eigen::Vector2f> getCornerPointsWorldCS();
 
+            void move_contour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
+
             friend bool operator==(const GeometryContour &lhs, const GeometryContour &rhs);
 
         protected:

@@ -85,6 +85,17 @@ namespace geometry_info
         return corner_points_world_cs;
     }
 
+    void GeometryContour::move_contour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation)
+    {
+        Eigen::Matrix<float, 3, 3> new_tf_geometry_to_world_cs = this->createTransformationMatrix(new_lead_vector_world_cs, new_cs_rotation);
+        Eigen::Matrix<float, 3, 3> new_tf_world_to_geometry_cs = new_tf_geometry_to_world_cs.inverse();
+
+        this->lead_vector_world_cs_ = new_lead_vector_world_cs;
+        this->world_to_geometry_cs_rotation_ = new_cs_rotation;
+        this->tf_geometry_to_world_cs_ = new_tf_geometry_to_world_cs;
+        this->tf_world_to_geometry_cs_ = new_tf_world_to_geometry_cs;
+    }
+
     Eigen::Matrix<float, 3, 3> GeometryContour::createTransformationMatrix(Eigen::Vector2f lead_vector_world_cs, float rotation)
     {
         Eigen::Matrix<float, 3, 3> transformation_matrix;
