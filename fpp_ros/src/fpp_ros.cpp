@@ -47,18 +47,21 @@ namespace fpp
             this->getParams();
             ROS_INFO("Initializing Formation Path Planner in namespace: %s", this->this_robots_robot_info_->robot_name.c_str());
 
+            std::shared_ptr<ros::NodeHandle> nh_ptr = std::make_shared<ros::NodeHandle>(nh);
             std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_ptr;
             robot_info_list_ptr = std::make_shared<std::vector<fpp_data_classes::RobotInfo>>(this->robot_info_list_);
             if(this->this_robots_robot_info_->fpp_master)
             {
                 FPPControllerMaster fpp_master_controller = FPPControllerMaster(robot_info_list_ptr,
-                                                                                this->this_robots_robot_info_);
+                                                                                this->this_robots_robot_info_,
+                                                                                nh_ptr);
                 this->fpp_controller_ = std::make_shared<FPPControllerMaster>(fpp_master_controller);
             }
             else
             {
                 FPPControllerSlave fpp_slave_controller = FPPControllerSlave(robot_info_list_ptr,
-                                                                             this->this_robots_robot_info_);
+                                                                             this->this_robots_robot_info_,
+                                                                             nh_ptr);
                 this->fpp_controller_ = std::make_shared<FPPControllerSlave>(fpp_slave_controller);
             }
 

@@ -147,6 +147,8 @@ namespace fpp
             std::vector<Eigen::Vector2f> createRobotOutlineFromXMLRPC(XmlRpc::XmlRpcValue footprint_xmlrpc,
                                                                       const std::string full_param_name);
 
+            //! Nodehandle for the planner
+
             //! Boolean flag that defines if the path planner was initialized correctly
             bool initialized_;
 

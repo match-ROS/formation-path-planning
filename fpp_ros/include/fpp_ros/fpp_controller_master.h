@@ -20,14 +20,15 @@ namespace fpp
     {
         public:
             FPPControllerMaster(std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list,
-                                std::shared_ptr<fpp_data_classes::RobotInfo> robot_info);
+                                std::shared_ptr<fpp_data_classes::RobotInfo> robot_info,
+                                std::shared_ptr<ros::NodeHandle> nh);
 
             void execute() override;
 
         private:
-            void initServices(ros::NodeHandle *nh);
-            void initTopics(ros::NodeHandle *nh);
-            void initTimers(ros::NodeHandle *nh);
+            void initServices();
+            void initTopics();
+            void initTimers();
 
             geometry_msgs::PoseWithCovarianceStampedConstPtr getAMCLPose(std::string robot_namespace);
             void getAMCLPose(std::string robot_namespace, Eigen::Vector2f &robot_pose, float &yaw);
