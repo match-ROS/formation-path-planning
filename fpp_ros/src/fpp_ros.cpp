@@ -32,7 +32,6 @@ namespace fpp
     {
         if(!this->initialized_)
         {
-            ROS_INFO("Initializing Formation Path Planner.");
             // Safe parameter for planning
             this->path_planner_name_ = name;
             this->costmap_ = costmap;
@@ -46,84 +45,21 @@ namespace fpp
 
             // Get all params from the config file for the global path planner            
             this->getParams();
-            
+            ROS_INFO("Initializing Formation Path Planner in namespace: %s", this->this_robots_robot_info_->robot_name.c_str());
+
+            std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_ptr;
+            robot_info_list_ptr = std::make_shared<std::vector<fpp_data_classes::RobotInfo>>(this->robot_info_list_);
             if(this->this_robots_robot_info_->fpp_master)
             {
-                FPPControllerBase fpp_master_controller = FPPControllerMaster(this->this_robots_robot_info_);
-                this->fpp_controller_ = std::make_shared<FPPControllerBase>(fpp_master_controller);
+                FPPControllerMaster fpp_master_controller = FPPControllerMaster(robot_info_list_ptr,
+                                                                                this->this_robots_robot_info_);
+                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(fpp_master_controller);
             }
-
-            // Das hier in den fpp_master auslagern? Weil das muss nur dort gecalled werden und dann brauche ich hier keine unnötige abfrage
-            if(this->robot_name_ == "robot0")
+            else
             {
-                // Init services
-                this->dyn_rec_inflation_srv_client_ = nh.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
-                this->dyn_rec_inflation_srv_client_.waitForExistence();
-
-                // Init topics
-                this->formation_footprint_pub_ = nh.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
-                while(this->formation_footprint_pub_.getNumSubscribers() < 1)
-                    ros::Duration(0.01).sleep();
-
-                // Initialize formation planner with default values. Set lead vector when all robots are added and centroid can be calculated
-                this->formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
-
-                for(fpp_data_classes::RobotInfo robot_info: this->robot_info_list_)
-                {
-                    std::string amcl_pose_topic = robot_info.robot_namespace + "/amcl_pose";
-                    geometry_msgs::PoseWithCovarianceStampedConstPtr robot_pose_ptr;
-                    robot_pose_ptr = ros::topic::waitForMessage<geometry_msgs::PoseWithCovarianceStamped>(amcl_pose_topic);
-
-                    Eigen::Vector2f robot_pose;
-                    float yaw;
-                    if(robot_pose_ptr == nullptr)
-                    {
-                        ROS_ERROR_STREAM("FormationPathPlanner: No message was received from the topic: " << amcl_pose_topic);
-                        robot_pose << 0, 0;
-                        yaw = 0;
-                    }
-                    else
-                    {
-                        robot_pose << robot_pose_ptr->pose.pose.position.x, robot_pose_ptr->pose.pose.position.y;
-                        yaw = tf::getYaw(robot_pose_ptr->pose.pose.orientation);
-                    }
-
-                    geometry_info::GeometryContour robot_outline;
-                    robot_outline = geometry_info::GeometryContour(robot_pose, yaw);
-                    
-                    for(Eigen::Vector2f corner: robot_info.robot_outline)
-                    {
-                        // ROS_INFO_STREAM("Creating robot contour x: " << corner[0] << " y: " << corner[1]);
-                        robot_outline.addContourCornerGeometryCS(corner);
-                    }
-                    robot_outline.createContourEdges();
-
-                    this->robot_outline_list_.insert(std::pair<std::string, geometry_info::GeometryContour>(robot_info.robot_name, robot_outline));
-                    this->formation_contour_.addRobotToFormation(robot_outline);
-                }
-
-                // Call services
-                fpp_msgs::DynReconfigure dyn_reconfig_msg;
-                this->formation_contour_.exeGiftWrappingAlg();
-                this->formation_outline_circle_.calcMinimalEnclosingCircle(this->formation_contour_.getCornerPointsWorldCS());
-                dyn_reconfig_msg.request.new_inflation_radius = this->formation_outline_circle_.getCircleRadius();
-                dyn_reconfig_msg.request.robot_namespace = this->robot_ns_ ;
-                ros::Duration(0.1).sleep();
-                this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
-
-                geometry_msgs::PolygonStamped formation_footprint_msg;
-                formation_footprint_msg.header.frame_id = "map";
-                formation_footprint_msg.header.stamp = ros::Time::now();
-                for(Eigen::Vector2f corner: this->formation_contour_.getCornerPointsWorldCS())
-                {
-                    geometry_msgs::Point32 corner_point;
-                    corner_point.x = corner[0];
-                    corner_point.y = corner[1];
-                    ROS_INFO_STREAM("x: " << corner_point.x << " y: " << corner_point.y);
-                    corner_point.z = 0.0;
-                    formation_footprint_msg.polygon.points.push_back(corner_point);
-                }
-                this->formation_footprint_pub_.publish(formation_footprint_msg);
+                FPPControllerSlave fpp_slave_controller = FPPControllerSlave(robot_info_list_ptr,
+                                                                             this->this_robots_robot_info_);
+                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(fpp_slave_controller);
             }
 
             initialized_ = true; // Initialized method was called so planner is now initialized
@@ -159,7 +95,7 @@ namespace fpp
         private_nh.param<float>("default_tolerance", this->default_tolerance_, 1333.0);
 
         
-        
+        this->fpp_controller_->execute();
 
 
         this->start_ = start;
@@ -236,23 +172,17 @@ namespace fpp
                         robot_outline = robot_info_xmlrpc["robot_outline"];
                         std::string robot_outline_key = "formation_config/" + robot_iterator->first + "/robot_outline";
 
-                        ROS_INFO_STREAM("outline full: " << robot_outline_key);
-
                         robot_info.robot_outline = this->createRobotOutlineFromXMLRPC(robot_outline, robot_outline_key);
                     }
                 }
 
                 this->robot_info_list_.push_back(robot_info);
-                this->this_robots_robot_info_ = std::make_shared<fpp_data_classes::RobotInfo>(this->robot_info_list_.back());
+                if(this->robot_info_list_.back().robot_name == this->robot_name_)
+                {
+                    this->this_robots_robot_info_ = std::make_shared<fpp_data_classes::RobotInfo>(this->robot_info_list_.back());
+                }                
             }
         }
-    }
-
-    void FormationPathPlanner::calcFormationEnclosingCircle()
-    {
-        this->formation_outline_circle_ = fpp_helper::MinimalEnclosingCircle();
-        std::vector<Eigen::Vector2f> robot_positions;
-        this->formation_outline_circle_.calcMinimalEnclosingCircle(this->formation_contour_.getCornerPointsWorldCS());
     }
 
     Eigen::Vector2f FormationPathPlanner::MsgsPoseToEigenVector2f(geometry_msgs::Pose pose_to_convert)

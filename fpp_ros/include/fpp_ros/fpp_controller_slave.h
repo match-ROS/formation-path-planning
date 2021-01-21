@@ -17,7 +17,11 @@ namespace fpp
     class FPPControllerSlave : public FPPControllerBase
     {
         public:
-            FPPControllerSlave(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info);
+            FPPControllerSlave(std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list,
+                               std::shared_ptr<fpp_data_classes::RobotInfo> robot_info);
+
+            void execute() override {};
+
         private:
     };
 }

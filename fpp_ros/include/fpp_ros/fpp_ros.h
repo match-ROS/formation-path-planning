@@ -48,9 +48,6 @@
 
 namespace fpp
 {
-    
-
-
     class FormationPathPlanner : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public: 
@@ -144,16 +141,11 @@ namespace fpp
              */
             void getParams();
 
-            void calcFormationEnclosingCircle();
-
             Eigen::Vector2f MsgsPoseToEigenVector2f(geometry_msgs::Pose pose_to_convert);
-
 
             double getNumberFromXMLRPC(XmlRpc::XmlRpcValue value, const std::string full_param_name);
             std::vector<Eigen::Vector2f> createRobotOutlineFromXMLRPC(XmlRpc::XmlRpcValue footprint_xmlrpc,
                                                                       const std::string full_param_name);
-
-            void amclRobotPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg);
 
             //! Boolean flag that defines if the path planner was initialized correctly
             bool initialized_;
@@ -181,26 +173,13 @@ namespace fpp
 
             // Process information
 
-            //! @brief This value defines the size of the arrays that are the 1D-representation of the costmap
+            //! This value defines the size of the arrays that are the 1D-representation of the costmap
             int array_size_;
             //! Storing the start position as pose from where the robot is starting
             geometry_msgs::PoseStamped start_;
             //! Storing the goal position as pose where the robot should arrive after following the calculated path
             geometry_msgs::PoseStamped goal_;
-
-            std::map<std::string, geometry_info::GeometryContour> robot_outline_list_;
-            geometry_info::FormationContour formation_contour_;
-
-            //! Helper object for getting the smallest circle around the formation
-            fpp_helper::MinimalEnclosingCircle formation_outline_circle_;
-
+            //! Object that defines if this planner acts as slave or master. Calls to this object execute the planner.
             std::shared_ptr<FPPControllerBase> fpp_controller_;
-
-            // Because I was not able to dynamically reconfigure the costmap from this class
-            // I had to create a relay node that would get a service (this one) and forward
-            // it to the dynamic reconfigure server
-            ros::ServiceClient dyn_rec_inflation_srv_client_;
-
-            ros::Publisher formation_footprint_pub_;
     };
 }

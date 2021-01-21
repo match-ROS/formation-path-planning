@@ -151,6 +151,7 @@ add_library(minimal_enclosing_circle src/path_planner/minimal_enclosing_circle.c
 
 add_library(edge_info src/geometry_info/edge_info.cpp)
 add_library(geometry_contour src/geometry_info/geometry_contour.cpp)
+add_library(robot_contour src/geometry_info/robot_contour.cpp)
 add_library(formation_contour src/geometry_info/formation_contour.cpp)
 
 add_library(robot_info include/fpp_ros/data_classes/robot_info.h)
@@ -186,8 +187,6 @@ set_target_properties(robot_info PROPERTIES LINKER_LANGUAGE CXX)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(fpp_ros 
-  minimal_enclosing_circle 
-  edge_info geometry_contour formation_contour 
   robot_info 
   fpp_controller_base fpp_controller_master fpp_controller_slave
   ${catkin_LIBRARIES})
@@ -195,10 +194,17 @@ target_link_libraries(fpp_ros
 target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
 
 target_link_libraries(geometry_contour edge_info)
-target_link_libraries(formation_contour geometry_contour)
+target_link_libraries(robot_contour geometry_contour)
+target_link_libraries(formation_contour robot_contour geometry_contour)
 
-target_link_libraries(fpp_controller_base robot_info ${catkin_LIBRARIES})
-target_link_libraries(fpp_controller_master fpp_controller_base robot_info ${catkin_LIBRARIES})
+target_link_libraries(fpp_controller_base 
+  robot_info 
+  formation_contour robot_contour 
+  ${catkin_LIBRARIES})
+target_link_libraries(fpp_controller_master fpp_controller_base 
+  robot_info minimal_enclosing_circle
+  formation_contour robot_contour 
+  ${catkin_LIBRARIES})
 target_link_libraries(fpp_controller_slave fpp_controller_base robot_info ${catkin_LIBRARIES})
 # target_link_libraries(splined_relaxed_a_star general_types cubic_bezier_splines debug_helper  ${catkin_LIBRARIES})
 

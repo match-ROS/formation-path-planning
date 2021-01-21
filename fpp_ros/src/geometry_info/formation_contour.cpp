@@ -49,13 +49,41 @@ namespace geometry_info
         this->createContourEdges();
     }
 
-    void FormationContour::addRobotToFormation(geometry_info::GeometryContour robot_to_add)
+    void FormationContour::addRobotToFormation(geometry_info::RobotContour robot_to_add)
     {
         if (std::find(this->robot_contours_.begin(), this->robot_contours_.end(), robot_to_add) == this->robot_contours_.end())
         {
             this->robot_contours_.push_back(robot_to_add);
-            this->addContourCornersWorldCS(robot_to_add.getCornerPointsWorldCS());
         }
+        else
+        {
+            std::cout << "FormationContour: Robot already exists in formation.";
+        }
+    }
+
+    void FormationContour::updateRobotPose(std::string robot_name,
+                                           Eigen::Vector2f new_robot_pose_world_cs,
+                                           float new_rotation_world_to_geometry_cs)
+    {
+        for(RobotContour &robot_contour : this->robot_contours_)
+        {
+            if(robot_contour.getRobotName() == robot_name)
+            {
+                robot_contour.move_contour(new_robot_pose_world_cs, new_rotation_world_to_geometry_cs);
+            }
+        }
+    }
+
+    void FormationContour::updateFormationContour()
+    {
+        this->corner_points_geometry_cs_.clear(); // Delete all current corner points
+
+        // Add all corners of current robots and then exe gift wrapping algorithm
+        for(RobotContour &robot_contour: this->robot_contours_)
+        {
+            this->addContourCornersWorldCS(robot_contour.getCornerPointsWorldCS());
+        }
+        this->exeGiftWrappingAlg();
     }
 
     int FormationContour::calcNextWrappingPoint(Eigen::Vector2f current_wrapping_point_geometry_cs,
