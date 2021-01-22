@@ -69,7 +69,7 @@ namespace geometry_info
         {
             if(robot_contour.getRobotName() == robot_name)
             {
-                robot_contour.move_contour(new_robot_pose_world_cs, new_rotation_world_to_geometry_cs);
+                robot_contour.moveContour(new_robot_pose_world_cs, new_rotation_world_to_geometry_cs);
             }
         }
     }

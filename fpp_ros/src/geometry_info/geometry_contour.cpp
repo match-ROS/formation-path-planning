@@ -56,6 +56,84 @@ namespace geometry_info
         }
     }
 
+    float GeometryContour::calcArea()
+    {
+        float area = 0.0;
+        
+        for(int corner_counter = 0; corner_counter < this->corner_points_geometry_cs_.size(); corner_counter++)
+        {
+            float part_area = 0.0;
+            if((corner_counter + 1) == this->corner_points_geometry_cs_.size())
+            {
+                part_area = ((this->corner_points_geometry_cs_[corner_counter][0] *
+                              this->corner_points_geometry_cs_[0][1]) -
+                             (this->corner_points_geometry_cs_[0][0] *
+                              this->corner_points_geometry_cs_[corner_counter][1]));
+            }
+            else
+            {
+                part_area = ((this->corner_points_geometry_cs_[corner_counter][0] *
+                              this->corner_points_geometry_cs_[corner_counter + 1][1]) -
+                             (this->corner_points_geometry_cs_[corner_counter + 1][0] *
+                              this->corner_points_geometry_cs_[corner_counter][1]));
+            }
+            area = area + part_area;
+        }
+
+        area = std::abs(0.5 * area);
+
+        return area;
+    }
+
+    Eigen::Vector2f GeometryContour::calcCentroidGeometryCS()
+    {
+        float geometry_area = this->calcArea();
+
+        float x_centroid = 0.0;
+        float y_centroid = 0.0;
+
+        for(int corner_counter = 0; corner_counter < this->corner_points_geometry_cs_.size(); corner_counter++)
+        {
+            float x_first_factor = 0.0;
+            float y_first_factor = 0.0;
+            float second_factor = 0.0;
+
+            if((corner_counter + 1) == this->corner_points_geometry_cs_.size())
+            {
+                second_factor = ((this->corner_points_geometry_cs_[corner_counter][0] *
+                                  this->corner_points_geometry_cs_[0][1]) -
+                                 (this->corner_points_geometry_cs_[0][0] *
+                                  this->corner_points_geometry_cs_[corner_counter][1]));
+                x_first_factor = (this->corner_points_geometry_cs_[corner_counter][0] +
+                                  this->corner_points_geometry_cs_[0][0]);
+                y_first_factor = (this->corner_points_geometry_cs_[corner_counter][1] +
+                                  this->corner_points_geometry_cs_[0][1]);
+            }
+            else
+            {
+                second_factor = ((this->corner_points_geometry_cs_[corner_counter][0] *
+                                  this->corner_points_geometry_cs_[corner_counter + 1][1]) -
+                                 (this->corner_points_geometry_cs_[corner_counter + 1][0] *
+                                  this->corner_points_geometry_cs_[corner_counter][1]));
+                x_first_factor = (this->corner_points_geometry_cs_[corner_counter][0] +
+                                  this->corner_points_geometry_cs_[corner_counter + 1][0]);
+                y_first_factor = (this->corner_points_geometry_cs_[corner_counter][1] +
+                                  this->corner_points_geometry_cs_[corner_counter + 1][1]);
+            }
+            
+            x_centroid = x_centroid + (x_first_factor * second_factor);
+            y_centroid = y_centroid + (y_first_factor * second_factor);
+        }
+
+        x_centroid = (1 / (6 * geometry_area)) * x_centroid;
+        y_centroid = (1 / (6 * geometry_area)) * y_centroid;
+
+        Eigen::Vector2f centroid_geometry_cs;
+        centroid_geometry_cs << x_centroid, y_centroid;
+
+        return centroid_geometry_cs;
+    }
+
     Eigen::Vector2f GeometryContour::transformWorldToGeometryCS(Eigen::Vector2f world_cs)
     {
         Eigen::Vector3f extended_world_cs;
@@ -85,7 +163,12 @@ namespace geometry_info
         return corner_points_world_cs;
     }
 
-    void GeometryContour::move_contour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation)
+    void GeometryContour::moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation)
+    {
+        
+    }
+
+    void GeometryContour::moveContour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation)
     {
         Eigen::Matrix<float, 3, 3> new_tf_geometry_to_world_cs = this->createTransformationMatrix(new_lead_vector_world_cs, new_cs_rotation);
         Eigen::Matrix<float, 3, 3> new_tf_world_to_geometry_cs = new_tf_geometry_to_world_cs.inverse();

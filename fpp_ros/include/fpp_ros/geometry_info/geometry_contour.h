@@ -24,12 +24,23 @@ namespace geometry_info
 
             void createContourEdges();
 
+            float calcArea();
+
+            /**
+             * @brief Method for calculating the geometric centroid of the contour
+             * For formula see: https://en.wikipedia.org/wiki/Centroid under "Of a polygon"
+             * 
+             * @return Eigen::Vector2f 
+             */
+            Eigen::Vector2f calcCentroidGeometryCS();
+
             Eigen::Vector2f transformWorldToGeometryCS(Eigen::Vector2f world_cs);
             Eigen::Vector2f transformGeometryToWorldCS(Eigen::Vector2f geometry_cs);
 
             std::vector<Eigen::Vector2f> getCornerPointsWorldCS();
 
-            void move_contour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
+            void moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
+            void moveContour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
 
             friend bool operator==(const GeometryContour &lhs, const GeometryContour &rhs);
 

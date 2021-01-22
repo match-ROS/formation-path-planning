@@ -38,7 +38,6 @@ namespace fpp
                               fpp_data_classes::RobotInfo *&robot_info,
                               ros::NodeHandle &nh);
 
-            // ANDEREN NAMEN AUSDENKEN. AUCH IRGENDWAS MIT MAKE PLAN?
             /**
              * 
              * @brief This method is called when the planning should happen
