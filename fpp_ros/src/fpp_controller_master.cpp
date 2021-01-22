@@ -2,9 +2,9 @@
 
 namespace fpp
 {
-    FPPControllerMaster::FPPControllerMaster(std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list,
-                                             std::shared_ptr<fpp_data_classes::RobotInfo> robot_info,
-                                             ros::NodeHandle *nh)
+    FPPControllerMaster::FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
+                                             fpp_data_classes::RobotInfo *&robot_info,
+                                             ros::NodeHandle &nh)
         : FPPControllerBase(robot_info_list, robot_info, nh)
     {
         this->initServices();
@@ -12,13 +12,13 @@ namespace fpp
 
         // Initialize formation planner with default values. Set lead vector when all robots are added and centroid can be calculated
         this->formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
-
-        for(fpp_data_classes::RobotInfo robot_info: *this->robot_info_list_)
+        
+        for(fpp_data_classes::RobotInfo robot_info: this->robot_info_list_)
         {
             Eigen::Vector2f robot_pose;
             float yaw;
             this->getAMCLPose(robot_info.robot_namespace, robot_pose, yaw);
-
+            
             geometry_info::RobotContour robot_contour;
             robot_contour = geometry_info::RobotContour(robot_pose, yaw, robot_info.robot_name);
             
@@ -44,26 +44,26 @@ namespace fpp
         this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
 
         this->publishFootprint();
-
+        
         this->initTimers();
     }
 
     void FPPControllerMaster::initServices()
     {
-        this->dyn_rec_inflation_srv_client_ = this->nh_->serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
+        this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
         this->dyn_rec_inflation_srv_client_.waitForExistence();
     }
 
     void FPPControllerMaster::initTopics()
     {
-        this->formation_footprint_pub_ = this->nh_->advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
+        this->formation_footprint_pub_ = this->nh_.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
         while(this->formation_footprint_pub_.getNumSubscribers() < 1)
             ros::Duration(0.01).sleep();
     }
 
     void FPPControllerMaster::initTimers()
     {
-        this->footprint_timer_ = this->nh_->createTimer(ros::Duration(1.0), &FPPControllerMaster::footprintTimerCallback, this);
+        this->footprint_timer_ = this->nh_.createTimer(ros::Duration(1.0), &FPPControllerMaster::footprintTimerCallback, this);
     }
 
 
@@ -101,15 +101,10 @@ namespace fpp
 
     void FPPControllerMaster::updateFootprint()
     {
-        ROS_INFO("1");
-        std::vector<fpp_data_classes::RobotInfo> list = *this->robot_info_list_;
-        for(fpp_data_classes::RobotInfo robot_info: list)
+        for(fpp_data_classes::RobotInfo robot_info: this->robot_info_list_)
         {
-            ROS_INFO("2");
             Eigen::Vector2f new_robot_pose;
-            ROS_INFO("3");
             float new_rotation;
-            ROS_INFO("4");
             this->getAMCLPose(robot_info.robot_namespace, new_robot_pose, new_rotation);
 
             this->formation_contour_.updateRobotPose(robot_info.robot_name, new_robot_pose, new_rotation);
@@ -138,7 +133,6 @@ namespace fpp
 
     void FPPControllerMaster::footprintTimerCallback(const ros::TimerEvent& e)
     {
-        ROS_INFO("Update Footprint");
         this->updateFootprint();
         this->publishFootprint();        
     }

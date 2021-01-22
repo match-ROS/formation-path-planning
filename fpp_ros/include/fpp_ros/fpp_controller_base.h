@@ -10,6 +10,7 @@
 #include <string>
 #include <memory> // Usage of smart pointers
 #include <vector>
+#include <list>
 #include <set>
 #include <map>
 #include <algorithm>
@@ -26,9 +27,16 @@ namespace fpp
     class FPPControllerBase
     {
         public:
-            FPPControllerBase(std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list,
-                              std::shared_ptr<fpp_data_classes::RobotInfo> robot_info,
-                              ros::NodeHandle *nh);
+            /**
+             * @brief Construct a new FPPControllerBase object
+             * 
+             * @param robot_info_list 
+             * @param robot_info Reference to pointer
+             * @param nh 
+             */
+            FPPControllerBase(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
+                              fpp_data_classes::RobotInfo *&robot_info,
+                              ros::NodeHandle &nh);
 
             // ANDEREN NAMEN AUSDENKEN. AUCH IRGENDWAS MIT MAKE PLAN?
             /**
@@ -38,18 +46,15 @@ namespace fpp
              */
             virtual void execute() = 0;
 
-            // TEST
-            std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_;
-
         protected:
             //! NodeHandle from the node that initializes the fpp controller classes
-            ros::NodeHandle *nh_;
+            ros::NodeHandle &nh_;
 
             //! This is all the information that was read from the config file about each robot
-            std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_;
+            std::list<fpp_data_classes::RobotInfo> &robot_info_list_;
 
             //! This points to the object in the robot_info_list_ that contains the information about this robot
-            // std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_;
+            fpp_data_classes::RobotInfo *&robot_info_;
 
     };
 }

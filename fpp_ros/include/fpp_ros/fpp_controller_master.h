@@ -19,9 +19,9 @@ namespace fpp
     class FPPControllerMaster : public FPPControllerBase
     {
         public:
-            FPPControllerMaster(std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list,
-                                std::shared_ptr<fpp_data_classes::RobotInfo> robot_info,
-                                ros::NodeHandle *nh);
+            FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
+                                fpp_data_classes::RobotInfo *&robot_info,
+                                ros::NodeHandle &nh);
 
             void execute() override;
 

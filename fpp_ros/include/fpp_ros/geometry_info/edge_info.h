@@ -12,9 +12,7 @@ namespace geometry_info
         public:
             EdgeInfo(Eigen::Vector2f start_point, Eigen::Vector2f end_point);
 
-            void setStartPoint(Eigen::Vector2f start_point);
             Eigen::Vector2f getStartPoint();
-            void setEndPoint(Eigen::Vector2f end_point);
             Eigen::Vector2f getEndPoint();
             Eigen::Vector2f getEdgeVector();
 
@@ -22,9 +20,9 @@ namespace geometry_info
         private:
             void calculateEdgeVector();
 
-            std::shared_ptr<Eigen::Vector2f> start_point_;
-            std::shared_ptr<Eigen::Vector2f> end_point_;
+            Eigen::Vector2f start_point_;
+            Eigen::Vector2f end_point_;
 
-            std::shared_ptr<Eigen::Vector2f> edge_vector_;
+            Eigen::Vector2f edge_vector_;
     };
 }

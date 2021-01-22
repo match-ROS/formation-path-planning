@@ -39,6 +39,7 @@ namespace fpp
             this->array_size_ = this->costmap_->getSizeInCellsX() * this->costmap_->getSizeInCellsY();
 
             // Initialize node handle that points to namespace of planner
+            this->nh_ = ros::NodeHandle();
             this->planner_nh_ = ros::NodeHandle("~/" + this->path_planner_name_);
 
             // Get the tf prefix
@@ -49,16 +50,13 @@ namespace fpp
             this->getParams();
             ROS_INFO("Initializing Formation Path Planner in namespace: %s", this->this_robots_robot_info_->robot_name.c_str());
 
-            std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_ptr;
-            robot_info_list_ptr = std::make_shared<std::vector<fpp_data_classes::RobotInfo>>(this->robot_info_list_);
-
             if(this->this_robots_robot_info_->fpp_master)
             {
-                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(robot_info_list_ptr, this->this_robots_robot_info_, &this->nh_);
+                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->robot_info_list_, this->this_robots_robot_info_, this->nh_);
             }
             else
             {
-                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(robot_info_list_ptr, this->this_robots_robot_info_, &this->nh_);
+                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->robot_info_list_, this->this_robots_robot_info_, this->nh_);
             }
 
             initialized_ = true; // Initialized method was called so planner is now initialized
@@ -88,9 +86,6 @@ namespace fpp
             ROS_ERROR("RelaxedAStar planner was not initialized yet. Please initialize the planner before usage.");
             return mbf_msgs::GetPathResult::NOT_INITIALIZED;
         }
-
-        this->planner_nh_.param<float>("default_tolerance", this->default_tolerance_, 1333.0);
-
 
         this->start_ = start;
         this->goal_ = goal;
@@ -170,7 +165,10 @@ namespace fpp
                 this->robot_info_list_.push_back(robot_info);
                 if(this->robot_info_list_.back().robot_name == this->robot_name_)
                 {
-                    this->this_robots_robot_info_ = std::make_shared<fpp_data_classes::RobotInfo>(this->robot_info_list_.back());
+                    this->this_robots_robot_info_ = &(this->robot_info_list_.back());
+                    ROS_INFO("Pointer worked?");
+                    ROS_INFO("bla: %s", this->this_robots_robot_info_->robot_name.c_str());
+                    ROS_INFO("YES");
                 }                
             }
         }

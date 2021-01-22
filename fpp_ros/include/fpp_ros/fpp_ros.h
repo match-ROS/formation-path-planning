@@ -171,9 +171,9 @@ namespace fpp
             //! The default tolerance that is used if the tolerance of the received goal is not valid
             float default_tolerance_;
             //! Contains all positions of every robot that is part of the formation
-            std::vector<fpp_data_classes::RobotInfo> robot_info_list_;
+            std::list<fpp_data_classes::RobotInfo> robot_info_list_;
             //! This is a pointer to the RobotInfo object in the robot_info_list for easier access
-            std::shared_ptr<fpp_data_classes::RobotInfo> this_robots_robot_info_;
+            fpp_data_classes::RobotInfo *this_robots_robot_info_;
 
             // Process information
 
