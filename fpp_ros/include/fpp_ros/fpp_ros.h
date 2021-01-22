@@ -147,10 +147,6 @@ namespace fpp
             std::vector<Eigen::Vector2f> createRobotOutlineFromXMLRPC(XmlRpc::XmlRpcValue footprint_xmlrpc,
                                                                       const std::string full_param_name);
 
-            // TEST
-            void footprintTimerCallback(const ros::TimerEvent& e);
-            ros::Timer test_timer;
-
             //! Nodehandle for the planner
             ros::NodeHandle nh_;
             ros::NodeHandle planner_nh_;

@@ -25,13 +25,7 @@ namespace fpp
 
             void execute() override;
 
-            //TEST
-            void footprintTimerCallback(const ros::TimerEvent& e);
-
         private:        
-            //TEST
-            std::string test_string_;
-
             void initServices();
             void initTopics();
             void initTimers();
@@ -41,7 +35,7 @@ namespace fpp
 
             void updateFootprint();
             void publishFootprint();
-            // void footprintTimerCallback(const ros::TimerEvent& e);
+            void footprintTimerCallback(const ros::TimerEvent& e);
 
             // Process information
             std::map<std::string, geometry_info::GeometryContour> robot_outline_list_;

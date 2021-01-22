@@ -7,9 +7,6 @@ namespace fpp
                                              ros::NodeHandle *nh)
         : FPPControllerBase(robot_info_list, robot_info, nh)
     {
-        //TEST
-        this->test_string_ = "BLUB";
-
         this->initServices();
         this->initTopics();
 
@@ -44,12 +41,11 @@ namespace fpp
         dyn_reconfig_msg.request.new_inflation_radius = formation_outline_circle.getCircleRadius();
         dyn_reconfig_msg.request.robot_namespace = this->robot_info_->robot_namespace;
         ros::Duration(0.1).sleep();
-        ROS_ERROR("DYN CALL");
         this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
 
-        // this->publishFootprint();
+        this->publishFootprint();
 
-        // this->initTimers();
+        this->initTimers();
     }
 
     void FPPControllerMaster::initServices()
@@ -74,7 +70,6 @@ namespace fpp
     void FPPControllerMaster::execute()
     {
         ROS_ERROR("execute");
-        // this->initTimers();
     }
 
 
@@ -107,16 +102,14 @@ namespace fpp
     void FPPControllerMaster::updateFootprint()
     {
         ROS_INFO("1");
-        ROS_INFO("robot_name: %s", this->test_string_.c_str());
-        ROS_INFO("2");
         std::vector<fpp_data_classes::RobotInfo> list = *this->robot_info_list_;
         for(fpp_data_classes::RobotInfo robot_info: list)
         {
-            ROS_INFO("3");
+            ROS_INFO("2");
             Eigen::Vector2f new_robot_pose;
-            ROS_INFO("4");
+            ROS_INFO("3");
             float new_rotation;
-            ROS_INFO("5");
+            ROS_INFO("4");
             this->getAMCLPose(robot_info.robot_namespace, new_robot_pose, new_rotation);
 
             this->formation_contour_.updateRobotPose(robot_info.robot_name, new_robot_pose, new_rotation);

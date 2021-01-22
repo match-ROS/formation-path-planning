@@ -54,23 +54,12 @@ namespace fpp
 
             if(this->this_robots_robot_info_->fpp_master)
             {
-                FPPControllerMaster fpp_master_controller = FPPControllerMaster(robot_info_list_ptr,
-                                                                                this->this_robots_robot_info_,
-                                                                                &this->nh_);
-                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(fpp_master_controller);
-
-                //TEST
-                this->test_timer = this->nh_.createTimer(ros::Duration(0.5), &FPPControllerMaster::footprintTimerCallback, dynamic_cast<FPPControllerMaster*>(this->fpp_controller_.get()));
+                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(robot_info_list_ptr, this->this_robots_robot_info_, &this->nh_);
             }
             else
             {
-                FPPControllerSlave fpp_slave_controller = FPPControllerSlave(robot_info_list_ptr,
-                                                                             this->this_robots_robot_info_,
-                                                                             &this->nh_);
-                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(fpp_slave_controller);
+                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(robot_info_list_ptr, this->this_robots_robot_info_, &this->nh_);
             }
-
-            
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 
@@ -90,12 +79,6 @@ namespace fpp
         return 10 > this->makePlan(start, goal, 0.1, plan, cost, message);
     }  
 
-    void FormationPathPlanner::footprintTimerCallback(const ros::TimerEvent& e)
-    {
-        if(this->fpp_controller_ != nullptr)
-            ROS_INFO_STREAM("FPP TIMER" << this->fpp_controller_->robot_info_->robot_name);
-    }
-
     uint32_t FormationPathPlanner::makePlan(const geometry_msgs::PoseStamped &start, const geometry_msgs::PoseStamped &goal,
                                 double tolerance, std::vector<geometry_msgs::PoseStamped> &plan, double &cost,
                                 std::string &message)
@@ -107,9 +90,6 @@ namespace fpp
         }
 
         this->planner_nh_.param<float>("default_tolerance", this->default_tolerance_, 1333.0);
-
-        
-        this->fpp_controller_->execute();
 
 
         this->start_ = start;
