@@ -49,17 +49,18 @@ namespace fpp
             this->getParams();
             ROS_INFO("Initializing Formation Path Planner in namespace: %s", this->this_robots_robot_info_->robot_name.c_str());
 
-            //TEST
-            this->test_timer = this->nh_.createTimer(ros::Duration(0.5), &FormationPathPlanner::footprintTimerCallback, this);
-
             std::shared_ptr<std::vector<fpp_data_classes::RobotInfo>> robot_info_list_ptr;
             robot_info_list_ptr = std::make_shared<std::vector<fpp_data_classes::RobotInfo>>(this->robot_info_list_);
+
             if(this->this_robots_robot_info_->fpp_master)
             {
                 FPPControllerMaster fpp_master_controller = FPPControllerMaster(robot_info_list_ptr,
                                                                                 this->this_robots_robot_info_,
                                                                                 &this->nh_);
                 this->fpp_controller_ = std::make_shared<FPPControllerMaster>(fpp_master_controller);
+
+                //TEST
+                this->test_timer = this->nh_.createTimer(ros::Duration(0.5), &FPPControllerMaster::footprintTimerCallback, dynamic_cast<FPPControllerMaster*>(this->fpp_controller_.get()));
             }
             else
             {
@@ -68,6 +69,8 @@ namespace fpp
                                                                              &this->nh_);
                 this->fpp_controller_ = std::make_shared<FPPControllerSlave>(fpp_slave_controller);
             }
+
+            
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 

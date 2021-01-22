@@ -7,6 +7,9 @@ namespace fpp
                                              ros::NodeHandle *nh)
         : FPPControllerBase(robot_info_list, robot_info, nh)
     {
+        //TEST
+        this->test_string_ = "BLUB";
+
         this->initServices();
         this->initTopics();
 
@@ -46,7 +49,7 @@ namespace fpp
 
         // this->publishFootprint();
 
-        this->initTimers();
+        // this->initTimers();
     }
 
     void FPPControllerMaster::initServices()
@@ -104,15 +107,16 @@ namespace fpp
     void FPPControllerMaster::updateFootprint()
     {
         ROS_INFO("1");
-        ROS_INFO_STREAM("robot_name: " << this->robot_info_->robot_name);
-        auto list = *this->robot_info_list_;
+        ROS_INFO("robot_name: %s", this->test_string_.c_str());
+        ROS_INFO("2");
+        std::vector<fpp_data_classes::RobotInfo> list = *this->robot_info_list_;
         for(fpp_data_classes::RobotInfo robot_info: list)
         {
-            ROS_INFO("2");
-            Eigen::Vector2f new_robot_pose;
             ROS_INFO("3");
-            float new_rotation;
+            Eigen::Vector2f new_robot_pose;
             ROS_INFO("4");
+            float new_rotation;
+            ROS_INFO("5");
             this->getAMCLPose(robot_info.robot_namespace, new_robot_pose, new_rotation);
 
             this->formation_contour_.updateRobotPose(robot_info.robot_name, new_robot_pose, new_rotation);
