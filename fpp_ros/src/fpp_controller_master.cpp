@@ -28,7 +28,7 @@ namespace fpp
             }
             robot_contour.createContourEdges();
 
-            this->robot_outline_list_.insert(std::pair<std::string, geometry_info::GeometryContour>(robot_info.robot_name, robot_contour));
+            this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(robot_info.robot_name, robot_contour));
             this->formation_contour_.addRobotToFormation(robot_contour);
         }
         this->formation_contour_.updateFormationContour();

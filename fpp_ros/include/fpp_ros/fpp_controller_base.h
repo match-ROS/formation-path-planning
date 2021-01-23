@@ -20,6 +20,7 @@
 #include <fpp_ros/data_classes/robot_info.h>
 
 #include <fpp_ros/geometry_info/geometry_contour.h>
+#include <fpp_ros/geometry_info/robot_contour.h>
 #include <fpp_ros/geometry_info/formation_contour.h>
 
 namespace fpp
@@ -28,11 +29,12 @@ namespace fpp
     {
         public:
             /**
-             * @brief Construct a new FPPControllerBase object
+             * @brief Constructor for the BaseObject of the FPPController. 
+             * This stores basic information that is needed for the FPPController
              * 
-             * @param robot_info_list 
-             * @param robot_info Reference to pointer
-             * @param nh 
+             * @param robot_info_list Information about all robots in the formation
+             * @param robot_info Reference to pointer that points to element in the robot_info_list that defines the information about the robot this controller is running on.
+             * @param nh Nodehandle for topics/services and actions
              */
             FPPControllerBase(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                               fpp_data_classes::RobotInfo *&robot_info,
@@ -41,7 +43,7 @@ namespace fpp
             /**
              * 
              * @brief This method is called when the planning should happen
-             * This has to be imeplemented by the master and slave
+             * This has to be implemented by the master and slave as it is pure virtual
              */
             virtual void execute() = 0;
 
