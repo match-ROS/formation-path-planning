@@ -45,6 +45,21 @@ namespace fpp_helper
         return this->circle_radius_;
     }
 
+    Eigen::Vector2f MinimalEnclosingCircle::getCircleCentre()
+    {
+        return this->circle_centre_;
+    }
+
+    std::vector<Eigen::Vector2f> MinimalEnclosingCircle::getCircleDefiningPoints()
+    {
+        return this->circle_defining_points_;
+    }
+
+    std::vector<Eigen::Vector2f> MinimalEnclosingCircle::getEnclosedPoints()
+    {
+        return this->enclosed_points_;
+    }
+
     void MinimalEnclosingCircle::findNewSmallestCircle()
     {
         if(this->circle_defining_points_.size() == 3)
