@@ -6,24 +6,12 @@ namespace geometry_info
         : start_point_(start_point), end_point_(end_point)
     {
         this->calculateEdgeVector();
-    }   
-
-    // void EdgeInfo::setStartPoint(Eigen::Vector2f start_point)
-    // {
-    //     this->start_point_ = start_point;
-    //     this->calculateEdgeVector();
-    // }
+    }
 
     Eigen::Vector2f EdgeInfo::getStartPoint()
     {
         return this->start_point_;
     }
-
-    // void EdgeInfo::setEndPoint(Eigen::Vector2f end_point)
-    // {
-    //     this->end_point_ = end_point;
-    //     this->calculateEdgeVector();
-    // }
 
     Eigen::Vector2f EdgeInfo::getEndPoint()
     {

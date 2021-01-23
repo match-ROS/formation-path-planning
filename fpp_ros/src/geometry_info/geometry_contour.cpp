@@ -165,7 +165,34 @@ namespace geometry_info
 
     void GeometryContour::moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation)
     {
+        Eigen::Matrix<float, 3, 3> new_tf_geometry_to_world_cs = this->createTransformationMatrix(new_lead_vector_world_cs,
+                                                                                       new_cs_rotation);
+        Eigen::Matrix<float, 3, 3> new_tf_world_to_geometry_cs = new_tf_geometry_to_world_cs.inverse();
+
+        Eigen::Matrix<float, 3, 3> tf_old_to_new_geometry_cs;
+        tf_old_to_new_geometry_cs = new_tf_world_to_geometry_cs * this->tf_geometry_to_world_cs_;
+
+        std::vector<Eigen::Vector2f> corner_point_list_new_geometry_cs;
+        for(Eigen::Vector2f corner_old_geometry_cs : this->corner_points_geometry_cs_)
+        {
+            Eigen::Vector3f corner_extended_old_geometry_cs;
+            Eigen::Vector3f corner_extended_new_geometry_cs;
+            
+            corner_extended_old_geometry_cs << corner_old_geometry_cs, 1;
+            corner_extended_new_geometry_cs = tf_old_to_new_geometry_cs * corner_extended_old_geometry_cs;
+            corner_point_list_new_geometry_cs.push_back(corner_extended_new_geometry_cs.head<2>());
+        }
         
+        this->lead_vector_world_cs_ = new_lead_vector_world_cs;
+        this->world_to_geometry_cs_rotation_ = new_cs_rotation;
+        this->tf_geometry_to_world_cs_ = new_tf_geometry_to_world_cs;
+        this->tf_world_to_geometry_cs_ = new_tf_world_to_geometry_cs;
+
+        this->corner_points_geometry_cs_.clear();
+        this->corner_points_geometry_cs_.insert(this->corner_points_geometry_cs_.end(),
+                                                corner_point_list_new_geometry_cs.begin(),
+                                                corner_point_list_new_geometry_cs.end());
+        this->createContourEdges();
     }
 
     void GeometryContour::moveContour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation)
