@@ -10,8 +10,9 @@ namespace fpp_helper
     void MinimalEnclosingCircle::calcMinimalEnclosingCircle(const std::vector<Eigen::Vector2f> &points_to_enclose)
     {
         std::vector<Eigen::Vector2f> points_to_enclose_copy = points_to_enclose;
-        CircleInfo circle_info = this->exeWetzlAlg(points_to_enclose_copy, { });
+        CircleInfo circle_info = this->exeWetzlAlg(points_to_enclose_copy, { }, points_to_enclose.size());
 
+        this->enclosed_points_ = points_to_enclose;
         this->circle_radius_ = circle_info.radius;
         this->circle_centre_ = circle_info.centre;
 
@@ -24,30 +25,31 @@ namespace fpp_helper
     }
 
     CircleInfo MinimalEnclosingCircle::exeWetzlAlg(std::vector<Eigen::Vector2f> &points_to_enclose,
-                                                   std::vector<Eigen::Vector2f> circle_defining_points)
+                                                   std::vector<Eigen::Vector2f> circle_defining_points,
+                                                   int points_to_go)
     {
-        if(points_to_enclose.size() == 0 || circle_defining_points.size() == 3)
+        if(points_to_go == 0 || circle_defining_points.size() == 3)
         {
             return this->createCircle(circle_defining_points);
         }
 
         // Select random point
-        int random_point_index = rand() % points_to_enclose.size();
+        int random_point_index = rand() % points_to_go;
         Eigen::Vector2f point = points_to_enclose[random_point_index];
 
         // Remove selected point from list
         points_to_enclose.erase(points_to_enclose.begin() + random_point_index);
 
-        CircleInfo circle_info = this->exeWetzlAlg(points_to_enclose, circle_defining_points);
+        CircleInfo circle_info = this->exeWetzlAlg(points_to_enclose, circle_defining_points, points_to_go - 1);
         
         if(this->isPointEnclosed(circle_info, point))
         {
             return circle_info;
         }
-
         circle_defining_points.push_back(point);
+        this->circle_defining_points_ = circle_defining_points; // This will get overwritten every time but the last one will stay
 
-        return this->exeWetzlAlg(points_to_enclose, circle_defining_points);
+        return this->exeWetzlAlg(points_to_enclose, circle_defining_points, points_to_go - 1);
     }
 
     CircleInfo MinimalEnclosingCircle::createCircle(std::vector<Eigen::Vector2f> circle_defining_points)
@@ -86,10 +88,12 @@ namespace fpp_helper
             }
 
             // Smallest circle can only be created with three points
-            return this->createCircle(circle_defining_points[0],
-                                      circle_defining_points[1],
-                                      circle_defining_points[2]);
+            circle_info = this->createCircle(circle_defining_points[0],
+                                             circle_defining_points[1],
+                                             circle_defining_points[2]);
         }
+
+        return circle_info;
     }
 
     CircleInfo MinimalEnclosingCircle::createCircle(Eigen::Vector2f point1, Eigen::Vector2f point2)
@@ -102,7 +106,15 @@ namespace fpp_helper
 
     CircleInfo MinimalEnclosingCircle::createCircle(Eigen::Vector2f point1, Eigen::Vector2f point2, Eigen::Vector2f point3)
     {
-        // TODO, glaube ich nehme meinen Code
+        Eigen::Vector2f vector_centre1 = this->calcCentreOfVector(this->circle_defining_points_[1], this->circle_defining_points_[0]);
+        Eigen::Vector2f orthogonal_vector1 = this->calcOrthogonalVector(this->circle_defining_points_[0] - this->circle_defining_points_[1]);
+        Eigen::Vector2f vector_centre2 = this->calcCentreOfVector(this->circle_defining_points_[1], this->circle_defining_points_[2]);
+        Eigen::Vector2f orthogonal_vector2 = this->calcOrthogonalVector(this->circle_defining_points_[2] - this->circle_defining_points_[1]);
+
+        CircleInfo circle_info;
+        circle_info.centre = this->calcVectorLineIntersectionPoint(vector_centre1, orthogonal_vector1,
+                                                                        vector_centre2, orthogonal_vector2);
+        circle_info.radius = this->calcDistance(this->circle_defining_points_[0], this->circle_centre_);
     }
 
     double MinimalEnclosingCircle::getCircleRadius()
@@ -153,6 +165,30 @@ namespace fpp_helper
         return true;
     }
 
+    Eigen::Vector2f MinimalEnclosingCircle::calcOrthogonalVector(Eigen::Vector2f vector)
+    {
+        // Calculating the orthogonal vector is just swaping x and y and after that inverting the x coordinate
+        Eigen::Vector2f orthognal_vector;
+        orthognal_vector[0] = -vector[1];
+        orthognal_vector[1] = vector[0];
+        return orthognal_vector;
+    }
+
+    Eigen::Vector2f MinimalEnclosingCircle::calcVectorLineIntersectionPoint(Eigen::Vector2f lead_vector1,
+                                                                            Eigen::Vector2f direction_vector1,
+                                                                            Eigen::Vector2f lead_vector2,
+                                                                            Eigen::Vector2f direction_vector2)
+    {
+        double numerator = ((lead_vector2[1] * direction_vector2[0]) + (lead_vector1[0] * direction_vector2[1]) -
+                            (lead_vector2[0] * direction_vector2[1]) - (lead_vector1[1] * direction_vector2[0]));
+
+        double denominator = (direction_vector1[1] * direction_vector2[0]) - (direction_vector1[0] * direction_vector2[1]);
+
+        double factor = numerator / denominator;
+
+        return lead_vector1 + (factor * direction_vector1);
+    }
+
     // void MinimalEnclosingCircle::createCircle()
     // {
     //     if(this->circle_defining_points_.size() == 2)
@@ -162,17 +198,7 @@ namespace fpp_helper
     //     }
     //     else if(this->circle_defining_points_.size() == 3)
     //     {
-    //         Eigen::Vector2f vector_centre1 = this->calcCentreOfVector(this->circle_defining_points_[1], this->circle_defining_points_[0]);
-    //         Eigen::Vector2f orthogonal_vector1 = this->calcOrthogonalVector(this->circle_defining_points_[0] - this->circle_defining_points_[1]);
-    //         Eigen::Vector2f vector_centre2 = this->calcCentreOfVector(this->circle_defining_points_[1], this->circle_defining_points_[2]);
-    //         Eigen::Vector2f orthogonal_vector2 = this->calcOrthogonalVector(this->circle_defining_points_[2] - this->circle_defining_points_[1]);
-
-    //         // DEBUGGING
-    //         std::cout << "vector_centre1: " << vector_centre1 << " | orthogonal_vector1: " << orthogonal_vector1 << " | vector_centre2: " << vector_centre2 << " | orthogonal_vector2: " << orthogonal_vector2 << "\n";
-
-    //         this->circle_centre_ = this->calcVectorLineIntersectionPoint(vector_centre1, orthogonal_vector1,
-    //                                                                      vector_centre2, orthogonal_vector2);
-    //         this->circle_radius_ = this->calcDistance(this->circle_defining_points_[0], this->circle_centre_);
+    //         
     //     }
     //     else
     //     {
@@ -278,47 +304,5 @@ namespace fpp_helper
 
     
 
-    // Eigen::Vector2f MinimalEnclosingCircle::calcOrthogonalVector(Eigen::Vector2f vector)
-    // {
-    //     // Calculating the orthogonal vector is just swaping x and y and after that inverting the x coordinate
-    //     Eigen::Vector2f orthognal_vector;
-    //     orthognal_vector[0] = -vector[1];
-    //     orthognal_vector[1] = vector[0];
-    //     return orthognal_vector;
-    // }
-
-    // Eigen::Vector2f MinimalEnclosingCircle::calcVectorLineIntersectionPoint(Eigen::Vector2f lead_vector1,
-    //                                                                         Eigen::Vector2f direction_vector1,
-    //                                                                         Eigen::Vector2f lead_vector2,
-    //                                                                         Eigen::Vector2f direction_vector2)
-    // {
-    //     double numerator = ((lead_vector2[1] * direction_vector2[0]) + (lead_vector1[0] * direction_vector2[1]) -
-    //                         (lead_vector2[0] * direction_vector2[1]) - (lead_vector1[1] * direction_vector2[0]));
-
-    //     double denominator = (direction_vector1[1] * direction_vector2[0]) - (direction_vector1[0] * direction_vector2[1]);
-
-    //     double factor = numerator / denominator;
-
-    //     // DEBUGGING
-    //     std::cout << "numerator: " << numerator << " | denominator: " << denominator << " | factor: " << factor << "\n";
-
-    //     return lead_vector1 + (factor * direction_vector1);
-    // }
-
     
-
-    // bool MinimalEnclosingCircle::hasCircleAllPointsEnclosed()
-    // {
-    //     for(Eigen::Vector2f point : this->enclosed_points_)
-    //     {
-    //         if(std::find(this->circle_defining_points_.begin(), this->circle_defining_points_.end(), point) == this->circle_defining_points_.end())
-    //         {
-    //             if(this->calcDistance(this->circle_centre_, point) > this->circle_radius_)
-    //             {
-    //                 return false;
-    //             }
-    //         }
-    //     }
-    //     return true;
-    // }
 }

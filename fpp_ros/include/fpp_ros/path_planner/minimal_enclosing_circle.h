@@ -33,7 +33,8 @@ namespace fpp_helper
             
         private:
             CircleInfo exeWetzlAlg(std::vector<Eigen::Vector2f> &points_to_enclose,
-                                   std::vector<Eigen::Vector2f> circle_defining_points);
+                                   std::vector<Eigen::Vector2f> circle_defining_points,
+                                   int points_to_go);
             CircleInfo createCircle(std::vector<Eigen::Vector2f> enclosed_points);
             CircleInfo createCircle(Eigen::Vector2f point1, Eigen::Vector2f point2);
             CircleInfo createCircle(Eigen::Vector2f point1, Eigen::Vector2f point2, Eigen::Vector2f point3);
@@ -49,11 +50,11 @@ namespace fpp_helper
             // void updateCircle();
             // void findNewSmallestCircle();        
             
-            // Eigen::Vector2f calcOrthogonalVector(Eigen::Vector2f vector);
-            // Eigen::Vector2f calcVectorLineIntersectionPoint(Eigen::Vector2f lead_vector1,
-            //                                                 Eigen::Vector2f direction_vector1,
-            //                                                 Eigen::Vector2f lead_vector2,
-            //                                                 Eigen::Vector2f direction_vector2);
+            Eigen::Vector2f calcOrthogonalVector(Eigen::Vector2f vector);
+            Eigen::Vector2f calcVectorLineIntersectionPoint(Eigen::Vector2f lead_vector1,
+                                                            Eigen::Vector2f direction_vector1,
+                                                            Eigen::Vector2f lead_vector2,
+                                                            Eigen::Vector2f direction_vector2);
             
             // bool hasCircleAllPointsEnclosed();
 

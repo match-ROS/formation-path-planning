@@ -52,6 +52,7 @@
 
   <depend>roscpp</depend>
   <depend>std_srvs</depend>
+  <depend> fpp_ros </depend>
 
   <build_depend>dynamic_reconfigure</build_depend>
 

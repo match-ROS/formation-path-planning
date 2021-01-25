@@ -14,6 +14,7 @@ find_package(
     rospy
     roscpp
     std_srvs
+    fpp_ros
     dynamic_reconfigure)
 
 
@@ -135,6 +136,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(test_dyn_rec src/cpp_dynamic_reconfigure_test.cpp)
+add_executable(min_enc_circle_node src/minimal_enclosing_circle_test.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,6 +150,8 @@ add_executable(test_dyn_rec src/cpp_dynamic_reconfigure_test.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_dyn_rec ${catkin_LIBRARIES})
+
+target_link_libraries(min_enc_circle_node fpp_ros ${catkin_LIBRARIES})
 
 #############
 ## Install ##
