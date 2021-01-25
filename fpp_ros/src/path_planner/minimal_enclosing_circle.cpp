@@ -2,11 +2,6 @@
 
 namespace fpp_helper
 {
-    MinimalEnclosingCircle::MinimalEnclosingCircle()
-    {
-
-    }
-
     void MinimalEnclosingCircle::calcMinimalEnclosingCircle(const std::vector<Eigen::Vector2f> &points_to_enclose)
     {
         std::vector<Eigen::Vector2f> points_to_enclose_copy = points_to_enclose;
@@ -117,26 +112,6 @@ namespace fpp_helper
         circle_info.radius = this->calcDistance(this->circle_defining_points_[0], this->circle_centre_);
     }
 
-    double MinimalEnclosingCircle::getCircleRadius()
-    {
-        return this->circle_radius_;
-    }
-
-    Eigen::Vector2f MinimalEnclosingCircle::getCircleCentre()
-    {
-        return this->circle_centre_;
-    }
-
-    std::vector<Eigen::Vector2f> MinimalEnclosingCircle::getCircleDefiningPoints()
-    {
-        return this->circle_defining_points_;
-    }
-
-    std::vector<Eigen::Vector2f> MinimalEnclosingCircle::getEnclosedPoints()
-    {
-        return this->enclosed_points_;
-    }
-
     double MinimalEnclosingCircle::calcDistance(Eigen::Vector2f first_point, Eigen::Vector2f second_point)
     {
         Eigen::Vector2f diff_vector = second_point - first_point;
@@ -148,21 +123,6 @@ namespace fpp_helper
         Eigen::Vector2f diff_vector = second_point - first_point;
         Eigen::Vector2f relative_circle_centre = 0.5 * diff_vector;
         return first_point + relative_circle_centre;
-    }
-
-    bool MinimalEnclosingCircle::isPointEnclosed(const CircleInfo &circle_info, const Eigen::Vector2f &point)
-    {
-        return (this->calcDistance(circle_info.centre, point) <= circle_info.radius);
-    }
-
-    bool MinimalEnclosingCircle::arePointsEnclosed(const CircleInfo &circle_info, const std::vector<Eigen::Vector2f> &points)
-    {
-        for(const Eigen::Vector2f &point: points)
-        {
-            if(!this->isPointEnclosed(circle_info, point))
-                return false;
-        }
-        return true;
     }
 
     Eigen::Vector2f MinimalEnclosingCircle::calcOrthogonalVector(Eigen::Vector2f vector)
@@ -189,120 +149,38 @@ namespace fpp_helper
         return lead_vector1 + (factor * direction_vector1);
     }
 
-    // void MinimalEnclosingCircle::createCircle()
-    // {
-    //     if(this->circle_defining_points_.size() == 2)
-    //     {
-    //         this->circle_centre_ = this->calcCentreOfVector(this->enclosed_points_[0], this->enclosed_points_[1]);
-    //         this->circle_radius_ = 0.5 * this->calcDistance(this->enclosed_points_[0], this->enclosed_points_[1]);
-    //     }
-    //     else if(this->circle_defining_points_.size() == 3)
-    //     {
-    //         
-    //     }
-    //     else
-    //     {
-    //         std::cout << "MinimalEnclosingCircle: Error during updateCircle method. Number of points define circle: " << std::to_string(this->circle_defining_points_.size());
-    //     }
-    // }
+    bool MinimalEnclosingCircle::isPointEnclosed(const CircleInfo &circle_info, const Eigen::Vector2f &point)
+    {
+        return (this->calcDistance(circle_info.centre, point) <= circle_info.radius);
+    }
 
-    // void MinimalEnclosingCircle::findNewSmallestCircle()
-    // {
-    //     if(this->circle_defining_points_.size() == 3)
-    //     {
-    //         for(Eigen::Vector2f outer_point: this->circle_defining_points_)
-    //         {
-    //             Eigen::Vector2f diff_vector1;
-    //             diff_vector1 << 0, 0;
-    //             Eigen::Vector2f diff_vector2;
-    //             diff_vector2 << 0, 0;
-    //             for(Eigen::Vector2f inner_point: this->circle_defining_points_)
-    //             {
-    //                 if(outer_point != inner_point)
-    //                 {
-    //                     if(diff_vector1[0] == 0 && diff_vector1[1] == 0)
-    //                     {
-    //                         diff_vector1 = inner_point - outer_point;
-    //                     }
-    //                     else
-    //                     {
-    //                         diff_vector2 = inner_point - outer_point;
-    //                     }
-    //                 }
-    //             }
-    //             Eigen::Vector2f diff_vector = diff_vector1 - diff_vector2;
-    //             double angle = atan2(diff_vector[1], diff_vector[0]);
+    bool MinimalEnclosingCircle::arePointsEnclosed(const CircleInfo &circle_info, const std::vector<Eigen::Vector2f> &points)
+    {
+        for(const Eigen::Vector2f &point: points)
+        {
+            if(!this->isPointEnclosed(circle_info, point))
+                return false;
+        }
+        return true;
+    }
 
-    //             if(angle > M_PI_2) // If angle is bigger than 90° than it is an obtuse angle
-    //             {
-    //                 std::vector<Eigen::Vector2f>::iterator point_to_delete = std::find(this->circle_defining_points_.begin(),
-    //                                                                                    this->circle_defining_points_.end(),
-    //                                                                                    outer_point);
-    //                 this->circle_defining_points_.erase(point_to_delete);
-    //                 break;
-    //             }
-    //         }
-    //         this->updateCircle();
-    //     }
-    //     else if(this->circle_defining_points_.size() == 4)
-    //     {
-    //         std::vector<Eigen::Vector2f> saved_circle_defining_points = this->circle_defining_points_;
-    //         Eigen::Vector2f new_point = this->circle_defining_points_.back();
-            
-    //         std::vector<Eigen::Vector2f> best_circle_defining_points;
-    //         double smallest_circle_radius;
+    double MinimalEnclosingCircle::getCircleRadius()
+    {
+        return this->circle_radius_;
+    }
 
-    //         // Init
-    //         smallest_circle_radius = this->calcDistance(new_point, this->circle_defining_points_[0]);
+    Eigen::Vector2f MinimalEnclosingCircle::getCircleCentre()
+    {
+        return this->circle_centre_;
+    }
 
-    //         // First try forming smallest circle with new point and one of the old points
-    //         for(Eigen::Vector2f point: saved_circle_defining_points)
-    //         {
-    //             if(point != new_point)
-    //             {
-    //                 this->circle_defining_points_.clear();
-    //                 this->circle_defining_points_.push_back(point);
-    //                 this->circle_defining_points_.push_back(new_point);
-    //                 this->updateCircle();
-    //                 if(this->hasCircleAllPointsEnclosed() && this->circle_radius_ < smallest_circle_radius)
-    //                 {
-    //                     best_circle_defining_points = this->circle_defining_points_;
-    //                     smallest_circle_radius = this->circle_radius_;
-    //                 }
-    //             }
-    //         }
+    std::vector<Eigen::Vector2f> MinimalEnclosingCircle::getCircleDefiningPoints()
+    {
+        return this->circle_defining_points_;
+    }
 
-    //         // Then try forming smallest circle with new point and two of the old points
-    //         for(int point_counter = 0; point_counter < 3; point_counter++)
-    //         {
-    //             this->circle_defining_points_.clear();
-    //             this->circle_defining_points_.push_back(saved_circle_defining_points[point_counter]);
-    //             if(point_counter == 2)
-    //             {
-    //                 this->circle_defining_points_.push_back(saved_circle_defining_points[0]);
-    //             }
-    //             else
-    //             {
-    //                 this->circle_defining_points_.push_back(saved_circle_defining_points[point_counter+1]);
-    //             }
-    //             this->circle_defining_points_.push_back(new_point);
-    //             this->updateCircle();
-
-    //             if(this->hasCircleAllPointsEnclosed() && this->circle_radius_ < smallest_circle_radius)
-    //             {
-    //                 best_circle_defining_points = this->circle_defining_points_;
-    //                 smallest_circle_radius = this->circle_radius_;
-    //             }
-    //         }
-
-    //         this->circle_defining_points_ = best_circle_defining_points;
-    //         this->updateCircle();
-    //     }
-    // }
-
-    
-
-    
-
-    
+    std::vector<Eigen::Vector2f> MinimalEnclosingCircle::getEnclosedPoints()
+    {
+        return this->enclosed_points_;
+    }
 }
