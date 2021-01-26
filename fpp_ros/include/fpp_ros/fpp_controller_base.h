@@ -40,8 +40,9 @@ namespace fpp
              */
             FPPControllerBase(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                               fpp_data_classes::RobotInfo *&robot_info,
-                              ros::NodeHandle &nh,
-                              costmap_2d::Costmap2D *costmap);
+                              ros::NodeHandle &nh);
+
+            virtual void initialize(std::string planner_name, costmap_2d::Costmap2D *costmap, std::string global_frame);
 
             /**
              * 
@@ -62,8 +63,14 @@ namespace fpp
             //! This points to the object in the robot_info_list_ that contains the information about this robot
             fpp_data_classes::RobotInfo *&robot_info_;
 
-            // Direct pointer to the costmap to get updates instantly without the usage of topics
+            // Information for used planner
+            //! Name of the planer that is used to generate the plan for the formation
+            std::string planner_name_;
+            //! Direct pointer to the costmap to get updates instantly without the usage of topics
             costmap_2d::Costmap2D *costmap_;
+            //! Global frame which is used to transform points into map coordinate system
+            std::string global_frame_;
+
 
     };
 }

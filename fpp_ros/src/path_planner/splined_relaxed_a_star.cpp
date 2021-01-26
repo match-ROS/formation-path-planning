@@ -9,20 +9,11 @@ namespace path_planner
         ROS_ERROR("RELAXED A STAR DEFAULT CONSTRUCTOR");
     }
 
-    SplinedRelaxedAStar::SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
+    SplinedRelaxedAStar::SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap_ros, std::string global_frame)
         : initialized_(false)
     {
         ROS_ERROR("RELAXED A STAR OVERLOADED CONSTRUCTOR");
-        this->initialize(name, costmap_ros);
-    }
-
-    void SplinedRelaxedAStar::initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
-    {
-        if(!this->initialized_)
-        {
-            this->costmap_ros_ = costmap_ros_;
-            this->initialize(name, costmap_ros->getCostmap(), costmap_ros->getGlobalFrameID());
-        }
+        this->initialize(name, costmap_ros, global_frame);
     }
 
     void SplinedRelaxedAStar::initialize(std::string name, costmap_2d::Costmap2D *costmap, std::string global_frame)

@@ -4,9 +4,8 @@ namespace fpp
 {
     FPPControllerMaster::FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                              fpp_data_classes::RobotInfo *&robot_info,
-                                             ros::NodeHandle &nh,
-                                             costmap_2d::Costmap2D *costmap)
-        : FPPControllerBase(robot_info_list, robot_info, nh, costmap)
+                                             ros::NodeHandle &nh)
+        : FPPControllerBase(robot_info_list, robot_info, nh)
     {
         this->initServices();
         this->initTopics();
@@ -70,8 +69,11 @@ namespace fpp
                                       const geometry_msgs::PoseStamped &goal,
                                       std::vector<geometry_msgs::PoseStamped> &plan)
     {
-        path_planner::SplinedRelaxedAStar splined_ras = path_planner::SplinedRelaxedAStar("RelaxedAStar", this->costmap_);
+        path_planner::SplinedRelaxedAStar splined_ras_planner = path_planner::SplinedRelaxedAStar(this->planner_name_,
+                                                                                                  this->costmap_,
+                                                                                                  this->global_frame_);
 
+        splined_ras_planner.makePlan(start, goal, plan);
     }
 
 

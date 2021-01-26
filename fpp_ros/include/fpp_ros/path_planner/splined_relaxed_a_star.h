@@ -58,7 +58,7 @@ namespace path_planner
              * @param name The name of this planner
              * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
              */
-            SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
+            SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap_ros, std::string global_name);
 
             // mbf_costmap_core::CostmapPlanner interface implementation
             /**

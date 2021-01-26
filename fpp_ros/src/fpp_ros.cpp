@@ -54,16 +54,15 @@ namespace fpp
             {
                 this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->robot_info_list_,
                                                                               this->this_robots_robot_info_,
-                                                                              this->nh_,
-                                                                              costmap);
+                                                                              this->nh_);
             }
             else
             {
                 this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->robot_info_list_,
                                                                              this->this_robots_robot_info_,
-                                                                             this->nh_,
-                                                                             costmap);
+                                                                             this->nh_);
             }
+            this->fpp_controller_->initialize(name, costmap, global_frame);
 
             initialized_ = true; // Initialized method was called so planner is now initialized
 
@@ -96,6 +95,7 @@ namespace fpp
         this->start_ = start;
         this->goal_ = goal;
 
+        this->fpp_controller_->execute(start, goal, plan);
         
         return 0;
     }

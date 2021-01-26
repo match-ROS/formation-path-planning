@@ -22,8 +22,7 @@ namespace fpp
         public:
             FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                 fpp_data_classes::RobotInfo *&robot_info,
-                                ros::NodeHandle &nh,
-                                costmap_2d::Costmap2D *costmap);
+                                ros::NodeHandle &nh);
 
             void execute(const geometry_msgs::PoseStamped &start,
                          const geometry_msgs::PoseStamped &goal,

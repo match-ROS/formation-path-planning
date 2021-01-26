@@ -4,9 +4,8 @@ namespace fpp
 {
     FPPControllerSlave::FPPControllerSlave(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                            fpp_data_classes::RobotInfo *&robot_info,
-                                           ros::NodeHandle &nh,
-                                           costmap_2d::Costmap2D *costmap)
-        : FPPControllerBase(robot_info_list, robot_info, nh, costmap)
+                                           ros::NodeHandle &nh)
+        : FPPControllerBase(robot_info_list, robot_info, nh)
     {
         
     }
