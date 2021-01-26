@@ -1,4 +1,4 @@
-#include <relaxed_a_star/relaxed_a_star.h>
+#include <testing_pkg/path_planner/relaxed_a_star.h>
 #include <pluginlib/class_list_macros.h>
 
 PLUGINLIB_EXPORT_CLASS(relaxed_a_star::RelaxedAStar, mbf_costmap_core::CostmapPlanner)
@@ -43,8 +43,8 @@ namespace relaxed_a_star
             ros::NodeHandle private_nh("~/" + name);
             private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
             int neighbor_type;
-            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(general_types::NeighborType::FourWay));
-            this->neighbor_type_ = (general_types::NeighborType)neighbor_type;
+            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(relaxed_a_star::NeighborType::FourWay));
+            this->neighbor_type_ = (relaxed_a_star::NeighborType)neighbor_type;
             private_nh.param<float>("maximal_curvature", this->maximal_curvature_, 20);
             private_nh.param<int>("curvature_calculation_cell_distance", this->curvature_calculation_cell_distance_, 4);
 
@@ -262,7 +262,7 @@ namespace relaxed_a_star
     {
         // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
         // The elements in this list are linking to the index of the one dimensional costmap representation array.
-        std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list;
+        std::multiset<fpp_data_classes::Cell, std::less<fpp_data_classes::Cell>> array_open_cell_list;
         array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
 
         while (!array_open_cell_list.empty() &&
@@ -334,8 +334,8 @@ namespace relaxed_a_star
                 if(counter_x == 0 && counter_y == 0)
                     continue;
 
-                if (this->neighbor_type_ == general_types::NeighborType::EightWay ||
-                    (this->neighbor_type_ == general_types::NeighborType::FourWay &&
+                if (this->neighbor_type_ == relaxed_a_star::NeighborType::EightWay ||
+                    (this->neighbor_type_ == relaxed_a_star::NeighborType::FourWay &&
                      ((counter_x == 0 && counter_y == -1) ||
                       (counter_x == -1 && counter_y == 0) ||
                       (counter_x == 1 && counter_y == 0) ||

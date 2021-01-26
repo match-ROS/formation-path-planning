@@ -23,11 +23,23 @@
 #include <set>
 #include <cmath>
 
-#include <general_types/general_types.h>
-#include <debug_helper/visualization_helper.h>
+#include <fpp_ros/data_classes/path_planner_types.h>
+#include <fpp_ros/visualization_helper/visualization_helper.h>
 
 namespace advanced_a_star
 {
+    enum NeighborType
+    {
+        FourWay = 4,
+        EightWay = 8
+    };
+
+    enum FreeNeighborMode
+    {
+        CostmapOnly = 0,
+        CostmapAndMinimalCurveRadius = 1
+    };
+
     class AdvancedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public:
@@ -179,7 +191,7 @@ namespace advanced_a_star
 
             geometry_msgs::Pose createGeometryPose(int array_cell);
             void createMarkersForGScoreArray(std::shared_ptr<float[]> g_score);
-            void createMarkersForOpenCellList(std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list);
+            void createMarkersForOpenCellList(std::multiset<fpp_data_classes::Cell, std::less<fpp_data_classes::Cell>> array_open_cell_list);
 
 
             std::string global_frame_;
@@ -194,7 +206,7 @@ namespace advanced_a_star
             // 4 - This means the cells in the north, south, west, east direction are used
             // 8 - This means all cells around (also the diagonal ones) are used
             // Default: 8
-            general_types::NeighborType neighbor_type_;
+            advanced_a_star::NeighborType neighbor_type_;
 
             // Threshold for the costmap values that define if a cell is free or not.
             // This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.
@@ -207,7 +219,7 @@ namespace advanced_a_star
             // 0 - This mode only uses the g_scores of the cells. If the score of the selected cell is infinity, the cell will be pushed into the open list
             // 1 - This mode uses the same selection as mode 0. Additionally the curves get analyzed to have a maximal curvature. See: minimal_curve_radius parameter
             // Default: 0
-            general_types::FreeNeighborMode free_neighbor_mode_;
+            advanced_a_star::FreeNeighborMode free_neighbor_mode_;
 
             // This parameter is used together with the mode 1 of the free_neighbor_mode.
             // This parameter defines the maximal curvature the global plan should contain during a curve.

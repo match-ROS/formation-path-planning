@@ -25,12 +25,23 @@
 #include <cmath>
 #include <Eigen/Dense>
 
-#include <general_types/general_types.h>
-#include <debug_helper/visualization_helper.h>
-#include <splines/cubic_bezier_splines.h>
+#include <fpp_ros/data_classes/path_planner_types.h>
+#include <fpp_ros/visualization_helper/visualization_helper.h>
 
 namespace relaxed_a_star
 {
+    enum NeighborType
+    {
+        FourWay = 4,
+        EightWay = 8
+    };
+
+    enum FreeNeighborMode
+    {
+        CostmapOnly = 0,
+        CostmapAndMinimalCurveRadius = 1
+    };
+
     class RelaxedAStar : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public:
@@ -342,7 +353,7 @@ namespace relaxed_a_star
             // 4 - This means the cells in the north, south, west, east direction are used
             // 8 - This means all cells around (also the diagonal ones) are used
             // Default: 8
-            general_types::NeighborType neighbor_type_;
+            relaxed_a_star::NeighborType neighbor_type_;
 
             // Threshold for the costmap values that define if a cell is free or not.
             // This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.

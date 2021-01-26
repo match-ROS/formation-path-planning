@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <Eigen/Dense>
 
-namespace fpp_helper
+namespace geometry_info
 {
     struct CircleInfo
     {

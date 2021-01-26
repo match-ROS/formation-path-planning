@@ -1,4 +1,4 @@
-#include <advanced_a_star/advanced_a_star.h>
+#include <testing_pkg/path_planner/advanced_a_star.h>
 #include <pluginlib/class_list_macros.h>
 
 PLUGINLIB_EXPORT_CLASS(advanced_a_star::AdvancedAStar, mbf_costmap_core::CostmapPlanner)
@@ -46,12 +46,12 @@ namespace advanced_a_star
             ros::NodeHandle private_nh("~/" + name);
             private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
             int neighbor_type;
-            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(general_types::NeighborType::FourWay));
-            this->neighbor_type_ = (general_types::NeighborType)neighbor_type;
+            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(advanced_a_star::NeighborType::FourWay));
+            this->neighbor_type_ = (advanced_a_star::NeighborType)neighbor_type;
             int free_neighbor_mode;
             private_nh.param<int>("free_neighbor_mode", free_neighbor_mode, 0);
             ROS_INFO("mode: %i", free_neighbor_mode);
-            this->free_neighbor_mode_ = (general_types::FreeNeighborMode)free_neighbor_mode;
+            this->free_neighbor_mode_ = (advanced_a_star::FreeNeighborMode)free_neighbor_mode;
             private_nh.param<float>("maximal_curvature", this->maximal_curvature_, 20);
             private_nh.param<int>("curvature_calculation_cell_distance", this->curvature_calculation_cell_distance_, 4);
 
@@ -226,7 +226,7 @@ namespace advanced_a_star
         // Find plan
         // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
         // The elements in this list are linking to the index of the one dimensional costmap representation array.
-        std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list;
+        std::multiset<fpp_data_classes::Cell, std::less<fpp_data_classes::Cell>> array_open_cell_list;
         // Add start cell to open list to initialize it
         array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
 
@@ -243,10 +243,10 @@ namespace advanced_a_star
                 bool valid_cell = false;
                 switch(this->free_neighbor_mode_)
                 {
-                    case general_types::FreeNeighborMode::CostmapOnly:
+                    case advanced_a_star::FreeNeighborMode::CostmapOnly:
                         valid_cell = true;
                         break;
-                    case general_types::FreeNeighborMode::CostmapAndMinimalCurveRadius:
+                    case advanced_a_star::FreeNeighborMode::CostmapAndMinimalCurveRadius:
                         // Get first vector for angle calculation
                         int array_last_cell = array_neighbor_cell;
                         this->visu_helper_.addMarkerToExistingMarkerArray(this->theoretical_path_marker_identificator_,
@@ -472,8 +472,8 @@ namespace advanced_a_star
                 if(counter_x == 0 && counter_y == 0)
                     continue;
 
-                if (this->neighbor_type_ == general_types::NeighborType::EightWay ||
-                    (this->neighbor_type_ == general_types::NeighborType::FourWay &&
+                if (this->neighbor_type_ == advanced_a_star::NeighborType::EightWay ||
+                    (this->neighbor_type_ == advanced_a_star::NeighborType::FourWay &&
                      ((counter_x == 0 && counter_y == -1) ||
                       (counter_x == -1 && counter_y == 0) ||
                       (counter_x == 1 && counter_y == 0) ||
@@ -659,9 +659,9 @@ namespace advanced_a_star
         }
     }
 
-    void AdvancedAStar::createMarkersForOpenCellList(std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list)
+    void AdvancedAStar::createMarkersForOpenCellList(std::multiset<fpp_data_classes::Cell, std::less<fpp_data_classes::Cell>> array_open_cell_list)
     {
-        for(std::multiset<general_types::Cell, std::less<general_types::Cell>>::const_iterator iterator = array_open_cell_list.begin();
+        for(std::multiset<fpp_data_classes::Cell, std::less<fpp_data_classes::Cell>>::const_iterator iterator = array_open_cell_list.begin();
             iterator != array_open_cell_list.end();
             ++iterator)
         {

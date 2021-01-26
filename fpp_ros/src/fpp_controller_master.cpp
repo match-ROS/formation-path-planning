@@ -34,7 +34,7 @@ namespace fpp
         this->formation_contour_.updateFormationContour();
 
         // Call services
-        fpp_helper::MinimalEnclosingCircle formation_outline_circle = fpp_helper::MinimalEnclosingCircle();
+        geometry_info::MinimalEnclosingCircle formation_outline_circle = geometry_info::MinimalEnclosingCircle();
         formation_outline_circle.calcMinimalEnclosingCircle(this->formation_contour_.getCornerPointsWorldCS());
         fpp_msgs::DynReconfigure dyn_reconfig_msg;
         dyn_reconfig_msg.request.new_inflation_radius = formation_outline_circle.getCircleRadius();

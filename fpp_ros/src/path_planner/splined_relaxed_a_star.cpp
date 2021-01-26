@@ -1,6 +1,6 @@
 #include <fpp_ros/path_planner/splined_relaxed_a_star.h>
 
-namespace splined_relaxed_a_star
+namespace path_planner
 {
 
     SplinedRelaxedAStar::SplinedRelaxedAStar()
@@ -39,8 +39,8 @@ namespace splined_relaxed_a_star
             ros::NodeHandle private_nh("~/" + name);
             private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
             int neighbor_type;
-            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(general_types::NeighborType::FourWay));
-            this->neighbor_type_ = (general_types::NeighborType)neighbor_type;
+            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(path_planner::NeighborType::FourWay));
+            this->neighbor_type_ = (path_planner::NeighborType)neighbor_type;
 
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
@@ -235,14 +235,14 @@ namespace splined_relaxed_a_star
 
             // Create splines
             ROS_INFO("Start End Point");
-            std::vector<bezier_splines::CubicBezierSplines> spline_list;
+            std::vector<path_planner::CubicBezierSplines> spline_list;
             for(int pose_counter = 0; pose_counter < (selected_poses.size()-1); pose_counter++)
             {
                 Eigen::Matrix<float, 2, 1> start_pose;
                 Eigen::Matrix<float, 2, 1> end_pose;
                 start_pose << selected_poses[pose_counter].pose.position.x, selected_poses[pose_counter].pose.position.y;
                 end_pose << selected_poses[pose_counter + 1].pose.position.x, selected_poses[pose_counter + 1].pose.position.y;
-                bezier_splines::CubicBezierSplines spline(&this->visu_helper_, start_pose, end_pose);    
+                path_planner::CubicBezierSplines spline(&this->visu_helper_, start_pose, end_pose);    
                 spline_list.push_back(spline);
             }
 
@@ -282,7 +282,7 @@ namespace splined_relaxed_a_star
             // Create plan by splines
             plan.clear();
             std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
-            for(bezier_splines::CubicBezierSplines spline: spline_list)
+            for(path_planner::CubicBezierSplines spline: spline_list)
             {
                 std::vector<Eigen::Matrix<float, 2, 1>> points;
                 points = spline.calcBezierSpline(0.1);
@@ -333,7 +333,7 @@ namespace splined_relaxed_a_star
     {
         // The array_open_cell_list list contains all the open cells that were neighbors but not explored.
         // The elements in this list are linking to the index of the one dimensional costmap representation array.
-        std::multiset<general_types::Cell, std::less<general_types::Cell>> array_open_cell_list;
+        std::multiset<fpp_data_classes::Cell, std::less<fpp_data_classes::Cell>> array_open_cell_list;
         array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
 
         while (!array_open_cell_list.empty() &&
@@ -436,8 +436,8 @@ namespace splined_relaxed_a_star
                 if(counter_x == 0 && counter_y == 0)
                     continue;
 
-                if (this->neighbor_type_ == general_types::NeighborType::EightWay ||
-                    (this->neighbor_type_ == general_types::NeighborType::FourWay &&
+                if (this->neighbor_type_ == path_planner::NeighborType::EightWay ||
+                    (this->neighbor_type_ == path_planner::NeighborType::FourWay &&
                      ((counter_x == 0 && counter_y == -1) ||
                       (counter_x == -1 && counter_y == 0) ||
                       (counter_x == 1 && counter_y == 0) ||

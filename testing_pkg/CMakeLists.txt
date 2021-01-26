@@ -15,7 +15,14 @@ find_package(
     roscpp
     std_srvs
     fpp_ros
-    dynamic_reconfigure)
+    dynamic_reconfigure
+    mbf_costmap_core
+    mbf_msgs
+    nav_core
+    nav_msgs
+    geometry_msgs
+    visualization_msgs
+    costmap_2d)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -105,10 +112,19 @@ find_package(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS 
-  # include
-#  LIBRARIES testing_pkg
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+    include
+  LIBRARIES 
+    relaxed_a_star
+    advanced_a_star
+    debug_helper
+  CATKIN_DEPENDS 
+    roscpp
+    pluginlib
+    mbf_costmap_core
+    mbf_msgs
+    nav_core
+    geometry_msgs
+    tf
 )
 
 ###########
@@ -123,9 +139,8 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/testing_pkg.cpp
-# )
+add_library(relaxed_a_star src/path_planner/relaxed_a_star.cpp)
+add_library(advanced_a_star src/path_planner/advanced_a_star.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -152,6 +167,9 @@ add_executable(min_enc_circle_node src/minimal_enclosing_circle_test.cpp)
 target_link_libraries(test_dyn_rec ${catkin_LIBRARIES})
 
 target_link_libraries(min_enc_circle_node fpp_ros ${catkin_LIBRARIES})
+
+target_link_libraries(relaxed_a_star fpp_ros ${catkin_LIBRARIES})
+target_link_libraries(advanced_a_star fpp_ros ${catkin_LIBRARIES})
 
 #############
 ## Install ##

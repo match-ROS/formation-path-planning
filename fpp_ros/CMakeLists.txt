@@ -144,17 +144,20 @@ include_directories(
 
 ## Declare a C++ library
 add_library(fpp_ros src/fpp_ros.cpp)
-# add_library(general_types include/fpp_ros/path_planner/general_types.h)
-# add_library(splined_relaxed_a_star src/path_planner/splined_relaxed_a_star.cpp)
-# add_library(cubic_bezier_splines src/path_planner/cubic_bezier_splines.cpp)
-add_library(minimal_enclosing_circle src/path_planner/minimal_enclosing_circle.cpp)
+
+add_library(splined_relaxed_a_star src/path_planner/splined_relaxed_a_star.cpp)
+add_library(cubic_bezier_splines src/path_planner/cubic_bezier_splines.cpp)
+
+add_library(visualization_helper src/visualization_helper/visualization_helper.cpp)
 
 add_library(edge_info src/geometry_info/edge_info.cpp)
 add_library(geometry_contour src/geometry_info/geometry_contour.cpp)
 add_library(robot_contour src/geometry_info/robot_contour.cpp)
 add_library(formation_contour src/geometry_info/formation_contour.cpp)
+add_library(minimal_enclosing_circle src/geometry_info/minimal_enclosing_circle.cpp)
 
 add_library(robot_info include/fpp_ros/data_classes/robot_info.h)
+add_library(path_planner_types include/fpp_ros/data_classes/path_planner_types.h)
 
 add_library(fpp_controller_base src/fpp_controller_base.cpp)
 add_library(fpp_controller_master src/fpp_controller_master.cpp)
@@ -178,8 +181,8 @@ add_executable(dyn_reconfig_relay_node src/nodes/dyn_reconfig_relay_node.cpp)
 
 ## This setting of properties is so that I can only use a .h file without a .cpp file
 ## cpp would be empty as these files only contain types
-# set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(robot_info PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(path_planner_types PROPERTIES LINKER_LANGUAGE CXX)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -189,9 +192,21 @@ set_target_properties(robot_info PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(fpp_ros 
   robot_info 
   fpp_controller_base fpp_controller_master fpp_controller_slave
+  splined_relaxed_a_star cubic_bezier_splines visualization_helper
   ${catkin_LIBRARIES})
 
-target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
+target_link_libraries(splined_relaxed_a_star 
+  path_planner_types cubic_bezier_splines 
+  visualization_helper 
+  ${catkin_LIBRARIES})
+
+target_link_libraries(cubic_bezier_splines 
+  visualization_helper 
+  ${catkin_LIBRARIES})
+
+target_link_libraries(visualization_helper
+  ${catkin_LIBRARIES})
+
 
 target_link_libraries(geometry_contour edge_info)
 target_link_libraries(robot_contour geometry_contour)
@@ -206,7 +221,8 @@ target_link_libraries(fpp_controller_master fpp_controller_base
   formation_contour robot_contour 
   ${catkin_LIBRARIES})
 target_link_libraries(fpp_controller_slave fpp_controller_base robot_info ${catkin_LIBRARIES})
-# target_link_libraries(splined_relaxed_a_star general_types cubic_bezier_splines debug_helper  ${catkin_LIBRARIES})
+
+target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -2,7 +2,7 @@
 
 #include "ros/ros.h"
 
-#include <fpp_ros/path_planner/minimal_enclosing_circle.h>
+#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
 
 int main(int argc, char **argv)
 {
@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 
     // sleep(15);
     
-    fpp_helper::MinimalEnclosingCircle min_circle;
+    geometry_info::MinimalEnclosingCircle min_circle;
     min_circle.calcMinimalEnclosingCircle({ });
     std::cout << "\n";
 

@@ -10,7 +10,7 @@
 #include <list>
 #include <Eigen/Dense>
 
-#include <debug_helper/visualization_helper.h>
+#include <fpp_ros/visualization_helper/visualization_helper.h>
 
 
 namespace path_planner

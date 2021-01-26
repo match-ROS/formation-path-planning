@@ -1,4 +1,4 @@
-namespace general_types
+namespace fpp_data_classes
 {
     /**
      * @brief Struct that acts as a container for storing the call with the according f_cost value
@@ -19,17 +19,5 @@ namespace general_types
         {
             return this->f_cost > rhs.f_cost;
         }
-    };
-
-    enum NeighborType
-    {
-        FourWay = 4,
-        EightWay = 8
-    };
-
-    enum FreeNeighborMode
-    {
-        CostmapOnly = 0,
-        CostmapAndMinimalCurveRadius = 1
     };
 }

@@ -12,7 +12,7 @@
 
 
 #include <fpp_ros/fpp_controller_base.h>
-#include <fpp_ros/path_planner/minimal_enclosing_circle.h>
+#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
 
 namespace fpp
 {

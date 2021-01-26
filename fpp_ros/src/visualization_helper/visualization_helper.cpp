@@ -1,4 +1,4 @@
-#include <debug_helper/visualization_helper.h>
+#include <fpp_ros/visualization_helper/visualization_helper.h>
 
 namespace visualization_helper
 {

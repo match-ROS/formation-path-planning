@@ -1,6 +1,6 @@
-#include <fpp_ros/path_planner/minimal_enclosing_circle.h>
+#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
 
-namespace fpp_helper
+namespace geometry_info
 {
     void MinimalEnclosingCircle::calcMinimalEnclosingCircle(const std::vector<Eigen::Vector2f> &points_to_enclose)
     {

@@ -35,7 +35,7 @@
 #include <boost/bind.hpp>
 #include <XmlRpc.h>
 
-#include <fpp_ros/path_planner/minimal_enclosing_circle.h>
+#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
 #include <fpp_msgs/DynReconfigure.h>
 
 #include <fpp_ros/geometry_info/geometry_contour.h>

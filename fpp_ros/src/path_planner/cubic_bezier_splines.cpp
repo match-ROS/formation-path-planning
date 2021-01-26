@@ -1,6 +1,6 @@
-#include <splines/cubic_bezier_splines.h>
+#include <fpp_ros/path_planner/cubic_bezier_splines.h>
 
-namespace bezier_splines
+namespace path_planner
 {
     CubicBezierSplines::CubicBezierSplines(visualization_helper::VisualizationHelper *visu_helper)
     {
