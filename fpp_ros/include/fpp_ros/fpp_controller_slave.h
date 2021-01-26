@@ -19,9 +19,12 @@ namespace fpp
         public:
             FPPControllerSlave(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                fpp_data_classes::RobotInfo *&robot_info,
-                               ros::NodeHandle &nh);
+                               ros::NodeHandle &nh,
+                               costmap_2d::Costmap2D *costmap);
 
-            void execute() override {};
+            void execute(const geometry_msgs::PoseStamped &start,
+                         const geometry_msgs::PoseStamped &goal,
+                         std::vector<geometry_msgs::PoseStamped> &plan) override;
 
         private:
     };

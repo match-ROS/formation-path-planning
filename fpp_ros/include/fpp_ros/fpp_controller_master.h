@@ -10,8 +10,9 @@
 #include <algorithm>
 #include <Eigen/Dense>
 
-
 #include <fpp_ros/fpp_controller_base.h>
+
+#include <fpp_ros/path_planner/splined_relaxed_a_star.h>
 #include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
 
 namespace fpp
@@ -21,9 +22,12 @@ namespace fpp
         public:
             FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                 fpp_data_classes::RobotInfo *&robot_info,
-                                ros::NodeHandle &nh);
+                                ros::NodeHandle &nh,
+                                costmap_2d::Costmap2D *costmap);
 
-            void execute() override;
+            void execute(const geometry_msgs::PoseStamped &start,
+                         const geometry_msgs::PoseStamped &goal,
+                         std::vector<geometry_msgs::PoseStamped> &plan) override;
 
         private:      
             /**

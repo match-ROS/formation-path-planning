@@ -4,8 +4,9 @@ namespace fpp
 {
     FPPControllerMaster::FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                              fpp_data_classes::RobotInfo *&robot_info,
-                                             ros::NodeHandle &nh)
-        : FPPControllerBase(robot_info_list, robot_info, nh)
+                                             ros::NodeHandle &nh,
+                                             costmap_2d::Costmap2D *costmap)
+        : FPPControllerBase(robot_info_list, robot_info, nh, costmap)
     {
         this->initServices();
         this->initTopics();
@@ -65,10 +66,12 @@ namespace fpp
         this->footprint_timer_ = this->nh_.createTimer(ros::Duration(1.0), &FPPControllerMaster::footprintTimerCallback, this);
     }
 
-
-    void FPPControllerMaster::execute()
+    void FPPControllerMaster::execute(const geometry_msgs::PoseStamped &start,
+                                      const geometry_msgs::PoseStamped &goal,
+                                      std::vector<geometry_msgs::PoseStamped> &plan)
     {
-        ROS_ERROR("execute");
+        path_planner::SplinedRelaxedAStar splined_ras = path_planner::SplinedRelaxedAStar("RelaxedAStar", this->costmap_);
+
     }
 
 

@@ -52,11 +52,17 @@ namespace fpp
 
             if(this->this_robots_robot_info_->fpp_master)
             {
-                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->robot_info_list_, this->this_robots_robot_info_, this->nh_);
+                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->robot_info_list_,
+                                                                              this->this_robots_robot_info_,
+                                                                              this->nh_,
+                                                                              costmap);
             }
             else
             {
-                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->robot_info_list_, this->this_robots_robot_info_, this->nh_);
+                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->robot_info_list_,
+                                                                             this->this_robots_robot_info_,
+                                                                             this->nh_,
+                                                                             costmap);
             }
 
             initialized_ = true; // Initialized method was called so planner is now initialized

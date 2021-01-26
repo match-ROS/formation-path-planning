@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ros/ros.h"
+#include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
 
 #include <tf/transform_listener.h>
 #include <geometry_msgs/PolygonStamped.h>
@@ -38,14 +40,17 @@ namespace fpp
              */
             FPPControllerBase(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                               fpp_data_classes::RobotInfo *&robot_info,
-                              ros::NodeHandle &nh);
+                              ros::NodeHandle &nh,
+                              costmap_2d::Costmap2D *costmap);
 
             /**
              * 
              * @brief This method is called when the planning should happen
              * This has to be implemented by the master and slave as it is pure virtual
              */
-            virtual void execute() = 0;
+            virtual void execute(const geometry_msgs::PoseStamped &start,
+                                 const geometry_msgs::PoseStamped &goal,
+                                 std::vector<geometry_msgs::PoseStamped> &plan) = 0;
 
         protected:
             //! NodeHandle from the node that initializes the fpp controller classes
@@ -56,6 +61,9 @@ namespace fpp
 
             //! This points to the object in the robot_info_list_ that contains the information about this robot
             fpp_data_classes::RobotInfo *&robot_info_;
+
+            // Direct pointer to the costmap to get updates instantly without the usage of topics
+            costmap_2d::Costmap2D *costmap_;
 
     };
 }
