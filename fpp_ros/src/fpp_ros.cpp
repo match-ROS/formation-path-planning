@@ -166,9 +166,6 @@ namespace fpp
                 if(this->robot_info_list_.back().robot_name == this->robot_name_)
                 {
                     this->this_robots_robot_info_ = &(this->robot_info_list_.back());
-                    ROS_INFO("Pointer worked?");
-                    ROS_INFO("bla: %s", this->this_robots_robot_info_->robot_name.c_str());
-                    ROS_INFO("YES");
                 }                
             }
         }

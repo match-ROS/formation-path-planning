@@ -35,7 +35,6 @@ namespace fpp
 
         // Call services
         fpp_helper::MinimalEnclosingCircle formation_outline_circle = fpp_helper::MinimalEnclosingCircle();
-        std::vector<Eigen::Vector2f> robot_positions;
         formation_outline_circle.calcMinimalEnclosingCircle(this->formation_contour_.getCornerPointsWorldCS());
         fpp_msgs::DynReconfigure dyn_reconfig_msg;
         dyn_reconfig_msg.request.new_inflation_radius = formation_outline_circle.getCircleRadius();

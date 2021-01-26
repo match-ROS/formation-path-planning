@@ -3,7 +3,7 @@
 namespace geometry_info
 {
     FormationContour::FormationContour(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation)
-        : GeometryContour(lead_vector_world_cs_, world_to_geometry_cs_rotation)
+        : GeometryContour(lead_vector_world_cs, world_to_geometry_cs_rotation)
     {
 
     }
@@ -12,9 +12,10 @@ namespace geometry_info
     {
         if(this->corner_points_geometry_cs_.size() < 2)
         {
+            std::cout << "FormationContour::exeGiftWrappingAlg: ERROR, less than two points in contour.\n";
             return; // Error. With only 2 corners there can not be an area between the points
         }
-
+        
         // Start with finding the most left poit of the point cloud
         int index_lowest_point = 0;
         Eigen::Vector2f lowest_point_geometry_cs = this->corner_points_geometry_cs_[0]; // Initialize with first point from list
@@ -30,7 +31,7 @@ namespace geometry_info
         std::vector<Eigen::Vector2f> corners_to_wrap_geometry_cs = this->corner_points_geometry_cs_;
         std::vector<Eigen::Vector2f> wrapped_contour_corners_geometry_cs;
         wrapped_contour_corners_geometry_cs.push_back(lowest_point_geometry_cs);
-        
+
         float previous_radian = 2*M_PI; // Init with pi because no point can be below this one. After this point we rotate the line clockwise to find the next point
         // Get next point as long as the start point was not reached again
         while(wrapped_contour_corners_geometry_cs.size() <= 1 || wrapped_contour_corners_geometry_cs.back() != lowest_point_geometry_cs)
@@ -45,6 +46,7 @@ namespace geometry_info
             wrapped_contour_corners_geometry_cs.push_back(next_wrapping_point_geometry_cs);
             corners_to_wrap_geometry_cs.erase(corners_to_wrap_geometry_cs.begin() + next_wrapping_point_index);       
         }
+
         this->corner_points_geometry_cs_ = wrapped_contour_corners_geometry_cs;
         this->createContourEdges();
     }
@@ -79,6 +81,7 @@ namespace geometry_info
         this->corner_points_geometry_cs_.clear(); // Delete all current corner points
 
         // Add all corners of current robots and then exe gift wrapping algorithm
+        
         for(RobotContour &robot_contour: this->robot_contours_)
         {
             this->addContourCornersWorldCS(robot_contour.getCornerPointsWorldCS());

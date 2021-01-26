@@ -7,8 +7,8 @@ namespace geometry_info
         this->lead_vector_world_cs_= lead_vector_world_cs;
         this->world_to_geometry_cs_rotation_ = world_to_geometry_cs_rotation;
 
-        this->tf_geometry_to_world_cs_ = this->createTransformationMatrix(this->lead_vector_world_cs_,
-                                                                          this->world_to_geometry_cs_rotation_);
+        this->tf_geometry_to_world_cs_ = this->createTransformationMatrix(lead_vector_world_cs,
+                                                                          world_to_geometry_cs_rotation);
         this->tf_world_to_geometry_cs_ = this->tf_geometry_to_world_cs_.inverse();
     }
 
@@ -33,6 +33,10 @@ namespace geometry_info
                           corner_geometry_cs) == this->corner_points_geometry_cs_.end())
             {
                 this->corner_points_geometry_cs_.push_back(corner_geometry_cs);
+            }
+            else
+            {
+                std::cout << "GeometryContour::addContourCornersWorldCS: Corner point was already added, please check that all corners are different." << "\n";
             }
         }
     }
@@ -209,8 +213,8 @@ namespace geometry_info
     Eigen::Matrix<float, 3, 3> GeometryContour::createTransformationMatrix(Eigen::Vector2f lead_vector_world_cs, float rotation)
     {
         Eigen::Matrix<float, 3, 3> transformation_matrix;
-        transformation_matrix << cos(rotation), -sin(rotation), lead_vector_world_cs_[0],
-            sin(rotation), cos(rotation), lead_vector_world_cs_[1],
+        transformation_matrix << cos(rotation), -sin(rotation), lead_vector_world_cs[0],
+            sin(rotation), cos(rotation), lead_vector_world_cs[1],
             0, 0, 1;
         return transformation_matrix;
     }
