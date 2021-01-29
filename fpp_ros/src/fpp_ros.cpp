@@ -54,13 +54,15 @@ namespace fpp
             {
                 this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->robot_info_list_,
                                                                               this->this_robots_robot_info_,
-                                                                              this->nh_);
+                                                                              this->nh_,
+                                                                              this->planner_nh_);
             }
             else
             {
                 this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->robot_info_list_,
                                                                              this->this_robots_robot_info_,
-                                                                             this->nh_);
+                                                                             this->nh_,
+                                                                             this->planner_nh_);
             }
             this->fpp_controller_->initialize(name, costmap, global_frame);
 
@@ -121,7 +123,7 @@ namespace fpp
 
         // Get parameter of planner
         this->planner_nh_.param<float>("default_tolerance", this->default_tolerance_, 0.0);
-
+        
         XmlRpc::XmlRpcValue formation_config;
         this->planner_nh_.getParam("formation_config", formation_config);
         if(formation_config.getType() == XmlRpc::XmlRpcValue::TypeStruct)

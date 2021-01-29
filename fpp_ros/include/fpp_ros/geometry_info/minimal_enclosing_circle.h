@@ -31,6 +31,14 @@ namespace geometry_info
              */
             void calcMinimalEnclosingCircle(const std::vector<Eigen::Vector2f> &points_to_enclose);
 
+            /**
+             * @brief Method for calculating minimal circle around a defined circle centre.
+             * 
+             * @param circle_centre Centre point where the circle should be drawn around
+             * @param points_to_enclose Points where the minimal circle should be calculated around
+             */
+            void calcMinimalEnclosingCircle(const Eigen::Vector2f circle_centre, const std::vector<Eigen::Vector2f> &points_to_enclose);
+
             double getCircleRadius();
             Eigen::Vector2f getCircleCentre();
             std::vector<Eigen::Vector2f> getCircleDefiningPoints();

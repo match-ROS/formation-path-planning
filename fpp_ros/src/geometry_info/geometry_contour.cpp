@@ -84,9 +84,14 @@ namespace geometry_info
             area = area + part_area;
         }
 
-        area = std::abs(0.5 * area);
+        area = 0.5 * area;
 
         return area;
+    }
+
+    float GeometryContour::calcAbsArea()
+    {
+        return std::abs(this->calcArea());
     }
 
     Eigen::Vector2f GeometryContour::calcCentroidGeometryCS()
@@ -101,7 +106,6 @@ namespace geometry_info
             float x_first_factor = 0.0;
             float y_first_factor = 0.0;
             float second_factor = 0.0;
-
             if((corner_counter + 1) == this->corner_points_geometry_cs_.size())
             {
                 second_factor = ((this->corner_points_geometry_cs_[corner_counter][0] *
@@ -136,6 +140,13 @@ namespace geometry_info
         centroid_geometry_cs << x_centroid, y_centroid;
 
         return centroid_geometry_cs;
+    }
+
+    Eigen::Vector2f GeometryContour::calcCentroidWorldCS()
+    {
+        Eigen::Vector2f centroid_geometry_cs = this->calcCentroidGeometryCS();
+        Eigen::Vector2f centroid_world_cs = this->transformGeometryToWorldCS(centroid_geometry_cs);
+        return centroid_world_cs;
     }
 
     Eigen::Vector2f GeometryContour::transformWorldToGeometryCS(Eigen::Vector2f world_cs)

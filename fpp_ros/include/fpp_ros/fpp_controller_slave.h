@@ -19,7 +19,8 @@ namespace fpp
         public:
             FPPControllerSlave(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                fpp_data_classes::RobotInfo *&robot_info,
-                               ros::NodeHandle &nh);
+                               ros::NodeHandle &nh,
+                               ros::NodeHandle &planner_nh);
 
             void execute(const geometry_msgs::PoseStamped &start,
                          const geometry_msgs::PoseStamped &goal,

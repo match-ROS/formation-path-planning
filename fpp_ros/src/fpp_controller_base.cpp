@@ -4,8 +4,9 @@ namespace fpp
 {
     FPPControllerBase::FPPControllerBase(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                          fpp_data_classes::RobotInfo *&robot_info,
-                                         ros::NodeHandle &nh)
-        : robot_info_list_(robot_info_list), robot_info_(robot_info), nh_(nh)
+                                         ros::NodeHandle &nh,
+                                         ros::NodeHandle &planner_nh)
+        : robot_info_list_(robot_info_list), robot_info_(robot_info), nh_(nh), planner_nh_(planner_nh)
     {
 
     }

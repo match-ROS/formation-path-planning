@@ -54,12 +54,20 @@ namespace geometry_info
             void createContourEdges();
 
             /**
-             * @brief Method for calculating the area in the contour.
+             * @brief Method for calculating the area in the contour. If the area is negative the points are in clockwise order.
              * For formula see: https://en.wikipedia.org/wiki/Centroid under "Of a polygon".
              * 
              * @return float Value of the containing area
              */
             float calcArea();
+
+            /**
+             * @brief Method for calculating the absolute area in the contour so the area is always a positive value.
+             * For formula see: https://en.wikipedia.org/wiki/Centroid under "Of a polygon".
+             * 
+             * @return float Value of the containing area
+             */
+            float calcAbsArea();
 
             /**
              * @brief Method for calculating the geometric centroid of the contour
@@ -68,6 +76,14 @@ namespace geometry_info
              * @return Eigen::Vector2f Vector that points to the centroid of the contour in the geometry cs
              */
             Eigen::Vector2f calcCentroidGeometryCS();
+
+            /**
+             * @brief Method for calculating the geometric centroid of the contour
+             * For formula see: https://en.wikipedia.org/wiki/Centroid under "Of a polygon"
+             * 
+             * @return Eigen::Vector2f Vector that points to the centroid of the contour in the world cs
+             */
+            Eigen::Vector2f calcCentroidWorldCS();
 
             /**
              * @brief Helper method for easy transformation of a point from world to the coordinate system of this object

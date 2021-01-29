@@ -9,29 +9,23 @@ namespace path_planner
         ROS_ERROR("RELAXED A STAR DEFAULT CONSTRUCTOR");
     }
 
-    SplinedRelaxedAStar::SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap_ros, std::string global_frame)
-        : initialized_(false)
+    SplinedRelaxedAStar::SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap,
+                                             std::string global_frame)
+        : initialized_(false), costmap_(costmap), global_frame_(global_frame)
     {
         ROS_ERROR("RELAXED A STAR OVERLOADED CONSTRUCTOR");
-        this->initialize(name, costmap_ros, global_frame);
+        this->initialize(name);
     }
 
-    void SplinedRelaxedAStar::initialize(std::string name, costmap_2d::Costmap2D *costmap, std::string global_frame)
+    void SplinedRelaxedAStar::initialize(std::string name)
     {
         if(!this->initialized_)
         {
             ROS_INFO("Initializing SplinedRelaxedAStar planner.");
-            // Safe parameter for planning
-            this->costmap_ = costmap;
-            this->global_frame_ = global_frame;
             this->array_size_ = this->costmap_->getSizeInCellsX() * this->costmap_->getSizeInCellsY();
 
             // Get parameter of planner
             ros::NodeHandle private_nh("~/" + name);
-            private_nh.param<float>("default_tolerance", this->default_tolerance_, 0.0);
-            int neighbor_type;
-            private_nh.param<int>("neighbor_type", neighbor_type, static_cast<int>(path_planner::NeighborType::FourWay));
-            this->neighbor_type_ = (path_planner::NeighborType)neighbor_type;
 
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
@@ -350,9 +344,9 @@ namespace path_planner
                 }
             }
             // this->createMarkersForGScoreArray(g_score);
-            // this->visu_helper_.visualizeMarkerArray(this->g_score_marker_array_id_);
-            // this->visu_helper_.clearMarkerArray(this->g_score_marker_array_id_);
-            // ros::Duration(0.3).sleep();
+            // this->visu_helper_.visualizeMarkerArray(this->g_score_marker_identificator_);
+            // this->visu_helper_.clearMarkerArray(this->g_score_marker_identificator_);
+            // ros::Duration(0.1).sleep();
         }
     }
 
@@ -626,5 +620,20 @@ namespace path_planner
                                                      pose_stamped.pose);
         }
         return planning_points_orientation;
+    }
+
+    void SplinedRelaxedAStar::setDefaultTolerance(float default_tolerance)
+    {   
+        this->default_tolerance_ = default_tolerance;
+    }
+
+    void SplinedRelaxedAStar::setNeighborType(int neighbor_type)
+    {
+        this->neighbor_type_ = (NeighborType)neighbor_type;
+    }
+
+    void SplinedRelaxedAStar::setFreeCellThreshhold(int free_cell_thresshold)
+    {
+        this->free_cell_threshhold_ = free_cell_thresshold;
     }
 }

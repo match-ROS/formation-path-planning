@@ -22,13 +22,23 @@ namespace fpp
         public:
             FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                                 fpp_data_classes::RobotInfo *&robot_info,
-                                ros::NodeHandle &nh);
+                                ros::NodeHandle &nh,
+                                ros::NodeHandle &planner_nh);
+
+            void initialize(std::string planner_name,
+                            costmap_2d::Costmap2D *costmap,
+                            std::string global_frame) override;
 
             void execute(const geometry_msgs::PoseStamped &start,
                          const geometry_msgs::PoseStamped &goal,
                          std::vector<geometry_msgs::PoseStamped> &plan) override;
 
-        private:      
+        private:     
+            /**
+             * @brief Read params from config file
+             * 
+             */
+            void readParams(std::string name);
             /**
              * @brief Helper method for intializing all services
              * 
@@ -73,11 +83,27 @@ namespace fpp
              */
             void publishFootprint();
             /**
+             * @brief Publish a plan using the publisher that is handed in as parameter
+             * 
+             * @param plan_publisher Publisher that is used to publish the plan
+             * @param plan Plan that contains all points the define the plan
+             */
+            void publishPlan(const ros::Publisher &plan_publisher, const std::vector<geometry_msgs::PoseStamped> &plan);
+            /**
+             * @brief Call the dynamic reconfigure relay node to reconfigure the costmap inflation
+             * 
+             */
+            void callDynamicCostmapReconfigure();
+            /**
              * @brief Callback for the timer that triggers the publishing of the formation footprint
              * 
              * @param e TimerEvents handed to the callback 
              */
             void footprintTimerCallback(const ros::TimerEvent& e);
+
+            // Parameter information
+            //! This parameter contains the name of the used planner for generating the initial plan
+            std::string used_formation_planner_;
 
             // Process information
             
@@ -85,6 +111,12 @@ namespace fpp
             std::map<std::string, geometry_info::RobotContour> robot_outline_list_;
             //! Outline of the formation
             geometry_info::FormationContour formation_contour_;
+            //! Centre of the formation
+            Eigen::Vector2f formation_centre_;
+            //! Minimal circle around the formation to change the costmap inflation
+            geometry_info::MinimalEnclosingCircle formation_enclosing_circle_;
+            //! Replace this in the future with an interface pointer. Object that plans the initial path.
+            path_planner::SplinedRelaxedAStar initial_path_planner_;
 
             // Services and Topics
 
@@ -94,6 +126,8 @@ namespace fpp
             ros::ServiceClient dyn_rec_inflation_srv_client_;
             //! Topic to publish the footprint of the formation
             ros::Publisher formation_footprint_pub_;
+            //! Topic to publish the plan of the formation. From this each robot has to calculate its own plan
+            ros::Publisher formation_path_plan_pub_;
 
             //Timers
 

@@ -58,15 +58,8 @@ namespace path_planner
              * @param name The name of this planner
              * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
              */
-            SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap_ros, std::string global_name);
-
-            // mbf_costmap_core::CostmapPlanner interface implementation
-            /**
-            * @brief Initialization function for the CostmapPlanner
-            * @param name The name of this planner
-            * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
-            */
-            void initialize(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
+            SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap,
+                                std::string global_name);
 
             /**
              * @brief Initialization method for the CostmapPlanner
@@ -75,7 +68,7 @@ namespace path_planner
              * @param costmap A pointer to the costmap that will be used for planning
              * @param global_frame Global frame of the costmap
              */
-            void initialize(std::string name, costmap_2d::Costmap2D *costmap, std::string global_frame);
+            void initialize(std::string name);
 
             /**
              * @brief Given a goal pose in the world, compute a plan
@@ -123,6 +116,10 @@ namespace path_planner
             */
             bool cancel();
         
+            void setDefaultTolerance(float default_tolerance);
+            void setNeighborType(int neighbor_type);
+            void setFreeCellThreshhold(int free_cell_thresshold);
+
         protected:
 
             // Defines if the path planner was initialized. If not initialized the planner can not find path
@@ -334,49 +331,26 @@ namespace path_planner
 
             geometry_msgs::PoseArray createPoseArrayForOrientationVisu(std::vector<geometry_msgs::PoseStamped>& plan);
 
-            /**
-             * @brief Global frame of the robot
-             * 
-             */
+            //!Global frame of the robot
             std::string global_frame_;
-            /**
-             * @brief tf_prefix that was defined in the launch files for the robot
-             * 
-             */
+            //!tf_prefix that was defined in the launch files for the robot
             std::string tf_prefix_;
 
             // Parameter list
-            // The default tolerance that is used if the tolerance of the received goal is not valid
-            // Default: 0.2
+
+            //! The default tolerance that is used if the tolerance of the received goal is not valid
             float default_tolerance_;
 
-            // How many of the neighbor cells should be used. Options:
-            // 4 - This means the cells in the north, south, west, east direction are used
-            // 8 - This means all cells around (also the diagonal ones) are used
-            // Default: 8
+            //! How many of the neighbor cells should be used. Options:
+            //! 4 - This means the cells in the north, south, west, east direction are used
+            //! 8 - This means all cells around (also the diagonal ones) are used
             path_planner::NeighborType neighbor_type_;
 
-            // Threshold for the costmap values that define if a cell is free or not.
-            // This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.
-            // Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
-            // The greater this value will be defined the closer the global path will be planed next to walls.
-            // Default: 0
+            //! Threshold for the costmap values that define if a cell is free or not.
+            //! This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.
+            //! Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
+            //! The greater this value will be defined the closer the global path will be planed next to walls.
             int free_cell_threshhold_;
-
-            // This parameter is used together with the mode 1 of the free_neighbor_mode.
-            // This parameter defines the maximal curvature the global plan should contain during a curve.
-            // This parameter is specified in degree.
-            // Default: 20
-            float maximal_curvature_;
-
-            // This parameter defines the distance between the two points that are used for calculating the curvature of the path.
-            // For example 1 uses the current cell and the cell that the global planner wants to expand to or place in the open set.
-            // 4 uses the following setup |x|3|2|C|F where F is future cell, C is current cell where the neighbors are inspcted and x is the fourth cell.
-            // Notice that the resulting angle heavily depends on this value!
-            // If this parameter is 1 then with neighbor_type_=8 the resulting value will be 0 or a multiple of 45°.
-            // So if the maximal_curvature_ is smaller than 45° the robot would not be able to turn.
-            // Default: 4
-            int curvature_calculation_cell_distance_;
 
             // Process information
             /**

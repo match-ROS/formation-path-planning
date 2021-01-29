@@ -40,7 +40,8 @@ namespace fpp
              */
             FPPControllerBase(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
                               fpp_data_classes::RobotInfo *&robot_info,
-                              ros::NodeHandle &nh);
+                              ros::NodeHandle &nh,
+                              ros::NodeHandle &planner_nh);
 
             virtual void initialize(std::string planner_name, costmap_2d::Costmap2D *costmap, std::string global_frame);
 
@@ -56,6 +57,8 @@ namespace fpp
         protected:
             //! NodeHandle from the node that initializes the fpp controller classes
             ros::NodeHandle &nh_;
+            //! NodeHandle that is in the namespace of the planner
+            ros::NodeHandle &planner_nh_;
 
             //! This is all the information that was read from the config file about each robot
             std::list<fpp_data_classes::RobotInfo> &robot_info_list_;

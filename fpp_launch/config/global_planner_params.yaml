@@ -14,6 +14,8 @@ FormationPathPlanner:
   # Default: 0.2
   default_tolerance: 0.2
 
+  used_formation_planner: SplinedRelaxedAStar
+
   formation_config:
     robot0:
       namespace: /robot0_ns
@@ -27,6 +29,24 @@ FormationPathPlanner:
       namespace: /robot2_ns
       offset: [-1.0, -1.0] # Defines distance from master robot
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
+
+  formation_path_planner:
+    # This planner is used to create the initial path from where all robots have to offset their own path
+    SplinedRelaxedAStar:
+      # The default tolerance that is used if the tolerance of the received goal is not valid.
+      # Default: 0.2
+      default_tolerance: 0.2
+      # How many of the neighbor cells should be used. Options:
+      # 4 - This means the cells in the north, south, west, east direction are used
+      # 8 - This means all cells around (also the diagonal ones) are used
+      # Default: 8
+      neighbor_type: 8
+      # Threshold for the costmap values that define if a cell is free or not.
+      # This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.
+      # Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
+      # The greater this value will be defined the closer the global path will be planed next to walls.
+      # Default: 0
+      free_cell_threshold: 0 
 
 RelaxedAStar:
   # The default tolerance that is used if the tolerance of the received goal is not valid.

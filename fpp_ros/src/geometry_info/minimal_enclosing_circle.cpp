@@ -19,6 +19,28 @@ namespace geometry_info
         }
     }
 
+    void MinimalEnclosingCircle::calcMinimalEnclosingCircle(const Eigen::Vector2f circle_centre, const std::vector<Eigen::Vector2f> &points_to_enclose)
+    {
+        this->circle_centre_ = circle_centre;
+        
+        float max_radius = points_to_enclose[0].norm();
+
+        // Get point with max distance to circle centre. This point defines the radius
+        for(const Eigen::Vector2f &point: points_to_enclose)
+        {
+            float new_radius = point.norm();
+            if(max_radius < new_radius)
+            {
+                max_radius = new_radius;
+            }
+        }
+
+        this->circle_radius_ = max_radius;
+
+        // DEBUGGING
+        std::cout << "Minimal Circle | x: " << this->circle_centre_[0] << " , y: " << this->circle_centre_[1] << " , radius: " << this->circle_radius_ << "\n";
+    }
+
     CircleInfo MinimalEnclosingCircle::exeWetzlAlg(std::vector<Eigen::Vector2f> &points_to_enclose,
                                                    std::vector<Eigen::Vector2f> circle_defining_points,
                                                    int points_to_go)

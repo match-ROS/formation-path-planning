@@ -62,6 +62,7 @@
 
         <!--Override the existing global_planner params-->
         <rosparam file="$(find fpp_launch)/config/global_planner_params.yaml" command="load" ns="move_base_flex"/>
+        <param name="move_base_flex/global_costmap/obstacles/enabled" value="false"/>
 
         <!--This node is necessary to easily set the target position for the move_base_flex package through rviz-->
         <!--If a different path planner should be used, change the planner that is defined in the relay-->
@@ -85,6 +86,7 @@
 
         <!--Override the existing global_planner params-->
         <rosparam file="$(find fpp_launch)/config/global_planner_params.yaml" command="load" ns="move_base_flex"/>
+        <param name="move_base_flex/global_costmap/obstacles/enabled" value="false"/>
 
         <!--If rviz should also be started for second robot, insert the start of rviz with the specified config here.-->
 
@@ -110,6 +112,10 @@
 
         <!--Override the existing global_planner params-->
         <rosparam file="$(find fpp_launch)/config/global_planner_params.yaml" command="load" ns="move_base_flex"/>
+
+        <!--Overwrite the enabled param that defines if new obstacles should be inserted into the global costmap. -->
+        <!--Because of the mobile robots detecting each other this would add obstacles where the formation is standing -->
+        <param name="move_base_flex/global_costmap/obstacles/enabled" value="false"/>
 
         <!--If rviz should also be started for second robot, insert the start of rviz with the specified config here.-->
 
