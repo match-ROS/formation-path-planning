@@ -1,5 +1,3 @@
-#pragma once
-
 #include "ros/ros.h"
 
 #include <fpp_ros/geometry_info/minimal_enclosing_circle.h>

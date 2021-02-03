@@ -22,7 +22,7 @@ find_package(
     nav_msgs
     geometry_msgs
     visualization_msgs
-    costmap_2d)
+	costmap_2d)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -124,7 +124,8 @@ catkin_package(
     mbf_msgs
     nav_core
     geometry_msgs
-    tf
+	tf
+	fpp_ros
 )
 
 ###########
@@ -166,10 +167,10 @@ add_executable(min_enc_circle_node src/minimal_enclosing_circle_test.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_dyn_rec ${catkin_LIBRARIES})
 
-target_link_libraries(min_enc_circle_node fpp_ros ${catkin_LIBRARIES})
+target_link_libraries(min_enc_circle_node ${catkin_LIBRARIES})
 
-target_link_libraries(relaxed_a_star fpp_ros ${catkin_LIBRARIES})
-target_link_libraries(advanced_a_star fpp_ros ${catkin_LIBRARIES})
+target_link_libraries(relaxed_a_star ${catkin_LIBRARIES})
+target_link_libraries(advanced_a_star ${catkin_LIBRARIES})
 
 #############
 ## Install ##
