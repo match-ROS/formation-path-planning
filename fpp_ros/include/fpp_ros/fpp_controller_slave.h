@@ -1,15 +1,5 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <memory> // Usage of smart pointers
-#include <vector>
-#include <list>
-#include <set>
-#include <map>
-#include <algorithm>
-#include <Eigen/Dense>
-
 #include <fpp_ros/fpp_controller_base.h>
 
 namespace fpp
@@ -17,8 +7,8 @@ namespace fpp
     class FPPControllerSlave : public FPPControllerBase
     {
         public:
-            FPPControllerSlave(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
-                               fpp_data_classes::RobotInfo *&robot_info,
+            FPPControllerSlave(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
+                               std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
                                ros::NodeHandle &nh,
                                ros::NodeHandle &planner_nh);
 
@@ -27,5 +17,16 @@ namespace fpp
                          std::vector<geometry_msgs::PoseStamped> &plan) override;
 
         private:
+			std::shared_ptr<nav_msgs::Path> master_plan_;
+
+			ros::Subscriber master_plan_subscriber_;
+
+			/**
+             * @brief Helper method for initializing all topics
+             * 
+             */
+            void initTopics() override;
+
+			void masterPlanCb(const nav_msgs::Path::ConstPtr& master_plan);
     };
 }

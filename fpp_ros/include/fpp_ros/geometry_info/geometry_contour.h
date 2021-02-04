@@ -107,6 +107,12 @@ namespace geometry_info
              */
             std::vector<Eigen::Vector2f> getCornerPointsWorldCS();
 
+			Eigen::Matrix<float, 3, 3> getTFWorldToGeometryCS();
+			Eigen::Matrix<float, 3, 3> getTFGeometryToWorldCS();
+
+			Eigen::Vector2f getLeadVectorWorldCS();
+			float getWorldToGeometryCSRotation();
+
             /**
              * @brief Move the coordinate system without moving the points of the contour.
              * 

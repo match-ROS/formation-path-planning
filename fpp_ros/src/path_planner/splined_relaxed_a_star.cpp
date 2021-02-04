@@ -260,7 +260,7 @@ namespace path_planner
                 spline_list[spline_counter].addTangentsToVisuHelper();
                 spline_list[spline_counter].addControlPointsToVisuHelper();
                 spline_list[spline_counter].addBezierSplineToVisuHelper();
-                spline_list[spline_counter].visualizeData();
+                // spline_list[spline_counter].visualizeData();
             }
             // Visualize Splines End
 

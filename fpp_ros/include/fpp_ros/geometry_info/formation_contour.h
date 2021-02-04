@@ -63,6 +63,8 @@ namespace geometry_info
              */
             void updateFormationContour();
 
+			Eigen::Vector2f getRobotPosGeometryCS(std::string robot_name);
+
 
         private:
             std::vector<geometry_info::RobotContour> robot_contours_;

@@ -94,6 +94,22 @@ namespace geometry_info
         this->exeGiftWrappingAlg();
     }
 
+	Eigen::Vector2f FormationContour::getRobotPosGeometryCS(std::string robot_name)
+	{
+		int robot_counter;
+		for(robot_counter = 0; robot_counter < this->robot_contours_.size(); robot_counter++)
+		{
+			if(this->robot_contours_[robot_counter].getRobotName() == robot_name)
+			{
+				break;
+			}
+		}
+
+		Eigen::Vector2f formation_to_robot_translation = this->transformWorldToGeometryCS(
+			this->robot_contours_[robot_counter].getLeadVectorWorldCS());
+		return formation_to_robot_translation;
+	}
+
     int FormationContour::calcNextWrappingPoint(Eigen::Vector2f current_wrapping_point_geometry_cs,
                                                 std::vector<Eigen::Vector2f> corners_to_wrap_geometry_cs,
                                                 Eigen::Vector2f &next_wrapping_point_geometry_cs,

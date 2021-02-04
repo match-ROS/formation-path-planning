@@ -20,8 +20,8 @@ namespace fpp
     class FPPControllerMaster : public FPPControllerBase
     {
         public:
-            FPPControllerMaster(std::list<fpp_data_classes::RobotInfo> &robot_info_list,
-                                fpp_data_classes::RobotInfo *&robot_info,
+            FPPControllerMaster(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
+                                std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
                                 ros::NodeHandle &nh,
                                 ros::NodeHandle &planner_nh);
 
@@ -43,17 +43,17 @@ namespace fpp
              * @brief Helper method for intializing all services
              * 
              */
-            void initServices();
+            void initServices() override;
             /**
              * @brief Helper method for initializing all topics
              * 
              */
-            void initTopics();
+            void initTopics() override;
             /**
              * @brief Helper method for initializing all timers
              * 
              */
-            void initTimers();
+            void initTimers() override;
 
             /**
              * @brief Method for getting the amcl pose of a specified robot. Methods waits until one amcl_pose msg is received.
@@ -82,13 +82,6 @@ namespace fpp
              * 
              */
             void publishFootprint();
-            /**
-             * @brief Publish a plan using the publisher that is handed in as parameter
-             * 
-             * @param plan_publisher Publisher that is used to publish the plan
-             * @param plan Plan that contains all points the define the plan
-             */
-            void publishPlan(const ros::Publisher &plan_publisher, const std::vector<geometry_msgs::PoseStamped> &plan);
             /**
              * @brief Call the dynamic reconfigure relay node to reconfigure the costmap inflation
              * 
@@ -127,7 +120,7 @@ namespace fpp
             //! Topic to publish the footprint of the formation
             ros::Publisher formation_footprint_pub_;
             //! Topic to publish the plan of the formation. From this each robot has to calculate its own plan
-            ros::Publisher formation_path_plan_pub_;
+            ros::Publisher formation_plan_pub_;
 
             //Timers
 

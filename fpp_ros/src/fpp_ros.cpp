@@ -48,19 +48,21 @@ namespace fpp
 
             // Get all params from the config file for the global path planner            
             this->getParams();
-            ROS_INFO("Initializing Formation Path Planner in namespace: %s", this->this_robots_robot_info_->robot_name.c_str());
+            ROS_INFO("Initializing Formation Path Planner in namespace: %s", this->current_robot_info_->robot_name.c_str());
 
-            if(this->this_robots_robot_info_->fpp_master)
+			ROS_INFO_STREAM("offset fpp_ros: " << this->current_robot_info_->offset[0] << " " << this->current_robot_info_->offset[1]);
+
+            if(this->current_robot_info_->fpp_master)
             {
                 this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->robot_info_list_,
-                                                                              this->this_robots_robot_info_,
+                                                                              this->current_robot_info_,
                                                                               this->nh_,
                                                                               this->planner_nh_);
             }
             else
             {
                 this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->robot_info_list_,
-                                                                             this->this_robots_robot_info_,
+                                                                             this->current_robot_info_,
                                                                              this->nh_,
                                                                              this->planner_nh_);
             }
@@ -131,8 +133,9 @@ namespace fpp
             XmlRpc::XmlRpcValue::ValueStruct::const_iterator robot_iterator;
             for(robot_iterator = formation_config.begin(); robot_iterator != formation_config.end(); robot_iterator++)
             {
-                fpp_data_classes::RobotInfo robot_info;
-                robot_info.robot_name = robot_iterator->first;
+				std::shared_ptr<fpp_data_classes::RobotInfo> robot_info = std::make_shared<fpp_data_classes::RobotInfo>();
+                // fpp_data_classes::RobotInfo robot_info;
+                robot_info->robot_name = robot_iterator->first;
 
                 XmlRpc::XmlRpcValue robot_info_xmlrpc = robot_iterator->second;
 
@@ -140,24 +143,25 @@ namespace fpp
                 {
                     if(robot_info_xmlrpc.hasMember("master") && robot_info_xmlrpc["master"].getType() == XmlRpc::XmlRpcValue::TypeBoolean)
                     {
-                        robot_info.fpp_master = (bool)robot_info_xmlrpc["master"];
+                        robot_info->fpp_master = (bool)robot_info_xmlrpc["master"];
                     }
                     else
                     {
-                        robot_info.fpp_master = false;
+                        robot_info->fpp_master = false;
 
                         // Only if the robot is not the master the offset param is existing
                         if(robot_info_xmlrpc.hasMember("offset") && robot_info_xmlrpc["offset"].getType() == XmlRpc::XmlRpcValue::TypeArray)
                         {
-                            Eigen::Vector2f offset;
-                            offset[0] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][0], "formation_config/" + robot_info.robot_name + "/offset");
-                            offset[1] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][1], "formation_config/" + robot_info.robot_name + "/offset");
-                        }
+							robot_info->offset[0] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][0],
+																		"formation_config/" + robot_info->robot_name + "/offset");
+							robot_info->offset[1] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][1],
+																		"formation_config/" + robot_info->robot_name + "/offset");
+						}
                     }
 
                     if(robot_info_xmlrpc.hasMember("namespace") && robot_info_xmlrpc["namespace"].getType() == XmlRpc::XmlRpcValue::TypeString)
                     {
-                        robot_info.robot_namespace = static_cast<std::string>(robot_info_xmlrpc["namespace"]);
+                        robot_info->robot_namespace = static_cast<std::string>(robot_info_xmlrpc["namespace"]);
                     }
                     
                     if(robot_info_xmlrpc.hasMember("robot_outline"))
@@ -166,15 +170,15 @@ namespace fpp
                         robot_outline = robot_info_xmlrpc["robot_outline"];
                         std::string robot_outline_key = "formation_config/" + robot_iterator->first + "/robot_outline";
 
-                        robot_info.robot_outline = this->createRobotOutlineFromXMLRPC(robot_outline, robot_outline_key);
+                        robot_info->robot_outline = this->createRobotOutlineFromXMLRPC(robot_outline, robot_outline_key);
                     }
                 }
 
                 this->robot_info_list_.push_back(robot_info);
-                if(this->robot_info_list_.back().robot_name == this->robot_name_)
-                {
-                    this->this_robots_robot_info_ = &(this->robot_info_list_.back());
-                }                
+                if(robot_info->robot_name == this->robot_name_)
+				{
+					this->current_robot_info_ = robot_info;
+				}
             }
         }
     }

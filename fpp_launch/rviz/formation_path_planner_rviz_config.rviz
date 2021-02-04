@@ -25,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan - Robot2
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -64,18 +64,156 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: false
+      Enabled: true
       Links:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        robot0_tf/back_laser_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0_tf/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/base_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/bl_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/bl_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/br_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/br_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/camera_link_optical:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0_tf/ee_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/fl_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/fl_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/forearm_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/fr_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/fr_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/front_laser_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/imu_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0_tf/imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0_tf/left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/right_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/shoulder_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/surface:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0_tf/upper_arm_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/us_1_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0_tf/us_2_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0_tf/wrist_1_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/wrist_2_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0_tf/wrist_3_link_ur5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel - Robot0
       Robot Description: /robot0_ns/robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: false
+      Value: true
       Visual Enabled: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -1105,7 +1243,7 @@ Visualization Manager:
       Value: true
     - Alpha: 1
       Class: rviz/Polygon
-      Color: 25; 255; 0
+      Color: 32; 74; 135
       Enabled: true
       Name: Formation Footprint
       Topic: /robot0_ns/formation_footprint
@@ -1114,7 +1252,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 25; 255; 0
+      Color: 78; 154; 6
       Enabled: true
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
@@ -1139,7 +1277,7 @@ Visualization Manager:
       Marker Topic: /robot0_ns/move_base_flex/FormationPathPlanner/marker_array
       Name: MarkerArray
       Namespaces:
-        g_score: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1147,8 +1285,77 @@ Visualization Manager:
       Marker Topic: /robot0_ns/move_base_flex/FormationPathPlanner/marker
       Name: Marker
       Namespaces:
-        g_score: true
+        {}
       Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Master Plan
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /robot0_ns/move_base_flex/plan
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Slave Plan 1
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /robot1_ns/move_base_flex/plan
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Slave Plan 2
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /robot2_ns/move_base_flex/plan
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
@@ -1181,25 +1388,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 3.4252326488494873
+      Distance: 11.368425369262695
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.6487435102462769
-        Y: 0.5194990634918213
-        Z: 6.108180969022214e-6
+        X: -8.602558135986328
+        Y: -1.1730270385742188
+        Z: 2.2934837033972144e-6
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1147968769073486
+      Pitch: 1.1597970724105835
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 0.14357759058475494
+      Yaw: 3.4085824489593506
     Saved: ~
 Window Geometry:
   Displays:
