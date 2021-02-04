@@ -11,39 +11,69 @@ namespace fpp
         this->initServices();
         this->initTopics();
 
-        // Initialize formation planner with default values. Set lead vector when all robots are added and centroid can be calculated
-        this->formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
+        // Initialize the target formation contour that takes amcl from master robot and then the wanted offset for the other robots
+        this->target_formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
         
-        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->robot_info_list_)
-        {
-            Eigen::Vector2f robot_pose;
-            float yaw;
-            this->getAMCLPose(robot_info->robot_namespace, robot_pose, yaw);
-            
-            geometry_info::RobotContour robot_contour;
-            robot_contour = geometry_info::RobotContour(robot_pose, yaw, robot_info->robot_name);
-            
-            for(Eigen::Vector2f corner: robot_info->robot_outline)
-            {
-                robot_contour.addContourCornerGeometryCS(corner);
-            }
-            robot_contour.createContourEdges();
+		// Add master robot by amcl pose
+		Eigen::Vector2f master_robot_pose;
+		float master_yaw;
+		this->getAMCLPose(robot_info->robot_namespace, master_robot_pose, master_yaw);
+		geometry_info::RobotContour master_robot_contour = geometry_info::RobotContour(master_robot_pose, master_yaw, robot_info->robot_name);
+		this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(robot_info->robot_name, master_robot_contour));
+		this->target_formation_contour_.addRobotToFormation(master_robot_contour);
 
-            this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(robot_info->robot_name, robot_contour));
-            this->formation_contour_.addRobotToFormation(robot_contour);
+		// Add slave robots by relative offset to master robot. Take same yaw angle as this should be equal
+        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->robot_info_list_)
+        {
+			if(robot_info_it->robot_name != robot_info->robot_name)
+			{
+				Eigen::Vector2f robot_target_pose = master_robot_pose + robot_info_it->offset;
+
+				geometry_info::RobotContour slave_robot_contour = geometry_info::RobotContour(robot_target_pose,
+																							  master_yaw,
+																							  robot_info_it->robot_name);
+
+				for(Eigen::Vector2f corner: robot_info_it->robot_outline)
+				{
+					slave_robot_contour.addContourCornerGeometryCS(corner);
+				}
+				slave_robot_contour.createContourEdges();
+
+				this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(robot_info->robot_name, slave_robot_contour));
+				this->target_formation_contour_.addRobotToFormation(slave_robot_contour);
+			}
         }
-        this->formation_contour_.updateFormationContour();
-		this->formation_centre_ = this->formation_contour_.calcCentroidWorldCS();
-		this->formation_contour_.moveCoordinateSystem(this->formation_centre_, 0.0);
+        this->target_formation_contour_.updateFormationContour();
+		this->formation_centre_ = this->target_formation_contour_.calcCentroidWorldCS();
+		this->target_formation_contour_.moveCoordinateSystem(this->formation_centre_, 0.0);
         
         // Initialize the minimal circle enclosing the formation
         this->formation_enclosing_circle_ = geometry_info::MinimalEnclosingCircle();
         // this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->formation_centre_,
         //                                                              this->formation_contour_.getCornerPointsWorldCS());
-        this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->formation_contour_.getCornerPointsWorldCS());
+        this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->target_formation_contour_.getCornerPointsWorldCS());
 
         this->callDynamicCostmapReconfigure();
 
+		// Initialize real footprint that takes purely AMCL position
+		this->real_formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
+		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->robot_info_list_)
+        {
+			Eigen::Vector2f real_robot_pose;
+			float real_yaw;
+			this->getAMCLPose(robot_info_it->robot_namespace, real_robot_pose, real_yaw);
+
+			geometry_info::RobotContour robot_contour = geometry_info::RobotContour(real_robot_pose,
+																					real_yaw,
+																					robot_info_it->robot_name);
+
+			for(Eigen::Vector2f corner: robot_info_it->robot_outline)
+			{
+				robot_contour.addContourCornerGeometryCS(corner);
+			}
+			robot_contour.createContourEdges();
+			this->real_formation_contour_.addRobotToFormation(robot_contour);
+        }
         this->publishFootprint();
         
         this->initTimers();
@@ -148,11 +178,38 @@ namespace fpp
         ROS_INFO_STREAM("Formation Start: x: " << formation_start.pose.position.x << " y: " << formation_start.pose.position.y << "\n");
         this->initial_path_planner_.makePlan(formation_start, goal, formation_plan);
 
-		// Eigen::Vector2f robot_offset = -this->formation_centre_;
-		Eigen::Vector2f robot_offset = this->formation_contour_.getRobotPosGeometryCS(this->robot_info_->robot_name);
-		ROS_INFO_STREAM("robot_offset: " << robot_offset);
+		std::map<std::string, Eigen::Vector2f> target_robot_offset_list;
+		for(std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info: this->robot_info_list_)
+		{
+			Eigen::Vector2f target_robot_offset = this->target_formation_contour_.getRobotPosGeometryCS(robot_info->robot_name);
+			target_robot_offset_list.insert(std::pair<std::string, Eigen::Vector2f>(robot_info->robot_name,
+																					target_robot_offset));
+		}
 
-		this->calcOffsetPlan(formation_plan, plan, robot_offset);
+		std::map<std::string, std::vector<geometry_msgs::PoseStamped>> offset_robot_plans;
+		geometry_info::FormationContour path_planner_formation = this->target_formation_contour_;
+		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+		{
+			offset_robot_plans.insert(std::pair<std::string, std::vector<geometry_msgs::PoseStamped>>(robot_info_it->robot_name,
+																									  std::vector<geometry_msgs::PoseStamped>()));
+		}
+		for(geometry_msgs::PoseStamped formation_pose_in_plan: formation_plan)
+		{
+			Eigen::Vector2f new_lead_vector_world_cs;
+			new_lead_vector_world_cs << formation_pose_in_plan.pose.position.x,
+				formation_pose_in_plan.pose.position.y;
+			float new_rotation = tf::getYaw(formation_pose_in_plan.pose.orientation);
+			path_planner_formation.moveContour(new_lead_vector_world_cs, new_rotation);
+
+			for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+			{
+				geometry_msgs::PoseStamped new_pose;
+				Eigen::Vector2f pose = path_planner_formation.getRobotPosGeometryCS(robot_info_it->robot_name);
+				new_pose.pose.position.
+				offset_robot_plans[robot_info_it->robot_name].push_back();
+			}
+		}
+		
 		ROS_INFO_STREAM("formation:" << formation_plan[0].pose.position.x << " " << formation_plan[0].pose.position.y);
 		ROS_INFO_STREAM("plan:" << plan[0].pose.position.x << " " << plan[0].pose.position.y);
 		// Call move_base action servers of each slave robot to initialize the global planning of their path
@@ -207,9 +264,9 @@ namespace fpp
             float new_rotation;
             this->getAMCLPose(robot_info->robot_namespace, new_robot_pose, new_rotation);
 
-            this->formation_contour_.updateRobotPose(robot_info->robot_name, new_robot_pose, new_rotation);
+            this->real_formation_contour_.updateRobotPose(robot_info->robot_name, new_robot_pose, new_rotation);
         }
-        this->formation_contour_.updateFormationContour();
+        this->real_formation_contour_.updateFormationContour();
     }
 
     void FPPControllerMaster::publishFootprint()
@@ -218,7 +275,7 @@ namespace fpp
         formation_footprint_msg.header.frame_id = "map";
         formation_footprint_msg.header.stamp = ros::Time::now();
 
-        std::vector<Eigen::Vector2f> formation_corner_points = this->formation_contour_.getCornerPointsWorldCS();
+        std::vector<Eigen::Vector2f> formation_corner_points = this->real_formation_contour_.getCornerPointsWorldCS();
         for(Eigen::Vector2f corner: formation_corner_points)
         {
             geometry_msgs::Point32 corner_point;

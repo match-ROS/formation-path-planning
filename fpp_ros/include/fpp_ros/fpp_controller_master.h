@@ -102,8 +102,10 @@ namespace fpp
             
             //! List of all outlines of the individual robots
             std::map<std::string, geometry_info::RobotContour> robot_outline_list_;
-            //! Outline of the formation
-            geometry_info::FormationContour formation_contour_;
+            //! Outline of the real formation that occures through amcl poses
+            geometry_info::FormationContour real_formation_contour_;
+			//! Outline of the formation of everything is ideal
+            geometry_info::FormationContour target_formation_contour_;
             //! Centre of the formation
             Eigen::Vector2f formation_centre_;
             //! Minimal circle around the formation to change the costmap inflation
