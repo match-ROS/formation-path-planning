@@ -84,7 +84,11 @@ namespace fpp
 		FPPControllerBase::initServices();
         this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
         this->dyn_rec_inflation_srv_client_.waitForExistence();
-    }
+
+		this->get_robot_plan_srv_server_ = this->nh_.advertiseService("get_robot_plan",
+																	  &FPPControllerMaster::getRobotPlanCb,
+																	  this);
+	}
 
     void FPPControllerMaster::initTopics()
     {
@@ -178,40 +182,12 @@ namespace fpp
         ROS_INFO_STREAM("Formation Start: x: " << formation_start.pose.position.x << " y: " << formation_start.pose.position.y << "\n");
         this->initial_path_planner_.makePlan(formation_start, goal, formation_plan);
 
-		std::map<std::string, Eigen::Vector2f> target_robot_offset_list;
-		for(std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info: this->robot_info_list_)
-		{
-			Eigen::Vector2f target_robot_offset = this->target_formation_contour_.getRobotPosGeometryCS(robot_info->robot_name);
-			target_robot_offset_list.insert(std::pair<std::string, Eigen::Vector2f>(robot_info->robot_name,
-																					target_robot_offset));
-		}
-
-		std::map<std::string, std::vector<geometry_msgs::PoseStamped>> offset_robot_plans;
-		geometry_info::FormationContour path_planner_formation = this->target_formation_contour_;
-		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
-		{
-			offset_robot_plans.insert(std::pair<std::string, std::vector<geometry_msgs::PoseStamped>>(robot_info_it->robot_name,
-																									  std::vector<geometry_msgs::PoseStamped>()));
-		}
-		for(geometry_msgs::PoseStamped formation_pose_in_plan: formation_plan)
-		{
-			Eigen::Vector2f new_lead_vector_world_cs;
-			new_lead_vector_world_cs << formation_pose_in_plan.pose.position.x,
-				formation_pose_in_plan.pose.position.y;
-			float new_rotation = tf::getYaw(formation_pose_in_plan.pose.orientation);
-			path_planner_formation.moveContour(new_lead_vector_world_cs, new_rotation);
-
-			for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
-			{
-				geometry_msgs::PoseStamped new_pose;
-				Eigen::Vector2f pose = path_planner_formation.getRobotPosGeometryCS(robot_info_it->robot_name);
-				new_pose.pose.position.
-				offset_robot_plans[robot_info_it->robot_name].push_back();
-			}
-		}
+		this->calcRobotPlans(formation_plan);
+		plan = this->robot_plan_list_[this->robot_info_->robot_name];
 		
 		ROS_INFO_STREAM("formation:" << formation_plan[0].pose.position.x << " " << formation_plan[0].pose.position.y);
 		ROS_INFO_STREAM("plan:" << plan[0].pose.position.x << " " << plan[0].pose.position.y);
+		ROS_INFO_STREAM("plan:" << plan[10].pose.position.x << " " << plan[10].pose.position.y);
 		// Call move_base action servers of each slave robot to initialize the global planning of their path
 		for(std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> &slave_move_base_as: this->slave_move_base_as_list_)
 		{
@@ -228,7 +204,6 @@ namespace fpp
         this->publishPlan(this->formation_plan_pub_, formation_plan);
 		this->publishPlan(this->robot_plan_pub_, plan);
     }
-
 
     geometry_msgs::PoseWithCovarianceStampedConstPtr FPPControllerMaster::getAMCLPose(std::string robot_namespace)
     {
@@ -255,6 +230,43 @@ namespace fpp
             yaw = tf::getYaw(robot_pose_ptr->pose.pose.orientation);
         }
     }
+
+	void FPPControllerMaster::calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan)
+	{
+		// Clear existing plans and create new empty lists for the plans for each robot
+		this->robot_plan_list_.clear();
+		geometry_info::FormationContour path_planner_formation = this->target_formation_contour_;
+		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+		{
+			this->robot_plan_list_.insert(std::pair<std::string, std::vector<geometry_msgs::PoseStamped>>(robot_info_it->robot_name,
+																										  std::vector<geometry_msgs::PoseStamped>()));
+		}
+
+		// Push FormationContour along the path and save each robot position in the plan list
+		for(geometry_msgs::PoseStamped formation_pose_in_plan: formation_plan)
+		{
+			ROS_INFO_STREAM("formation pose: " << formation_pose_in_plan.pose.position.x << " " << formation_pose_in_plan.pose.position.y);
+			Eigen::Vector2f new_lead_vector_world_cs;
+			new_lead_vector_world_cs << formation_pose_in_plan.pose.position.x,
+				formation_pose_in_plan.pose.position.y;
+			float new_rotation = tf::getYaw(formation_pose_in_plan.pose.orientation);
+			path_planner_formation.moveContour(new_lead_vector_world_cs, new_rotation);
+
+			for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+			{
+				geometry_msgs::PoseStamped new_pose;
+				new_pose.header.stamp = formation_pose_in_plan.header.stamp;
+				new_pose.header.frame_id = formation_pose_in_plan.header.frame_id;
+
+				Eigen::Vector2f pose = path_planner_formation.getRobotPosWorldCS(robot_info_it->robot_name);
+				new_pose.pose.position.x = pose[0];
+				new_pose.pose.position.y = pose[1];
+				new_pose.pose.orientation = formation_pose_in_plan.pose.orientation;
+
+				this->robot_plan_list_[robot_info_it->robot_name].push_back(new_pose);
+			}
+		}
+	}
 
     void FPPControllerMaster::updateFootprint()
     {
@@ -302,4 +314,15 @@ namespace fpp
         this->updateFootprint();
         this->publishFootprint();        
     }
+
+	bool FPPControllerMaster::getRobotPlanCb(fpp_msgs::GetRobotPlan::Request &req, fpp_msgs::GetRobotPlan::Response &res)
+	{
+		ROS_INFO_STREAM("Get " << req.robot_name << " robot name");
+		nav_msgs::Path plan;
+		plan.header.frame_id = this->robot_plan_list_[req.robot_name].front().header.frame_id;
+		plan.header.stamp = this->robot_plan_list_[req.robot_name].front().header.stamp;
+		plan.poses = this->robot_plan_list_[req.robot_name];
+		res.robot_plan = plan;
+		ROS_INFO_STREAM("Returned " << req.robot_name << " robot name");
+	}
 }

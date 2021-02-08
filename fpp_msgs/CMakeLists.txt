@@ -10,6 +10,7 @@ add_compile_options(-std=c++14)
 find_package(catkin REQUIRED COMPONENTS
     std_msgs
     geometry_msgs
+	nav_msgs
     message_generation)
 
 ## System dependencies are found with CMake's conventions
@@ -56,6 +57,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   DynReconfigure.srv
+  GetRobotPlan.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -70,6 +72,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  nav_msgs
 )
 
 ################################################
@@ -104,7 +107,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES fpp-msgs
-  CATKIN_DEPENDS std_msgs geometry_msgs message_runtime
+  CATKIN_DEPENDS std_msgs geometry_msgs nav_msgs message_runtime
 #  DEPENDS system_lib
 )
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fpp_msgs/GetRobotPlan.h>
+
 #include <iostream>
 #include <string>
 #include <memory> // Usage of smart pointers
@@ -72,6 +74,8 @@ namespace fpp
              */
             void getAMCLPose(std::string robot_namespace, Eigen::Vector2f &robot_pose, float &yaw);
 
+			void calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan);
+
             /**
              * @brief Update the footprint of the formation with the new positions of the individual robots
              * 
@@ -94,6 +98,8 @@ namespace fpp
              */
             void footprintTimerCallback(const ros::TimerEvent& e);
 
+			bool getRobotPlanCb(fpp_msgs::GetRobotPlan::Request &req, fpp_msgs::GetRobotPlan::Response &res);
+
             // Parameter information
             //! This parameter contains the name of the used planner for generating the initial plan
             std::string used_formation_planner_;
@@ -112,6 +118,8 @@ namespace fpp
             geometry_info::MinimalEnclosingCircle formation_enclosing_circle_;
             //! Replace this in the future with an interface pointer. Object that plans the initial path.
             path_planner::SplinedRelaxedAStar initial_path_planner_;
+			//! List of the calculated plans for each robot
+			std::map<std::string, std::vector<geometry_msgs::PoseStamped>> robot_plan_list_;
 
             // Services and Topics
 
@@ -119,6 +127,9 @@ namespace fpp
             //! I had to create a relay node that would get a service (this one) and forward
             //! it to the dynamic reconfigure server
             ros::ServiceClient dyn_rec_inflation_srv_client_;
+			//!
+			ros::ServiceServer get_robot_plan_srv_server_;
+
             //! Topic to publish the footprint of the formation
             ros::Publisher formation_footprint_pub_;
             //! Topic to publish the plan of the formation. From this each robot has to calculate its own plan

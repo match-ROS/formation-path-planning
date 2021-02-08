@@ -119,7 +119,7 @@ namespace geometry_info
              * @param new_lead_vector_world_cs Lead vector to the new coordinate system
              * @param new_cs_rotation Rotation from the world to the new coordinate system 
              */
-            void moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
+            virtual void moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
             /**
              * @brief Move the entire contour. Method leaves corners in the geometry cs the same.
              * Only changes the lead vector and rotation from the world cs.
@@ -127,7 +127,7 @@ namespace geometry_info
              * @param new_lead_vector_world_cs Lead vector to the new position of the coordinate system of the contour
              * @param new_cs_rotation Rotation of the new position of the coordinate system of the contour
              */
-            void moveContour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
+            virtual void moveContour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation);
 
             /**
              * @brief Operator to compare GeometryContour objects

@@ -1,0 +1,3 @@
+string robot_name
+---
+nav_msgs/Path robot_plan

@@ -56,6 +56,39 @@ namespace geometry_info
         this->createContourEdges();
     }
 
+	int FormationContour::calcNextWrappingPoint(Eigen::Vector2f current_wrapping_point_geometry_cs,
+                                                std::vector<Eigen::Vector2f> corners_to_wrap_geometry_cs,
+                                                Eigen::Vector2f &next_wrapping_point_geometry_cs,
+                                                float &max_radian)
+    {
+        int next_wrapping_point_index = 0;
+        float next_max_radian;
+        float smallest_diff_to_max_radian = 2*M_PI; // This is the max value and should never occure because I look at the diff
+
+        for(int corner_to_wrap_counter = 0; corner_to_wrap_counter < corners_to_wrap_geometry_cs.size(); corner_to_wrap_counter++)
+        {
+            if(current_wrapping_point_geometry_cs == corners_to_wrap_geometry_cs[corner_to_wrap_counter])
+            {
+                continue;
+            }
+            float radian_next_wrapping_point = this->calcTan2(current_wrapping_point_geometry_cs,
+                                                              corners_to_wrap_geometry_cs[corner_to_wrap_counter]);
+            radian_next_wrapping_point = radian_next_wrapping_point + M_PI; // So I dont get a value area from -pi to pi.
+            float next_diff = max_radian - radian_next_wrapping_point;
+
+            if(radian_next_wrapping_point <= max_radian && smallest_diff_to_max_radian > next_diff)
+            {
+                smallest_diff_to_max_radian = next_diff;
+                next_wrapping_point_index = corner_to_wrap_counter;
+                next_max_radian = radian_next_wrapping_point;
+                next_wrapping_point_geometry_cs = corners_to_wrap_geometry_cs[corner_to_wrap_counter];
+            }                                                              
+        }
+        max_radian = next_max_radian;
+        return next_wrapping_point_index;
+    }
+
+
     void FormationContour::addRobotToFormation(geometry_info::RobotContour robot_to_add)
     {
         if (std::find(this->robot_contours_.begin(), this->robot_contours_.end(), robot_to_add) == this->robot_contours_.end())
@@ -94,6 +127,37 @@ namespace geometry_info
         this->exeGiftWrappingAlg();
     }
 
+	void FormationContour::moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation)
+	{
+		Eigen::Matrix<float, 3, 3> new_tf_geometry_to_world_cs = this->createTransformationMatrix(new_lead_vector_world_cs,
+                                                                                       new_cs_rotation);
+        Eigen::Matrix<float, 3, 3> new_tf_world_to_geometry_cs = new_tf_geometry_to_world_cs.inverse();
+
+		// Robot positions were intialized with world coords.
+		// Then coordinate system of formation was places in centre of gravity of the formation contour
+		// Robot positions will now be moved into the geometry cs of the formation
+		for(geometry_info::RobotContour &robot_contour: this->robot_contours_)
+		{
+			Eigen::Vector2f old_robot_lead_vector_world_cs = robot_contour.getLeadVectorWorldCS();
+			Eigen::Vector3f old_robot_lead_vector_world_cs_extended;
+			old_robot_lead_vector_world_cs_extended << old_robot_lead_vector_world_cs, 1;
+			Eigen::Vector3f new_robot_lead_vector_world_cs_extended = new_tf_world_to_geometry_cs * old_robot_lead_vector_world_cs_extended;
+			Eigen::Vector2f new_robot_lead_vector_world_cs = new_robot_lead_vector_world_cs_extended.head(2);
+			robot_contour.moveCoordinateSystem(new_robot_lead_vector_world_cs, robot_contour.getWorldToGeometryCSRotation());
+		}
+
+        this->lead_vector_world_cs_ = new_lead_vector_world_cs;
+        this->world_to_geometry_cs_rotation_ = new_cs_rotation;
+        this->tf_geometry_to_world_cs_ = new_tf_geometry_to_world_cs;
+        this->tf_world_to_geometry_cs_ = new_tf_world_to_geometry_cs;
+
+        this->corner_points_geometry_cs_.clear();
+		this->edge_list_geometry_cs_.clear();
+
+		this->updateFormationContour();
+		this->createContourEdges();
+	}
+
 	Eigen::Vector2f FormationContour::getRobotPosGeometryCS(std::string robot_name)
 	{
 		int robot_counter;
@@ -105,43 +169,24 @@ namespace geometry_info
 			}
 		}
 
-		Eigen::Vector2f formation_to_robot_translation = this->transformWorldToGeometryCS(
-			this->robot_contours_[robot_counter].getLeadVectorWorldCS());
-		return formation_to_robot_translation;
+		return this->robot_contours_[robot_counter].getLeadVectorWorldCS();
 	}
 
-    int FormationContour::calcNextWrappingPoint(Eigen::Vector2f current_wrapping_point_geometry_cs,
-                                                std::vector<Eigen::Vector2f> corners_to_wrap_geometry_cs,
-                                                Eigen::Vector2f &next_wrapping_point_geometry_cs,
-                                                float &max_radian)
-    {
-        int next_wrapping_point_index = 0;
-        float next_max_radian;
-        float smallest_diff_to_max_radian = 2*M_PI; // This is the max value and should never occure because I look at the diff
+	Eigen::Vector2f FormationContour::getRobotPosWorldCS(std::string robot_name)
+	{
+		int robot_counter;
+		for(robot_counter = 0; robot_counter < this->robot_contours_.size(); robot_counter++)
+		{
+			if(this->robot_contours_[robot_counter].getRobotName() == robot_name)
+			{
+				break;
+			}
+		}
 
-        for(int corner_to_wrap_counter = 0; corner_to_wrap_counter < corners_to_wrap_geometry_cs.size(); corner_to_wrap_counter++)
-        {
-            if(current_wrapping_point_geometry_cs == corners_to_wrap_geometry_cs[corner_to_wrap_counter])
-            {
-                continue;
-            }
-            float radian_next_wrapping_point = this->calcTan2(current_wrapping_point_geometry_cs,
-                                                              corners_to_wrap_geometry_cs[corner_to_wrap_counter]);
-            radian_next_wrapping_point = radian_next_wrapping_point + M_PI; // So I dont get a value area from -pi to pi.
-            float next_diff = max_radian - radian_next_wrapping_point;
-
-            if(radian_next_wrapping_point <= max_radian && smallest_diff_to_max_radian > next_diff)
-            {
-                smallest_diff_to_max_radian = next_diff;
-                next_wrapping_point_index = corner_to_wrap_counter;
-                next_max_radian = radian_next_wrapping_point;
-                next_wrapping_point_geometry_cs = corners_to_wrap_geometry_cs[corner_to_wrap_counter];
-            }                                                              
-        }
-        max_radian = next_max_radian;
-        return next_wrapping_point_index;
-    }
-
+		// As the robot contour lives in the formation contour this must be transformed before being in the world cs
+		return this->transformGeometryToWorldCS(this->robot_contours_[robot_counter].getLeadVectorWorldCS());
+	}
+   
     float FormationContour::calcTan2(Eigen::Vector2f start_point_geometry_cs, Eigen::Vector2f end_point_geometry_cs)
     {
         return std::atan2(end_point_geometry_cs[1] - start_point_geometry_cs[1],

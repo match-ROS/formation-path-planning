@@ -63,7 +63,19 @@ namespace geometry_info
              */
             void updateFormationContour();
 
+			/**
+             * @brief Move the coordinate system without moving the points of the contour.
+             * 
+             * @param new_lead_vector_world_cs Lead vector to the new coordinate system
+             * @param new_cs_rotation Rotation from the world to the new coordinate system 
+             */
+            void moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation) override;
+
+			// Pobably delete later!
+			//void moveContour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation) override;
+
 			Eigen::Vector2f getRobotPosGeometryCS(std::string robot_name);
+			Eigen::Vector2f getRobotPosWorldCS(std::string robot_name);
 
 
         private:
