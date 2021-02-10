@@ -28,6 +28,7 @@
 #include <fpp_ros/data_classes/path_planner_types.h>
 #include <fpp_ros/visualization_helper/visualization_helper.h>
 #include <fpp_ros/path_planner/cubic_bezier_splines.h>
+#include <fpp_ros/path_planner/quintic_bezier_splines.h>
 
 namespace path_planner
 {
@@ -119,6 +120,7 @@ namespace path_planner
             void setDefaultTolerance(float default_tolerance);
             void setNeighborType(int neighbor_type);
             void setFreeCellThreshhold(int free_cell_thresshold);
+			void setMinimalCurveRadius(float minimal_curve_radius);
 
         protected:
 
@@ -351,6 +353,12 @@ namespace path_planner
             //! Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
             //! The greater this value will be defined the closer the global path will be planed next to walls.
             int free_cell_threshhold_;
+
+			//! Minimal radius of a curve the formation can drive in m.
+			//! This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.
+			//! Whichever radius is bigger will be selected for creating the splines
+			float minimal_curve_radius_;
+
 
             // Process information
             /**

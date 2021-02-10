@@ -158,13 +158,33 @@ namespace fpp
             int neighbor_type;
             this->planner_nh_.getParam(path_planner_key + "/neighbor_type", neighbor_type);
             int free_cell_thresshold;
-            this->planner_nh_.getParam(path_planner_key + "/free_cell_thresshold", free_cell_thresshold);
+            this->planner_nh_.getParam(path_planner_key + "/free_cell_threshold", free_cell_thresshold);
+			float minimal_curve_radius;
+            this->planner_nh_.getParam(path_planner_key + "/minimal_curve_radius", minimal_curve_radius);
 
             this->initial_path_planner_.setDefaultTolerance(default_tolerance);
             this->initial_path_planner_.setNeighborType(neighbor_type);
             this->initial_path_planner_.setFreeCellThreshhold(free_cell_thresshold);
 
-            ROS_INFO_STREAM("1: " << default_tolerance << " 2: " << neighbor_type << " 3: " << free_cell_thresshold);
+			// Check if calculated minimal radius is bigger than the param
+			// Minimal radius is calculated by getting the distance between the robot that is the furthest away from the formation centre
+			float max_calculated_minimal_curve_radius = 0.0;
+			for(std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info: this->robot_info_list_)
+			{
+				float calculated_minimal_curve_radius = this->target_formation_contour_.getRobotPosGeometryCS(robot_info->robot_name).norm();
+				if(max_calculated_minimal_curve_radius < calculated_minimal_curve_radius)
+				{
+					max_calculated_minimal_curve_radius = calculated_minimal_curve_radius;
+				}
+			}
+			
+			if(max_calculated_minimal_curve_radius > minimal_curve_radius)
+			{
+				minimal_curve_radius = max_calculated_minimal_curve_radius;
+			}
+			this->initial_path_planner_.setMinimalCurveRadius(minimal_curve_radius);
+
+            ROS_INFO_STREAM("1: " << default_tolerance << " 2: " << neighbor_type << " 3: " << free_cell_thresshold << " 4: " << minimal_curve_radius);
         }
     }
 

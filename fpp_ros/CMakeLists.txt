@@ -166,6 +166,9 @@ set(PATH_PLANNER_SOURCES
 
 	include/fpp_ros/path_planner/cubic_bezier_splines.h
 	src/path_planner/cubic_bezier_splines.cpp
+
+	include/fpp_ros/path_planner/quintic_bezier_splines.h
+	src/path_planner/quintic_bezier_splines.cpp
 	)
 add_library(path_planner ${PATH_PLANNER_SOURCES})
 

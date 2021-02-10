@@ -84,6 +84,11 @@ namespace path_planner
             // result = A.colPivHouseholderQr().solve(b);
             // std::cout << "Result:\n" << result << std::endl;
             // ros::Duration(100).sleep();
+
+			ROS_INFO_STREAM("TESTING");
+			QuinticBezierSplines test(&this->visu_helper_);
+			test.calcPointOnBezierSpline(0.5);
+			ROS_INFO_STREAM("TESTING END");
             //TESTING END
         }
         else
@@ -202,8 +207,8 @@ namespace path_planner
 
             this->createPoseArrayForPlan(array_plan, plan);
 
-            // Select pose very so often
-            int cell_distance = 20; // Make this to a param later
+            // Select pose every so often
+            int cell_distance = 50; // Make this to a param later
             std::vector<geometry_msgs::PoseStamped> selected_poses;
             for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
             {
@@ -467,7 +472,7 @@ namespace path_planner
             {
                 unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
 
-                if(cell_cost == 0) // Cell is free
+                if(cell_cost <= this->free_cell_threshhold_) // Cell is free
                 {
                     this->occupancy_map_[this->getArrayIndexByCostmapCell(cell_counter_x, cell_counter_y)] = false; // False because cell is not occupied
                 }
@@ -636,4 +641,9 @@ namespace path_planner
     {
         this->free_cell_threshhold_ = free_cell_thresshold;
     }
+
+	void SplinedRelaxedAStar::setMinimalCurveRadius(float minimal_curve_radius)
+	{
+		this->minimal_curve_radius_ = minimal_curve_radius;
+	}
 }
