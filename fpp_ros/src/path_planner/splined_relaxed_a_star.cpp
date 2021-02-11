@@ -203,11 +203,10 @@ namespace path_planner
             this->createPoseArrayForPlan(array_plan, plan);
 
             // Select pose every so often
-            int cell_distance = 50; // Make this to a param later
             std::vector<geometry_msgs::PoseStamped> selected_poses;
             for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
             {
-                if(pose_counter % cell_distance == 0)
+                if(pose_counter % this->control_point_distance_ == 0)
                 {
                     selected_poses.push_back(plan[pose_counter]);
                 }
