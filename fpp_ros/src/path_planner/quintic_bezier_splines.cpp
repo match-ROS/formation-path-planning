@@ -3,19 +3,32 @@
 namespace path_planner
 {
     QuinticBezierSplines::QuinticBezierSplines(visualization_helper::VisualizationHelper *visu_helper)
+		: previous_spline_(nullptr), next_spline_(nullptr)
     {
         this->visu_helper_ = visu_helper;
         this->initVisuHelper();
     }
 
     QuinticBezierSplines::QuinticBezierSplines(visualization_helper::VisualizationHelper *visu_helper,
-                                           Eigen::Matrix<float, 2, 1> start_pose,
-                                           Eigen::Matrix<float, 2, 1> end_pose)
+                                           Eigen::Vector2f start_pose,
+                                           Eigen::Vector2f end_pose)
         : QuinticBezierSplines(visu_helper)
     {
         this->start_pose_ = start_pose;
         this->end_pose_ = end_pose;
     }
+
+	void QuinticBezierSplines::setPreviousSpline(const std::shared_ptr<QuinticBezierSplines> &previous_spline)
+	{
+		this->previous_spline_ = previous_spline;
+		this->setStartTangent(this->previous_spline_->getEndTangent());
+	}
+
+	void QuinticBezierSplines::setNextSpline(const std::shared_ptr<QuinticBezierSplines> &next_spline)
+	{
+		this->next_spline_ = next_spline;
+		this->setEndTangent(this->next_spline_->getEndPose());
+	}
 
     void QuinticBezierSplines::setStartTangent(tf::Quaternion robot_orientation)
     {
@@ -23,11 +36,11 @@ namespace path_planner
 
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_orientation, direction_vector);
-        rotated_vector = rotated_vector * start_to_end_length;
+        rotated_vector = 0.5 * rotated_vector * start_to_end_length; // see setEndTangent for 0.5 explanation
         this->start_pose_tangent_ << rotated_vector[0], rotated_vector[1];
     }
 
-    void QuinticBezierSplines::setStartTangent(Eigen::Matrix<float, 2, 1> start_pose_tangent)
+    void QuinticBezierSplines::setStartTangent(Eigen::Vector2f start_pose_tangent)
     {
         this->start_pose_tangent_ = start_pose_tangent;
     }
@@ -42,23 +55,23 @@ namespace path_planner
         this->end_pose_tangent_ << rotated_vector[0], rotated_vector[1];
     }
 
-    void QuinticBezierSplines::setEndTangent(Eigen::Matrix<float, 2, 1> next_pose)
+    void QuinticBezierSplines::setEndTangent(Eigen::Vector2f next_pose)
     {
-        Eigen::Matrix<float, 2, 1> diff_vector_start_to_end;
-        Eigen::Matrix<float, 2, 1> diff_vector_end_to_next;
+        Eigen::Vector2f diff_vector_start_to_end;
+        Eigen::Vector2f diff_vector_end_to_next;
 
         diff_vector_start_to_end = this->end_pose_ - this->start_pose_;
         diff_vector_end_to_next = next_pose - this->end_pose_;
 
-        Eigen::Matrix<float, 2, 1> normalized_diff_vector_start_to_end = diff_vector_start_to_end;
+        Eigen::Vector2f normalized_diff_vector_start_to_end = diff_vector_start_to_end;
         normalized_diff_vector_start_to_end.normalize();
-        Eigen::Matrix<float, 2, 1> normalized_diff_vector_end_to_next = diff_vector_end_to_next;
+        Eigen::Vector2f normalized_diff_vector_end_to_next = diff_vector_end_to_next;
         normalized_diff_vector_end_to_next.normalize();
 
-        Eigen::Matrix<float, 2, 1> angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
+        Eigen::Vector2f angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
         angular_bisector.normalize();
-        float length_diff_vector_end_to_next = angular_bisector.norm();
-        this->end_pose_tangent_ = 2.0 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper
+        float length_diff_vector_end_to_next = diff_vector_end_to_next.norm(); // Use length of end point and next point to calculate the length of the tangent
+        this->end_pose_tangent_ = 0.5 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper (p. 32 then links to Linear Geometry with Computer Graphics page 318)
     }
 
     void QuinticBezierSplines::visualizeData()
@@ -72,28 +85,25 @@ namespace path_planner
         ros::Duration(0.1).sleep(); // Wait for markers to be shown, maybe this helps to visualize them every time
     }
 
-    Eigen::Matrix<float, 2, 1> QuinticBezierSplines::getStartPose()
+    Eigen::Vector2f QuinticBezierSplines::getStartPose()
     {
         return this->start_pose_;
     }
 
-    Eigen::Matrix<float, 2, 1> QuinticBezierSplines::getEndPose()
+    Eigen::Vector2f QuinticBezierSplines::getEndPose()
     {
         return this->end_pose_;
     }
 
-    Eigen::Matrix<float, 2, 1> QuinticBezierSplines::getStartTangent()
+    Eigen::Vector2f QuinticBezierSplines::getStartTangent()
     {
         return this->start_pose_tangent_;
     }
 
-    Eigen::Matrix<float, 2, 1> QuinticBezierSplines::getEndTangent()
+    Eigen::Vector2f QuinticBezierSplines::getEndTangent()
     {
         return this->end_pose_tangent_;
     }
-
-
-
 
     float QuinticBezierSplines::calcStartToEndLength()
     {
@@ -105,9 +115,62 @@ namespace path_planner
 		// Ich glaube den Bruch hier kann ich anpassen um die Controlpoints weiter zu strecken
         this->cp1_ = (1.0 / 2.0) * this->start_pose_tangent_ + this->start_pose_;
         this->cp4_ = -(1.0 / 2.0) * this->end_pose_tangent_ + this->end_pose_;
+
+		std::shared_ptr<path_planner::CubicBezierSplines> previous_spline = nullptr;
+		std::shared_ptr<path_planner::CubicBezierSplines> current_spline = nullptr;
+		std::shared_ptr<path_planner::CubicBezierSplines> next_spline = nullptr;
+
+		if(this->previous_spline_ != nullptr)
+		{
+			previous_spline = this->previous_spline_->convertToCubicBezierSpline();
+		}
+		current_spline = this->convertToCubicBezierSpline();
+		if(this->next_spline_ != nullptr)
+		{
+			next_spline = this->next_spline_->convertToCubicBezierSpline();
+		}
+
+		if(this->previous_spline_ != nullptr)
+		{
+			previous_spline->setNextSpline(current_spline);
+			current_spline->setPreviousSpline(current_spline);
+		}
+		if(this->next_spline_ != nullptr)
+		{
+			current_spline->setNextSpline(next_spline);
+			next_spline->setPreviousSpline(current_spline);
+		}
+
+		Eigen::Vector2f curr_spline_second_derivative_val = current_spline->calcSecondDerivativeValue(0.0);
+		Eigen::Vector2f average_start_second_derivative_val;
+		if(previous_spline != nullptr) // Calc second derivative value through average of both connecting splines
+		{
+			Eigen::Vector2f prev_spline_second_derivative_val = previous_spline->calcSecondDerivativeValue(1.0);
+			
+			average_start_second_derivative_val = 0.5 * (prev_spline_second_derivative_val + curr_spline_second_derivative_val);
+		}
+		else // Just use second derivative of the cubic spline
+		{
+			average_start_second_derivative_val = curr_spline_second_derivative_val;
+		}
+		this->cp2_ = (1 / 20) * average_start_second_derivative_val + 2 * this->cp1_ - this->start_pose_;
+
+		curr_spline_second_derivative_val = current_spline->calcSecondDerivativeValue(1.0);
+		Eigen::Vector2f average_end_second_derivative_val;
+		if(next_spline != nullptr) // Calc second derivative value through average of both connecting splines
+		{
+			Eigen::Vector2f next_spline_second_derivative_val = next_spline->calcSecondDerivativeValue(0.0);
+			
+			average_end_second_derivative_val = 0.5 * (next_spline_second_derivative_val + curr_spline_second_derivative_val);
+		}
+		else // Just use the second derivative of the cubic spline
+		{
+			average_end_second_derivative_val = curr_spline_second_derivative_val;
+		}
+		this->cp3_ = (1 / 20) * average_end_second_derivative_val + 2 * this->cp4_ - this->end_pose_;
     }
 
-    Eigen::Matrix<float, 2, 1> QuinticBezierSplines::calcPointOnBezierSpline(float iterator)
+    Eigen::Vector2f QuinticBezierSplines::calcPointOnBezierSpline(float iterator)
     {
         Eigen::Matrix<float, 4, 4> bezier_basis_matrix;
         Eigen::Matrix<float, 1, 4> iterator_matrix;
@@ -115,7 +178,7 @@ namespace path_planner
 		const int bezier_degree = 5;
 
 		Eigen::Matrix<float, 6, 1> bernstein_polynom_vector;
-
+		
 		for(int counter = bezier_degree; counter >= 0; counter--)
 		{
 			bernstein_polynom_vector[counter] = this->calcBinomialCoefficient(bezier_degree, counter) *
@@ -123,7 +186,7 @@ namespace path_planner
 												std::pow((1 - iterator), bezier_degree - counter);
 		}
 
-        Eigen::Matrix<Eigen::Matrix<float, 2, 1>, 6, 1> point_matrix;
+        Eigen::Matrix<Eigen::Vector2f, 6, 1> point_matrix;
         point_matrix[0] = this->start_pose_;
         point_matrix[1] = this->cp1_;
 		point_matrix[2] = this->cp2_;
@@ -131,19 +194,32 @@ namespace path_planner
         point_matrix[4] = this->cp4_;
         point_matrix[5] = this->end_pose_;
 
-        // Eigen::Matrix<float, 4, 1> matrix_multi = iterator_matrix * bezier_basis_matrix;
-        // Eigen::Matrix<float , 2, 1> result_vector;
-        // result_vector << 0, 0;
-        // for(int counter = 0; counter <= 3; counter++)
-        // {
-        //     result_vector = result_vector + (matrix_multi[counter] * point_matrix[counter]);
-        // }
-        // return result_vector;
+        Eigen::Vector2f result_vector;
+        result_vector << 0, 0;
+        for(int counter = 0; counter < point_matrix.size(); counter++)
+        {
+			// ROS_INFO_STREAM("ITERATION");
+			// ROS_INFO_STREAM(bernstein_polynom_vector[counter]);
+			// ROS_INFO_STREAM(result_vector);
+			// ROS_INFO_STREAM(point_matrix[counter]);
+			// ROS_INFO_STREAM((bernstein_polynom_vector[counter] * point_matrix[counter]));
+			// ROS_INFO_STREAM(result_vector);
+			
+            result_vector = result_vector + (bernstein_polynom_vector[counter] * point_matrix[counter]);
+        }
+        return result_vector;
     }
 
-    std::vector<Eigen::Matrix<float, 2, 1>> QuinticBezierSplines::calcBezierSpline(float resolution)
+	std::shared_ptr<path_planner::CubicBezierSplines> QuinticBezierSplines::convertToCubicBezierSpline()
+	{
+		std::shared_ptr<path_planner::CubicBezierSplines> cubic_spline =
+			std::make_shared<path_planner::CubicBezierSplines>(this->visu_helper_, this->start_pose_, this->end_pose_);
+		return cubic_spline;
+	}
+
+    std::vector<Eigen::Vector2f> QuinticBezierSplines::calcBezierSpline(float resolution)
     {
-        std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
+        std::vector<Eigen::Vector2f> bezier_spline;
         for(float counter = 0; counter <= 1.0; counter = counter + resolution)
         {
             bezier_spline.push_back(this->calcPointOnBezierSpline(counter));
@@ -279,10 +355,10 @@ namespace path_planner
         this->addTangentToVisuHelper(this->end_pose_, this->end_pose_tangent_);
     }
 
-    void QuinticBezierSplines::addTangentToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> tangent)
+    void QuinticBezierSplines::addTangentToVisuHelper(Eigen::Vector2f start_point, Eigen::Vector2f tangent)
     {
         std::vector<geometry_msgs::Point> line;
-        Eigen::Matrix<float, 2, 1> end_point;
+        Eigen::Vector2f end_point;
         end_point = start_point + tangent;
 
         line.push_back(this->visu_helper_->createGeometryPoint(start_point[0], start_point[1]));
@@ -295,12 +371,12 @@ namespace path_planner
 
     void QuinticBezierSplines::addBezierSplineToVisuHelper()
     {
-        std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
+        std::vector<Eigen::Vector2f> bezier_spline;
         std::vector<geometry_msgs::Point> line;
 
         bezier_spline = this->calcBezierSpline(0.1);
 
-        for(Eigen::Matrix<float, 2, 1> point_on_spline: bezier_spline)
+        for(Eigen::Vector2f point_on_spline: bezier_spline)
         {
             line.push_back(this->visu_helper_->createGeometryPoint(point_on_spline[0], point_on_spline[1]));
         }
@@ -310,10 +386,10 @@ namespace path_planner
                                                        this->bezier_spline_identificator_);
     }
 
-    void QuinticBezierSplines::addDebugVectorToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> vector)
+    void QuinticBezierSplines::addDebugVectorToVisuHelper(Eigen::Vector2f start_point, Eigen::Vector2f vector)
     {
         std::vector<geometry_msgs::Point> line;
-        Eigen::Matrix<float, 2, 1> end_point;
+        Eigen::Vector2f end_point;
         end_point = start_point + vector;
 
         line.push_back(this->visu_helper_->createGeometryPoint(start_point[0], start_point[1]));

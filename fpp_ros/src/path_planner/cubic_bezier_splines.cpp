@@ -17,13 +17,25 @@ namespace path_planner
         this->end_pose_ = end_pose;
     }
 
+	void CubicBezierSplines::setPreviousSpline(const std::shared_ptr<CubicBezierSplines> &previous_spline)
+	{
+		this->previous_spline_ = previous_spline;
+		this->setStartTangent(this->previous_spline_->getEndTangent());
+	}
+
+	void CubicBezierSplines::setNextSpline(const std::shared_ptr<CubicBezierSplines> &next_spline)
+	{
+		this->next_spline_ = next_spline;
+		this->setEndTangent(this->next_spline_->getEndPose());
+	}
+
     void CubicBezierSplines::setStartTangent(tf::Quaternion robot_orientation)
     {
         float start_to_end_length = this->calcStartToEndLength();
 
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_orientation, direction_vector);
-        rotated_vector = rotated_vector * start_to_end_length;
+        rotated_vector = 0.5 * rotated_vector * start_to_end_length; // see setEndTangent for 0.5 explanation
         this->start_pose_tangent_ << rotated_vector[0], rotated_vector[1];
     }
 
@@ -57,8 +69,8 @@ namespace path_planner
 
         Eigen::Matrix<float, 2, 1> angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
         angular_bisector.normalize();
-        float length_diff_vector_end_to_next = angular_bisector.norm();
-        this->end_pose_tangent_ = 2.0 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper
+        float length_diff_vector_end_to_next = diff_vector_end_to_next.norm(); // Use length of end point and next point to calculate the length of the tangent
+        this->end_pose_tangent_ = 2.0 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper (p. 32 then links to Linear Geometry with Computer Graphics page 318)
     }
 
     void CubicBezierSplines::visualizeData()
@@ -69,7 +81,7 @@ namespace path_planner
         this->visu_helper_->visualizeMarkerArray(this->bezier_spline_identificator_);
         // this->visu_helper_->visualizeMarkerArray(this->debug_marker_identificator_);
 
-        ros::Duration(0.2).sleep(); // Wait for markers to be shown, maybe this helps to visualize them every time
+        ros::Duration(0.1).sleep(); // Wait for markers to be shown, maybe this helps to visualize them every time
     }
 
     Eigen::Matrix<float, 2, 1> CubicBezierSplines::getStartPose()
@@ -92,9 +104,6 @@ namespace path_planner
         return this->end_pose_tangent_;
     }
 
-
-
-
     float CubicBezierSplines::calcStartToEndLength()
     {
         return std::sqrt(std::pow((this->end_pose_[0] - this->start_pose_[0]), 2) + std::pow((this->end_pose_[1] - this->start_pose_[1]), 2));
@@ -102,8 +111,9 @@ namespace path_planner
 
     void CubicBezierSplines::calcControlPoints()
     {
-        this->cp1_ = (1.0 / 3.0) * this->start_pose_tangent_ + this->start_pose_;
-        this->cp2_ = -(1.0 / 3.0) * this->end_pose_tangent_ + this->end_pose_;
+		// Ich glaube den Bruch hier kann ich anpassen um die Controlpoints weiter zu strecken
+        this->cp1_ = (1.0 / 2.0) * this->start_pose_tangent_ + this->start_pose_;
+        this->cp2_ = -(1.0 / 2.0) * this->end_pose_tangent_ + this->end_pose_;
     }
 
     Eigen::Matrix<float, 2, 1> CubicBezierSplines::calcPointOnBezierSpline(float iterator)
@@ -111,21 +121,28 @@ namespace path_planner
         Eigen::Matrix<float, 4, 4> bezier_basis_matrix;
         Eigen::Matrix<float, 1, 4> iterator_matrix;
         
-        bezier_basis_matrix << -1, 3, -3, 1, 3, -6, 3, 0, -3, 3, 0, 0, 1, 0, 0, 0;
-        iterator_matrix << std::pow(iterator, 3), std::pow(iterator, 2), iterator, 1;
+		const int bezier_degree = 3;
 
-        Eigen::Matrix<Eigen::Matrix<float, 2, 1>, 4, 1> point_matrix;
+        Eigen::Matrix<float, 6, 1> bernstein_polynom_vector;
+
+		for(int counter = bezier_degree; counter >= 0; counter--)
+		{
+			bernstein_polynom_vector[counter] = this->calcBinomialCoefficient(bezier_degree, counter) *
+												std::pow(iterator, counter) *
+												std::pow((1 - iterator), bezier_degree - counter);
+		}
+		
+        Eigen::Matrix<Eigen::Matrix<float, 2, 1>, bezier_degree + 1, 1> point_matrix;
         point_matrix[0] = this->start_pose_;
         point_matrix[1] = this->cp1_;
         point_matrix[2] = this->cp2_;
         point_matrix[3] = this->end_pose_;
 
-        Eigen::Matrix<float, 4, 1> matrix_multi = iterator_matrix * bezier_basis_matrix;
         Eigen::Matrix<float , 2, 1> result_vector;
         result_vector << 0, 0;
-        for(int counter = 0; counter <= 3; counter++)
+        for(int counter = 0; counter <= bezier_degree; counter++)
         {
-            result_vector = result_vector + (matrix_multi[counter] * point_matrix[counter]);
+            result_vector = result_vector + (bernstein_polynom_vector[counter] * point_matrix[counter]);
         }
         return result_vector;
     }
@@ -140,6 +157,16 @@ namespace path_planner
 
         return bezier_spline;
     }
+
+	Eigen::Vector2f CubicBezierSplines::calcSecondDerivativeValue(float iterator)
+	{
+		Eigen::Vector2f second_derivative_value;
+
+		second_derivative_value = (6 * (1 - iterator) * (this->start_pose_ - 2 * this->cp1_ + this->cp2_) +
+								  6 * iterator * (this->cp1_ - 2 * this->cp2_ + this->end_pose_));
+
+		return second_derivative_value;
+	}
 
     void CubicBezierSplines::initVisuHelper()
     {
@@ -312,35 +339,24 @@ namespace path_planner
                                                        this->debug_marker_identificator_);
     }
 
-    // CubicBezierSplines::CubicBezierSplines(Eigen::Matrix<float, 2, 1> start_pose,
-    //                                        float start_first_derivative_value,
-    //                                        Eigen::Matrix<float, 2, 1> end_pose) : CubicBezierSplines()
-    // {
-    //     this->start_pose_ = start_pose;
-    //     this->start_first_derivative_value_ = start_first_derivative_value;
-    //     this->calcFirstSupportPose();
-    //     this->end_pose_ = end_pose;
-    // }
+	long CubicBezierSplines::calcFactorial(long n)
+	{
+		if(n == 0)
+		{
+			return 1;
+		}
 
-    // CubicBezierSplines::CubicBezierSplines(std::shared_ptr<CubicBezierSplines> previous_spline, Eigen::Matrix<float, 2, 1> end_pose) :
-    //     CubicBezierSplines()
-    // {
-    //     this->end_pose_ = end_pose;
-    //     this->previous_spline_ = previous_spline;
-    //     this->previous_spline_->setNextSpline(std::shared_ptr<CubicBezierSplines>(this));
-    // }
+		long result = 1;
+		for(long counter = 1; counter <= n; counter++)
+		{
+			result = result * counter;
+		}
+		return result;
+	}
 
-    // void CubicBezierSplines::calcFirstSupportPose()
-    // {
-    //     Eigen::Matrix<float, 2, 1> first_derivative_vector;
-    //     first_derivative_vector << 1*std::cos(std::atan(this->start_first_derivative_value_)), 1*std::sin(std::atan(this->start_first_derivative_value_)); // This vector is now calculated with a vector of the length 1
-    //     this->first_support_pose_ = (1/3) * first_derivative_vector + this->start_pose_;
-    // }
+	long CubicBezierSplines::calcBinomialCoefficient(long n, long k)
+	{
+		return (this->calcFactorial(n)) / (this->calcFactorial(k) * this->calcFactorial(n-k));
+	}
 
-    // void CubicBezierSplines::calcSecondSupportPose(Eigen::Matrix<float, 2, 1> end_vector)
-    // {
-    //     Eigen::Matrix<float, 2, 1> first_derivative_vector;
-        
-
-    // }
 }
