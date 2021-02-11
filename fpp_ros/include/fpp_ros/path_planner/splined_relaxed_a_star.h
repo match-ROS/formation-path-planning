@@ -120,6 +120,7 @@ namespace path_planner
             void setDefaultTolerance(float default_tolerance);
             void setNeighborType(int neighbor_type);
             void setFreeCellThreshhold(int free_cell_thresshold);
+			void setControlPointDistance(int control_point_distance);
 			void setMinimalCurveRadius(float minimal_curve_radius);
 
         protected:
@@ -353,6 +354,10 @@ namespace path_planner
             //! Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
             //! The greater this value will be defined the closer the global path will be planed next to walls.
             int free_cell_threshhold_;
+
+			//! Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
+      		//! Every nth cell will act as a control point
+			int control_point_distance_;
 
 			//! Minimal radius of a curve the formation can drive in m.
 			//! This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.

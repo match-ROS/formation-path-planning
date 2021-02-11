@@ -84,11 +84,6 @@ namespace path_planner
             // result = A.colPivHouseholderQr().solve(b);
             // std::cout << "Result:\n" << result << std::endl;
             // ros::Duration(100).sleep();
-
-			ROS_INFO_STREAM("TESTING");
-			QuinticBezierSplines test(&this->visu_helper_);
-			test.calcPointOnBezierSpline(0.5);
-			ROS_INFO_STREAM("TESTING END");
             //TESTING END
         }
         else
@@ -641,6 +636,11 @@ namespace path_planner
     {
         this->free_cell_threshhold_ = free_cell_thresshold;
     }
+
+	void SplinedRelaxedAStar::setControlPointDistance(int control_point_distance)
+	{
+		this->control_point_distance_ = control_point_distance;
+	}
 
 	void SplinedRelaxedAStar::setMinimalCurveRadius(float minimal_curve_radius)
 	{

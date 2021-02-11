@@ -159,12 +159,15 @@ namespace fpp
             this->planner_nh_.getParam(path_planner_key + "/neighbor_type", neighbor_type);
             int free_cell_thresshold;
             this->planner_nh_.getParam(path_planner_key + "/free_cell_threshold", free_cell_thresshold);
+			int control_point_distance;
+            this->planner_nh_.getParam(path_planner_key + "/control_point_distance", control_point_distance);
 			float minimal_curve_radius;
             this->planner_nh_.getParam(path_planner_key + "/minimal_curve_radius", minimal_curve_radius);
 
             this->initial_path_planner_.setDefaultTolerance(default_tolerance);
             this->initial_path_planner_.setNeighborType(neighbor_type);
             this->initial_path_planner_.setFreeCellThreshhold(free_cell_thresshold);
+			this->initial_path_planner_.setControlPointDistance(control_point_distance);
 
 			// Check if calculated minimal radius is bigger than the param
 			// Minimal radius is calculated by getting the distance between the robot that is the furthest away from the formation centre
