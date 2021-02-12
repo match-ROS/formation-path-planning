@@ -120,6 +120,8 @@ namespace path_planner
             void setDefaultTolerance(float default_tolerance);
             void setNeighborType(int neighbor_type);
             void setFreeCellThreshhold(int free_cell_thresshold);
+			void setStartStraightDistance(float start_straight_distance);
+			void setEndStraightDistance(float end_straight_distance);
 			void setControlPointDistance(int control_point_distance);
 			void setMinimalCurveRadius(float minimal_curve_radius);
 
@@ -354,6 +356,14 @@ namespace path_planner
             //! Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
             //! The greater this value will be defined the closer the global path will be planed next to walls.
             int free_cell_threshhold_;
+
+			//! Distance that is added from the start point of the Relaxed A Star in the direction of the start orientation.
+			//! This should help no creating splines that instantly make a curve
+			float start_straight_distance_;
+			
+			//! Distance that is subtracted from the end point of the Relaxed A Star in the direction of the end orientation.
+			//! This should help no creating splines that instantly make a curve before the end
+			float end_straight_distance_;
 
 			//! Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
       		//! Every nth cell will act as a control point

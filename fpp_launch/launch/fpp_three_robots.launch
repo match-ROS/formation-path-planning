@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="gazebo_gui" default="true"/> <!--Start without Gazebo GUI, RVIZ is enough-->
+    <arg name="gazebo_gui" default="false"/> <!--Start without Gazebo GUI, RVIZ is enough-->
 
     <!--Variables for the robot0-->
     <arg name="robot0_name" value="robot0"/>

@@ -192,6 +192,30 @@ namespace path_planner
         }
         g_score[array_start_cell] = 0;
 		
+		// Insert the start straight line
+		tf::Vector3 start_straight_vector = tf::Vector3(this->start_straight_distance_, 0, 0);
+		tf::Quaternion start_quaternion;
+		tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
+		start_straight_vector = tf::quatRotate(start_quaternion, start_straight_vector);
+		tf::Vector3 world_start = tf::Vector3(world_start_pose_x, world_start_pose_y, 0);
+		tf::Vector3 start_straight_end = world_start + start_straight_vector;
+		unsigned int start_straight_end_cell_x, start_straight_end_cell_y;
+		this->costmap_->worldToMap(start_straight_end.x(), start_straight_end.y(), start_straight_end_cell_x, start_straight_end_cell_y);
+		int array_start_straight_end_cell = this->getArrayIndexByCostmapCell(start_straight_end_cell_x, start_straight_end_cell_y);
+		this->findPlan(array_start_cell, array_start_straight_end_cell, g_score);
+
+		// Insert the end straight line
+		tf::Vector3 goal_straight_vector = tf::Vector3(this->end_straight_distance_, 0, 0);
+		tf::Quaternion goal_quaternion;
+		tf::quaternionMsgToTF(goal.pose.orientation, goal_quaternion);
+		goal_straight_vector = tf::quatRotate(goal_quaternion, goal_straight_vector);
+		tf::Vector3 world_goal = tf::Vector3(world_goal_pose_x, world_goal_pose_y, 0);
+		tf::Vector3 goal_straight_end = world_goal - goal_straight_vector;
+		unsigned int goal_straight_end_cell_x, goal_straight_end_cell_y;
+		this->costmap_->worldToMap()
+		
+		// CHANGE THE FIND PLAN BELOW TO USE THE END POINTS OF BOTH STRAIGHTS!!!
+		
         // Start planning
         this->findPlan(array_start_cell, array_goal_cell, g_score);
 		
@@ -713,6 +737,16 @@ namespace path_planner
     {
         this->free_cell_threshhold_ = free_cell_thresshold;
     }
+
+	void SplinedRelaxedAStar::setStartStraightDistance(float start_straight_distance)
+	{
+		this->start_straight_distance_ = start_straight_distance;
+	}
+
+	void SplinedRelaxedAStar::setEndStraightDistance(float end_straight_distance)
+	{
+		this->end_straight_distance_ = end_straight_distance;
+	}
 
 	void SplinedRelaxedAStar::setControlPointDistance(int control_point_distance)
 	{
