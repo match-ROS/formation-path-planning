@@ -229,8 +229,6 @@ namespace path_planner
             array_plan = this->createPlan(array_start_cell, array_goal_cell, g_score);
             this->createPoseArrayForPlan(array_plan, plan);
 
-			ROS_INFO_STREAM("start_cell: " << array_start_cell << " goal_cell: " << array_goal_cell << " straight end cell: " << array_goal_straight_end_cell << " first cell: " << array_plan[0] << " last cell: " << array_plan.back());
-
             // Select pose every so often
             std::vector<geometry_msgs::PoseStamped> selected_poses;
             for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
@@ -278,8 +276,6 @@ namespace path_planner
 
 			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
 			{
-				ROS_INFO_STREAM("spline start: x: " << spline->getStartPose()[0] << " y: " << spline->getStartPose()[1]);
-				ROS_INFO_STREAM("spline end: x: " << spline->getEndPose()[0] << " y: " << spline->getEndPose()[1]);
 				spline->calcControlPoints();
 				spline->addStartEndPointToVisuHelper();
                 spline->addTangentsToVisuHelper();
@@ -288,44 +284,44 @@ namespace path_planner
 				spline->visualizeData();
 			}
 
-			// // Create plan by splines
-            // plan.clear();
-            // std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
-            // for(path_planner::CubicBezierSplines &spline: spline_list)
-            // {
-            //     std::vector<Eigen::Matrix<float, 2, 1>> points;
-            //     points = spline.calcBezierSpline(0.1);
-            //     points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
-            // }
-            // geometry_msgs::PoseStamped last_pose;
-            // // < is necessary because we just copy elements from one vector (0 until size()) to the other
-            // for(uint path_counter = 0; path_counter < points_of_plan.size(); path_counter++)
-            // {
-            //     geometry_msgs::PoseStamped pose;
-            //     pose.header.stamp = ros::Time::now();
-            //     pose.header.frame_id = this->global_frame_;
+			// Create plan by splines
+            plan.clear();
+            std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
+            for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
+            {
+                std::vector<Eigen::Matrix<float, 2, 1>> points;
+                points = spline->calcBezierSpline(0.1);
+                points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
+            }
+            geometry_msgs::PoseStamped last_pose;
+            // < is necessary because we just copy elements from one vector (0 until size()) to the other
+            for(uint path_counter = 0; path_counter < points_of_plan.size(); path_counter++)
+            {
+                geometry_msgs::PoseStamped pose;
+                pose.header.stamp = ros::Time::now();
+                pose.header.frame_id = this->global_frame_;
 
-            //     pose.pose.position.x = points_of_plan[path_counter][0];
-            //     pose.pose.position.y = points_of_plan[path_counter][1];
+                pose.pose.position.x = points_of_plan[path_counter][0];
+                pose.pose.position.y = points_of_plan[path_counter][1];
 
-            //     // Calculate orientation for each point of the plan with the current position and the last one
-            //     if(path_counter == 0) // No previous point so orientation of start will be taken
-            //     {
-            //         pose.pose.orientation = this->start_.pose.orientation;
-            //     }
-            //     else // Some other points are before, so orientation can be calculated
-            //     {
-            //         float delta_x = pose.pose.position.x - last_pose.pose.position.x;
-            //         float delta_y = pose.pose.position.y - last_pose.pose.position.y;
-            //         double yaw_angle = std::atan2(delta_y, delta_x);
-            //         pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
-            //     }
+                // Calculate orientation for each point of the plan with the current position and the last one
+                if(path_counter == 0) // No previous point so orientation of start will be taken
+                {
+                    pose.pose.orientation = this->start_.pose.orientation;
+                }
+                else // Some other points are before, so orientation can be calculated
+                {
+                    float delta_x = pose.pose.position.x - last_pose.pose.position.x;
+                    float delta_y = pose.pose.position.y - last_pose.pose.position.y;
+                    double yaw_angle = std::atan2(delta_y, delta_x);
+                    pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
+                }
 
-            //     last_pose = pose; // Safe pose for next iteration
-            //     plan.insert(plan.begin() + plan.size(), pose);
-            //     ROS_INFO("plan size: %i", plan.size());
-            // }
-            // // Create plan by splines End
+                last_pose = pose; // Safe pose for next iteration
+                plan.insert(plan.begin() + plan.size(), pose);
+                ROS_INFO("plan size: %i", plan.size());
+            }
+            // Create plan by splines End
 
             // // Create splines
             // ROS_INFO("Start End Point");

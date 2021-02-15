@@ -51,7 +51,7 @@ namespace path_planner
 
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_end_orientation, direction_vector);
-        rotated_vector = rotated_vector * start_to_end_length;
+        rotated_vector = 0.5 * rotated_vector * start_to_end_length;
         this->end_pose_tangent_ << rotated_vector[0], rotated_vector[1];
     }
 
