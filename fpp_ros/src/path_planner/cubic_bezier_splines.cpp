@@ -150,10 +150,15 @@ namespace path_planner
     std::vector<Eigen::Matrix<float, 2, 1>> CubicBezierSplines::calcBezierSpline(float resolution)
     {
         std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
-        for(float counter = 0; counter <= 1.0; counter = counter + resolution)
+        for(float counter = 0; counter < 1.0; counter = counter + resolution)
         {
             bezier_spline.push_back(this->calcPointOnBezierSpline(counter));
         }
+
+		if(this->next_spline_ == nullptr)
+		{
+			bezier_spline.push_back(this->calcPointOnBezierSpline(1.0));
+		}
 
         return bezier_spline;
     }

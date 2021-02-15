@@ -220,10 +220,15 @@ namespace path_planner
     std::vector<Eigen::Vector2f> QuinticBezierSplines::calcBezierSpline(float resolution)
     {
         std::vector<Eigen::Vector2f> bezier_spline;
-        for(float counter = 0; counter <= 1.0; counter = counter + resolution)
+        for(float counter = 0.0; counter < 1.0; counter = counter + resolution)
         {
             bezier_spline.push_back(this->calcPointOnBezierSpline(counter));
         }
+
+		if(this->next_spline_ == nullptr) // Add point at 1.0 because there is no spline after this that can add the point thorugh its 0.0 value
+		{
+			bezier_spline.push_back(this->calcPointOnBezierSpline(1.0));
+		}
 
         return bezier_spline;
     }
