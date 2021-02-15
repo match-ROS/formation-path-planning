@@ -229,19 +229,39 @@ namespace path_planner
             array_plan = this->createPlan(array_start_cell, array_goal_cell, g_score);
             this->createPoseArrayForPlan(array_plan, plan);
 
+			ROS_INFO_STREAM("array plan size: " << array_plan.size());
+
             // Select pose every so often
-            std::vector<geometry_msgs::PoseStamped> selected_poses;
-            for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
-            {
-                if(pose_counter % this->control_point_distance_ == 0)
-                {
-                    selected_poses.push_back(plan[pose_counter]);
-                }
-            }
+			int control_point_amount = std::ceil(float(plan.size()) / float(this->control_point_distance_));
+			int real_control_point_distance = int(plan.size() / control_point_amount);
+
+			ROS_INFO_STREAM("control_point_amount: " << control_point_amount << " real_control_point_distance: " << real_control_point_distance);
+
+			std::vector<geometry_msgs::PoseStamped> selected_poses;
+			
+			// Use smaller or equal because when control_point_amount = 2 (plan.size = 90 && control_point_distance = 50), then there should be start, end and one control point in the middle
+			for(int control_point_counter = 0; control_point_counter < control_point_amount; control_point_counter++)
+			{
+				ROS_INFO_STREAM("loop: " << control_point_counter * real_control_point_distance);
+				selected_poses.push_back(plan[control_point_counter * real_control_point_distance]);
+			}
             geometry_msgs::PoseStamped last;
             last.header = (plan.end() - 1)->header;
             last.pose = (plan.end() - 1)->pose;
             selected_poses.push_back(last);
+
+			// std::vector<geometry_msgs::PoseStamped> selected_poses;
+            // for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
+            // {
+            //     if(pose_counter % this->control_point_distance_ == 0)
+            //     {
+            //         selected_poses.push_back(plan[pose_counter]);
+            //     }
+            // }
+            // geometry_msgs::PoseStamped last;
+            // last.header = (plan.end() - 1)->header;
+            // last.pose = (plan.end() - 1)->pose;
+            // selected_poses.push_back(last);
 
             // end
 
@@ -319,7 +339,6 @@ namespace path_planner
 
                 last_pose = pose; // Safe pose for next iteration
                 plan.insert(plan.begin() + plan.size(), pose);
-                ROS_INFO("plan size: %i", plan.size());
             }
             // Create plan by splines End
 
