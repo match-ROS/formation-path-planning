@@ -192,7 +192,7 @@ namespace path_planner
         }
         g_score[array_start_cell] = 0;
 		
-		// Insert the start straight line
+		// Calculate the start straight line points
 		tf::Vector3 start_straight_vector = tf::Vector3(this->start_straight_distance_, 0, 0);
 		tf::Quaternion start_quaternion;
 		tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
@@ -202,9 +202,8 @@ namespace path_planner
 		unsigned int start_straight_end_cell_x, start_straight_end_cell_y;
 		this->costmap_->worldToMap(start_straight_end.x(), start_straight_end.y(), start_straight_end_cell_x, start_straight_end_cell_y);
 		int array_start_straight_end_cell = this->getArrayIndexByCostmapCell(start_straight_end_cell_x, start_straight_end_cell_y);
-		this->findPlan(array_start_cell, array_start_straight_end_cell, g_score);
-
-		// Insert the end straight line
+		
+		// Calculate the end straight line points
 		tf::Vector3 goal_straight_vector = tf::Vector3(this->end_straight_distance_, 0, 0);
 		tf::Quaternion goal_quaternion;
 		tf::quaternionMsgToTF(goal.pose.orientation, goal_quaternion);
@@ -212,19 +211,26 @@ namespace path_planner
 		tf::Vector3 world_goal = tf::Vector3(world_goal_pose_x, world_goal_pose_y, 0);
 		tf::Vector3 goal_straight_end = world_goal - goal_straight_vector;
 		unsigned int goal_straight_end_cell_x, goal_straight_end_cell_y;
-		this->costmap_->worldToMap()
+		this->costmap_->worldToMap(goal_straight_end.x(), goal_straight_end.y(), goal_straight_end_cell_x, goal_straight_end_cell_y);
+		int array_goal_straight_end_cell = this->getArrayIndexByCostmapCell(goal_straight_end_cell_x, goal_straight_end_cell_y);
 		
-		// CHANGE THE FIND PLAN BELOW TO USE THE END POINTS OF BOTH STRAIGHTS!!!
+		// Find plan for the start straight line
+		this->findPlan(array_start_cell, array_start_straight_end_cell, g_score);
+
+        // Start planning the middle part
+        this->findPlan(array_start_straight_end_cell, array_goal_straight_end_cell, g_score);
 		
-        // Start planning
-        this->findPlan(array_start_cell, array_goal_cell, g_score);
-		
+		// Find Plan for the end straight line
+		this->findPlan(array_goal_straight_end_cell, array_goal_cell, g_score);
+
         if (g_score[array_goal_cell] != std::numeric_limits<float>::infinity())
         {
             std::vector<int> array_plan;
             array_plan = this->createPlan(array_start_cell, array_goal_cell, g_score);
             this->createPoseArrayForPlan(array_plan, plan);
-			
+
+			ROS_INFO_STREAM("start_cell: " << array_start_cell << " goal_cell: " << array_goal_cell << " straight end cell: " << array_goal_straight_end_cell << " first cell: " << array_plan[0] << " last cell: " << array_plan.back());
+
             // Select pose every so often
             std::vector<geometry_msgs::PoseStamped> selected_poses;
             for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
@@ -238,6 +244,7 @@ namespace path_planner
             last.header = (plan.end() - 1)->header;
             last.pose = (plan.end() - 1)->pose;
             selected_poses.push_back(last);
+
             // end
 
 			// Create splines
@@ -271,8 +278,9 @@ namespace path_planner
 
 			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
 			{
+				ROS_INFO_STREAM("spline start: x: " << spline->getStartPose()[0] << " y: " << spline->getStartPose()[1]);
+				ROS_INFO_STREAM("spline end: x: " << spline->getEndPose()[0] << " y: " << spline->getEndPose()[1]);
 				spline->calcControlPoints();
-				
 				spline->addStartEndPointToVisuHelper();
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
@@ -361,7 +369,7 @@ namespace path_planner
             //     spline_list[spline_counter].addTangentsToVisuHelper();
             //     spline_list[spline_counter].addControlPointsToVisuHelper();
             //     spline_list[spline_counter].addBezierSplineToVisuHelper();
-            //     // spline_list[spline_counter].visualizeData();
+            // 	spline_list[spline_counter].visualizeData();
             // }
             // // Visualize Splines End
 
@@ -422,6 +430,11 @@ namespace path_planner
         std::multiset<fpp_data_classes::Cell, std::less<fpp_data_classes::Cell>> array_open_cell_list;
         array_open_cell_list.insert({array_start_cell, this->calcHCost(array_start_cell, array_goal_cell)});
 
+		// g_score[array_start_cell] = 0.0;
+		// g_score[array_goal_cell] = std::numeric_limits<float>::infinity();
+
+		// ROS_INFO_STREAM("Start cell: " << array_start_cell << ", goal cell: " << array_goal_cell);
+
         while (!array_open_cell_list.empty() &&
                g_score[array_goal_cell] == std::numeric_limits<float>::infinity())
         {
@@ -472,7 +485,6 @@ namespace path_planner
             array_start_to_goal_plan.insert(array_start_to_goal_plan.begin() + array_start_to_goal_plan.size(),
                                             array_goal_to_start_plan[array_goal_to_start_plan.size() - path_counter]);
         }
-
         return array_start_to_goal_plan;
     }
 
