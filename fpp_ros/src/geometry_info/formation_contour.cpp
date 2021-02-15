@@ -49,7 +49,6 @@ namespace geometry_info
 
         if(wrapped_contour_corners_geometry_cs.front() == wrapped_contour_corners_geometry_cs.back())
         {
-            ROS_INFO_STREAM("FIRST AND LAST IS SAME");
             wrapped_contour_corners_geometry_cs.pop_back();
         }
         this->corner_points_geometry_cs_ = wrapped_contour_corners_geometry_cs;

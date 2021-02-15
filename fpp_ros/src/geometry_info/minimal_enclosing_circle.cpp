@@ -132,6 +132,8 @@ namespace geometry_info
         circle_info.centre = this->calcVectorLineIntersectionPoint(vector_centre1, orthogonal_vector1,
                                                                         vector_centre2, orthogonal_vector2);
         circle_info.radius = this->calcDistance(this->circle_defining_points_[0], this->circle_centre_);
+		
+		return circle_info;
     }
 
     double MinimalEnclosingCircle::calcDistance(Eigen::Vector2f first_point, Eigen::Vector2f second_point)
