@@ -273,6 +273,9 @@ namespace path_planner
 			tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
 			spline_list.back()->setEndTangent(end_quaternion);
 
+			// Optimize the curvature of the splines to be under a certain threshold
+
+
 			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
 			{
 				spline->calcControlPoints();
@@ -676,5 +679,10 @@ namespace path_planner
 	void SplinedRelaxedAStar::setMinimalCurveRadius(float minimal_curve_radius)
 	{
 		this->minimal_curve_radius_ = minimal_curve_radius;
+	}
+
+	void SplinedRelaxedAStar::setPlanningPointsPerSpline(int planning_points_per_spline)
+	{
+		this->planning_points_per_spline_ = planning_points_per_spline;
 	}
 }

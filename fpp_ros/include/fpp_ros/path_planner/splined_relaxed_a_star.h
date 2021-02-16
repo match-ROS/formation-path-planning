@@ -124,6 +124,7 @@ namespace path_planner
 			void setEndStraightDistance(float end_straight_distance);
 			void setControlPointDistance(int control_point_distance);
 			void setMinimalCurveRadius(float minimal_curve_radius);
+			void setPlanningPointsPerSpline(int planning_points_per_spline);
 
         protected:
 
@@ -368,6 +369,9 @@ namespace path_planner
 			//! Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
       		//! Every nth cell will act as a control point
 			int control_point_distance_;
+
+			//! This value defines how many points should be inserted into the plan from one spline.
+			int planning_points_per_spline_;
 
 			//! Minimal radius of a curve the formation can drive in m.
 			//! This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.

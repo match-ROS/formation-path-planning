@@ -166,6 +166,8 @@ namespace fpp
 			this->planner_nh_.getParam(path_planner_key + "/end_straight_distance", end_straight_distance);
 			int control_point_distance;
             this->planner_nh_.getParam(path_planner_key + "/control_point_distance", control_point_distance);
+			int planning_points_per_spline;
+			this->planner_nh_.getParam(path_planner_key + "/planning_points_per_spline", planning_points_per_spline);
 			float minimal_curve_radius;
             this->planner_nh_.getParam(path_planner_key + "/minimal_curve_radius", minimal_curve_radius);
 
@@ -175,6 +177,7 @@ namespace fpp
 			this->initial_path_planner_.setStartStraightDistance(start_straight_distance);
 			this->initial_path_planner_.setEndStraightDistance(end_straight_distance);
 			this->initial_path_planner_.setControlPointDistance(control_point_distance);
+			this->initial_path_planner_.setPlanningPointsPerSpline(planning_points_per_spline);
 
 			// Check if calculated minimal radius is bigger than the param
 			// Minimal radius is calculated by getting the distance between the robot that is the furthest away from the formation centre
