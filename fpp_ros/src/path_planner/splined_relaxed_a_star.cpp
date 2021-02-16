@@ -229,20 +229,15 @@ namespace path_planner
             array_plan = this->createPlan(array_start_cell, array_goal_cell, g_score);
             this->createPoseArrayForPlan(array_plan, plan);
 
-			ROS_INFO_STREAM("array plan size: " << array_plan.size());
-
             // Select pose every so often
 			int control_point_amount = std::ceil(float(plan.size()) / float(this->control_point_distance_));
 			int real_control_point_distance = int(plan.size() / control_point_amount);
-
-			ROS_INFO_STREAM("control_point_amount: " << control_point_amount << " real_control_point_distance: " << real_control_point_distance);
 
 			std::vector<geometry_msgs::PoseStamped> selected_poses;
 			
 			// Use smaller or equal because when control_point_amount = 2 (plan.size = 90 && control_point_distance = 50), then there should be start, end and one control point in the middle
 			for(int control_point_counter = 0; control_point_counter < control_point_amount; control_point_counter++)
 			{
-				ROS_INFO_STREAM("loop: " << control_point_counter * real_control_point_distance);
 				selected_poses.push_back(plan[control_point_counter * real_control_point_distance]);
 			}
             geometry_msgs::PoseStamped last;
@@ -250,23 +245,7 @@ namespace path_planner
             last.pose = (plan.end() - 1)->pose;
             selected_poses.push_back(last);
 
-			// std::vector<geometry_msgs::PoseStamped> selected_poses;
-            // for(int pose_counter = 0; pose_counter < (plan.size() - 10); pose_counter++)
-            // {
-            //     if(pose_counter % this->control_point_distance_ == 0)
-            //     {
-            //         selected_poses.push_back(plan[pose_counter]);
-            //     }
-            // }
-            // geometry_msgs::PoseStamped last;
-            // last.header = (plan.end() - 1)->header;
-            // last.pose = (plan.end() - 1)->pose;
-            // selected_poses.push_back(last);
-
-            // end
-
 			// Create splines
-            ROS_INFO("Start End Point");
             std::vector<std::shared_ptr<path_planner::QuinticBezierSplines>> spline_list;
             for(int pose_counter = 0; pose_counter < (selected_poses.size()-1); pose_counter++)
             {
@@ -340,92 +319,6 @@ namespace path_planner
                 last_pose = pose; // Safe pose for next iteration
                 plan.insert(plan.begin() + plan.size(), pose);
             }
-            // Create plan by splines End
-
-            // // Create splines
-            // ROS_INFO("Start End Point");
-            // std::vector<path_planner::CubicBezierSplines> spline_list;
-            // for(int pose_counter = 0; pose_counter < (selected_poses.size()-1); pose_counter++)
-            // {
-            //     Eigen::Matrix<float, 2, 1> start_pose;
-            //     Eigen::Matrix<float, 2, 1> end_pose;
-            //     start_pose << selected_poses[pose_counter].pose.position.x, selected_poses[pose_counter].pose.position.y;
-            //     end_pose << selected_poses[pose_counter + 1].pose.position.x, selected_poses[pose_counter + 1].pose.position.y;
-            //     path_planner::CubicBezierSplines spline(&this->visu_helper_, start_pose, end_pose);    
-            //     spline_list.push_back(spline);
-            // }
-
-            // ROS_INFO("Tangent");
-            // tf::Quaternion start_quaternion;
-            // tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
-            // spline_list[0].setStartTangent(start_quaternion);
-            // spline_list[0].setEndTangent(spline_list[1].getEndPose());
-            // for(int spline_counter = 1; spline_counter < (spline_list.size() - 1); spline_counter++)
-            // {
-            //     spline_list[spline_counter].setStartTangent(spline_list[spline_counter - 1].getEndTangent());
-            //     spline_list[spline_counter].setEndTangent(spline_list[spline_counter + 1].getEndPose());
-            // }
-            // tf::Quaternion end_quaternion;
-            // tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
-            // (spline_list.end() - 1)->setStartTangent((spline_list.end() - 2)->getEndTangent());
-            // (spline_list.end() - 1)->setEndTangent(end_quaternion);
-
-            // ROS_INFO("Control Points");
-            // for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
-            // {
-            //     spline_list[spline_counter].calcControlPoints();
-            // }
-            // // Create splines end
-
-            // // Visualize Splines
-            // for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
-            // {
-            //     spline_list[spline_counter].addStartEndPointToVisuHelper();
-            //     spline_list[spline_counter].addTangentsToVisuHelper();
-            //     spline_list[spline_counter].addControlPointsToVisuHelper();
-            //     spline_list[spline_counter].addBezierSplineToVisuHelper();
-            // 	spline_list[spline_counter].visualizeData();
-            // }
-            // // Visualize Splines End
-
-            // // Create plan by splines
-            // plan.clear();
-            // std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
-            // for(path_planner::CubicBezierSplines &spline: spline_list)
-            // {
-            //     std::vector<Eigen::Matrix<float, 2, 1>> points;
-            //     points = spline.calcBezierSpline(0.1);
-            //     points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
-            // }
-            // geometry_msgs::PoseStamped last_pose;
-            // // < is necessary because we just copy elements from one vector (0 until size()) to the other
-            // for(uint path_counter = 0; path_counter < points_of_plan.size(); path_counter++)
-            // {
-            //     geometry_msgs::PoseStamped pose;
-            //     pose.header.stamp = ros::Time::now();
-            //     pose.header.frame_id = this->global_frame_;
-
-            //     pose.pose.position.x = points_of_plan[path_counter][0];
-            //     pose.pose.position.y = points_of_plan[path_counter][1];
-
-            //     // Calculate orientation for each point of the plan with the current position and the last one
-            //     if(path_counter == 0) // No previous point so orientation of start will be taken
-            //     {
-            //         pose.pose.orientation = this->start_.pose.orientation;
-            //     }
-            //     else // Some other points are before, so orientation can be calculated
-            //     {
-            //         float delta_x = pose.pose.position.x - last_pose.pose.position.x;
-            //         float delta_y = pose.pose.position.y - last_pose.pose.position.y;
-            //         double yaw_angle = std::atan2(delta_y, delta_x);
-            //         pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
-            //     }
-
-            //     last_pose = pose; // Safe pose for next iteration
-            //     plan.insert(plan.begin() + plan.size(), pose);
-            //     ROS_INFO("plan size: %i", plan.size());
-            // }
-            // // Create plan by splines End
         }
         ROS_INFO("Planning finished %i", plan.size());
         this->publishPlan(plan);

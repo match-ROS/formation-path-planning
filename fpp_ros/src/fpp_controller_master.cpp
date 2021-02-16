@@ -49,9 +49,10 @@ namespace fpp
         
         // Initialize the minimal circle enclosing the formation
         this->formation_enclosing_circle_ = geometry_info::MinimalEnclosingCircle();
-        // this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->formation_centre_,
-        //                                                              this->formation_contour_.getCornerPointsWorldCS());
-        this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->target_formation_contour_.getCornerPointsWorldCS());
+		// For now the minimal enclosing circle will be bigger than the smallest circle possible
+        this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->formation_centre_,
+                                                                     this->target_formation_contour_.getCornerPointsWorldCS());
+        // this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->target_formation_contour_.getCornerPointsWorldCS());
 
         this->callDynamicCostmapReconfigure();
 
@@ -201,22 +202,19 @@ namespace fpp
                                       const geometry_msgs::PoseStamped &goal,
                                       std::vector<geometry_msgs::PoseStamped> &plan)
     {
-        ROS_INFO_STREAM("Start: x: " << start.pose.position.x << " y: " << start.pose.position.y << "\n");
-        ROS_INFO_STREAM("Goal: x: " << goal.pose.position.x << " y: " << goal.pose.position.y << "\n");
+        ROS_INFO_STREAM("Start: x: " << start.pose.position.x << " y: " << start.pose.position.y);
+        ROS_INFO_STREAM("Goal: x: " << goal.pose.position.x << " y: " << goal.pose.position.y);
         
         geometry_msgs::PoseStamped formation_start = start;
 		std::vector<geometry_msgs::PoseStamped> formation_plan;
         formation_start.pose.position.x = this->formation_centre_[0];
         formation_start.pose.position.y = this->formation_centre_[1];
-        ROS_INFO_STREAM("Formation Start: x: " << formation_start.pose.position.x << " y: " << formation_start.pose.position.y << "\n");
+        ROS_INFO_STREAM("Formation Start: x: " << formation_start.pose.position.x << " y: " << formation_start.pose.position.y);
         this->initial_path_planner_.makePlan(formation_start, goal, formation_plan);
 
 		this->calcRobotPlans(formation_plan);
 		plan = this->robot_plan_list_[this->robot_info_->robot_name];
 		
-		ROS_INFO_STREAM("formation:" << formation_plan[0].pose.position.x << " " << formation_plan[0].pose.position.y);
-		ROS_INFO_STREAM("plan:" << plan[0].pose.position.x << " " << plan[0].pose.position.y);
-		ROS_INFO_STREAM("plan:" << plan[10].pose.position.x << " " << plan[10].pose.position.y);
 		// Call move_base action servers of each slave robot to initialize the global planning of their path
 		for(std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> &slave_move_base_as: this->slave_move_base_as_list_)
 		{
@@ -346,12 +344,10 @@ namespace fpp
 
 	bool FPPControllerMaster::getRobotPlanCb(fpp_msgs::GetRobotPlan::Request &req, fpp_msgs::GetRobotPlan::Response &res)
 	{
-		ROS_INFO_STREAM("Get " << req.robot_name << " robot name");
 		nav_msgs::Path plan;
 		plan.header.frame_id = this->robot_plan_list_[req.robot_name].front().header.frame_id;
 		plan.header.stamp = this->robot_plan_list_[req.robot_name].front().header.stamp;
 		plan.poses = this->robot_plan_list_[req.robot_name];
 		res.robot_plan = plan;
-		ROS_INFO_STREAM("Returned " << req.robot_name << " robot name");
 	}
 }

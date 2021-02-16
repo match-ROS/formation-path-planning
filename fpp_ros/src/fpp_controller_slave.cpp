@@ -20,16 +20,6 @@ namespace fpp
                                      const geometry_msgs::PoseStamped &goal,
                                      std::vector<geometry_msgs::PoseStamped> &plan)
     {
-		// ROS_INFO_STREAM("Received new goal " << this->robot_info_->robot_name);
-
-		// // Wait for the plan of the master robot to be published
-		// while(this->master_plan_ == nullptr)
-		// {
-		// 	ros::Duration(0.01).sleep();
-		// }
-
-		// this->calcOffsetPlan(this->master_plan_->poses, plan, this->robot_info_->offset);
-
 		fpp_msgs::GetRobotPlan robot_plan_msg;
 		robot_plan_msg.request.robot_name = this->robot_info_->robot_name;
 		this->get_robot_plan_srv_client_.call(robot_plan_msg);

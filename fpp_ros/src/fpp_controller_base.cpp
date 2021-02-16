@@ -54,22 +54,7 @@ namespace fpp
         path_to_publish.header.frame_id = plan[0].header.frame_id;
 
         path_to_publish.poses = plan;
-		ROS_INFO_STREAM("publish: " << path_to_publish.poses.size() << " " << plan_publisher.getTopic());
+		// ROS_INFO_STREAM("publish: " << path_to_publish.poses.size() << " " << plan_publisher.getTopic());
         plan_publisher.publish(path_to_publish);
     }
-
-	void FPPControllerBase::calcOffsetPlan(const std::vector<geometry_msgs::PoseStamped> &master_plan,
-										   std::vector<geometry_msgs::PoseStamped> &offset_plan,
-										   Eigen::Vector2f offset)
-	{
-		ROS_INFO_STREAM("offset: x:" << offset[0] << " y: " << offset[1]);
-		for(geometry_msgs::PoseStamped master_pose: master_plan)
-		{
-			geometry_msgs::PoseStamped offset_pose = master_pose;
-			offset_pose.pose.position.x = offset_pose.pose.position.x + offset[0];
-			offset_pose.pose.position.y = offset_pose.pose.position.y + offset[1];
-			offset_plan.push_back(offset_pose);
-			ROS_INFO_STREAM("master: x:" << master_pose.pose.position.x << " y: " << master_pose.pose.position.y << " offset: x: " << offset_pose.pose.position.x << " offset: y: " << offset_pose.pose.position.y);
-		}
-	}
 }

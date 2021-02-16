@@ -109,16 +109,5 @@ namespace fpp
              * @param plan Plan that contains all points the define the plan
              */
 			void publishPlan(const ros::Publisher &plan_publisher, const std::vector<geometry_msgs::PoseStamped> &plan);
-
-			/**
-			 * @brief Method for calculating a plan that has a fix offset in x and y from the master_plan
-			 * 
-			 * @param master_plan Master plan that dictates the plan and where the offset will be added to
-			 * @param offset_plan Plan that contains the moved plan
-			 * @param offset The offset which should be applied to the master plan
-			 */
-			void calcOffsetPlan(const std::vector<geometry_msgs::PoseStamped> &master_plan,
-								std::vector <geometry_msgs::PoseStamped> &offset_plan,
-								Eigen::Vector2f offset);
 	};
 }
