@@ -233,6 +233,27 @@ namespace path_planner
         return bezier_spline;
     }
 
+	Eigen::Vector2f QuinticBezierSplines::calcFirstDerivative(float iterator)
+	{
+		Eigen::Vector2f first_derivative_value = 5 * std::pow(1 - iterator, 4) * (this->cp1_ - this->start_pose_) +
+												 20 * std::pow(1 - iterator, 3) * iterator * (this->cp2_ - this->cp1_) +
+												 30 * std::pow(1 - iterator, 2) * std::pow(iterator, 2) * (this->cp3_ - this->cp2_) +
+												 20 * (1 - iterator) * std::pow(iterator, 3) * (this->cp4_ - this->cp3_) +
+												 5 * std::pow(iterator, 4) * (this->end_pose_ - this->cp4_);
+
+		return first_derivative_value;									   
+	}
+
+	Eigen::Vector2f QuinticBezierSplines::calcSecondDerivative(float iterator)
+	{
+		Eigen::Vector2f second_derivative_value = 20 * std::pow(1 - iterator, 3) * (this->start_pose_ - 2 * this->cp1_ + this->cp2_) +
+												  60 * std::pow(1 - iterator, 2) * iterator * (this->cp1_ - 2 * this->cp2_ + this->cp3_) +
+												  60 * (1 - iterator) * std::pow(iterator, 2) * (this->cp2_ - 2 * this->cp3_ + this->cp4_) +
+												  20 * std::pow(iterator, 3) * (this->cp3_ - 2 * this->cp4_ + this->end_pose_);
+
+		return second_derivative_value;												  
+	}
+
     void QuinticBezierSplines::initVisuHelper()
     {
         this->start_end_marker_identificator_ = "start_end";
