@@ -292,7 +292,7 @@ namespace path_planner
             for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
             {
                 std::vector<Eigen::Matrix<float, 2, 1>> points;
-                points = spline->calcBezierSpline(0.1);
+                points = spline->calcBezierSpline(1.0/this->planning_points_per_spline_);
                 points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
             }
             geometry_msgs::PoseStamped last_pose;
