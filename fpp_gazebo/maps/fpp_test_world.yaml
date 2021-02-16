@@ -1,4 +1,4 @@
-image: fpp_test_world.pgm
+image: my_new_fpp_testing_world.pgm
 resolution: 0.050000
 origin: [-100.000000, -100.000000, 0.000000]
 negate: 0
