@@ -35,15 +35,36 @@ namespace path_planner
 
             void calcControlPoints();
             Eigen::Vector2f calcPointOnBezierSpline(float iterator);
-            std::vector<Eigen::Vector2f> calcBezierSpline(float resolution);
+            std::vector<Eigen::Vector2f> calcBezierSpline(int resolution);
 
 			Eigen::Vector2f calcFirstDerivative(float iterator);
 			Eigen::Vector2f calcSecondDerivative(float iterator);
 
+			float calcCurvation(float iterator);
+			float calcCurveRadius(float iterator);
+			/**
+			 * @brief 
+			 * 
+			 * @param iterator 
+			 * @param min_curve_radius 
+			 * @return true Curve Radius is greater or equal to min curve radius. Curve is fine.
+			 * @return false Curve radius is smaller than min curve radius. Curve is not finde.
+			 */
+			bool checkMinCurveRadiusAtPoint(float iterator, float min_curve_radius);
+			/**
+			 * @brief 
+			 * 
+			 * @param resolution 
+			 * @param min_curve_radius 
+			 * @return true Curve Radius is greater or equal to min curve radius. Curve is fine.
+			 * @return false Curve radius is smaller than min curve radius. Curve is not finde.
+			 */
+			bool checkMinCurveRadiusOnSpline(int resolution, float min_curve_radius);
+
             void visualizeData();
             void addStartEndPointToVisuHelper();
             void addControlPointsToVisuHelper();
-            void addBezierSplineToVisuHelper();
+            void addBezierSplineToVisuHelper(int resolution);
             void addTangentsToVisuHelper();
 
             Eigen::Vector2f getStartPose();

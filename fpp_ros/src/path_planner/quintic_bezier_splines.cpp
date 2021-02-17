@@ -217,12 +217,14 @@ namespace path_planner
 		return cubic_spline;
 	}
 
-    std::vector<Eigen::Vector2f> QuinticBezierSplines::calcBezierSpline(float resolution)
+    std::vector<Eigen::Vector2f> QuinticBezierSplines::calcBezierSpline(int resolution)
     {
+		int int_res = int(resolution);
         std::vector<Eigen::Vector2f> bezier_spline;
-        for(float counter = 0.0; counter < 1.0; counter = counter + resolution)
+        for(int counter = 0; counter < int_res; counter++)
         {
-            bezier_spline.push_back(this->calcPointOnBezierSpline(counter));
+			float iterator = (counter == 0) ? 0.0 : (float(counter) / float(resolution));
+            bezier_spline.push_back(this->calcPointOnBezierSpline(iterator));
         }
 
 		if(this->next_spline_ == nullptr) // Add point at 1.0 because there is no spline after this that can add the point thorugh its 0.0 value
@@ -252,6 +254,47 @@ namespace path_planner
 												  20 * std::pow(iterator, 3) * (this->cp3_ - 2 * this->cp4_ + this->end_pose_);
 
 		return second_derivative_value;												  
+	}
+
+	float QuinticBezierSplines::calcCurvation(float iterator)
+	{
+		Eigen::Vector2f first_derivative_value = this->calcFirstDerivative(iterator);
+		Eigen::Vector2f second_derivative_value = this->calcSecondDerivative(iterator);
+		// ROS_INFO_STREAM("first derivative: " << first_derivative_value[0] << "|" << first_derivative_value[1] << " second derivative: " << second_derivative_value[0] << "|" << second_derivative_value[1]);
+		// Calculate curvation. See Calculus Early Transcendentals p. 856  for formula
+		float curvation_value = std::abs(first_derivative_value[0] * second_derivative_value[1] - first_derivative_value[1] * second_derivative_value[0]) /
+								std::pow(std::abs(first_derivative_value.norm()), 3);
+		// ROS_INFO_STREAM("curvature: " << curvation_value);								
+
+		return curvation_value;
+	}
+
+	float QuinticBezierSplines::calcCurveRadius(float iterator)
+	{
+
+		float radius_value = 1 / this->calcCurvation(iterator);
+		// ROS_INFO_STREAM("radius: " << radius_value);
+		return radius_value;
+	}
+
+	bool QuinticBezierSplines::checkMinCurveRadiusAtPoint(float iterator, float min_curve_radius)
+	{
+		return this->calcCurveRadius(iterator) > min_curve_radius;
+	}
+
+	bool QuinticBezierSplines::checkMinCurveRadiusOnSpline(int resolution, float min_curve_radius)
+	{
+		for(int counter = 0; counter <= resolution; counter++)
+		{
+			// ROS_INFO_STREAM("iterator: " << counter);
+			if(!this->checkMinCurveRadiusAtPoint((float(counter) / float(resolution)), min_curve_radius))
+			{
+				// ROS_INFO_STREAM("------------------------------------------------------");
+				// ROS_INFO_STREAM("radius: " << this->calcCurveRadius((float(counter) / float(resolution))));
+				// return false;
+			}
+		}
+		return true;
 	}
 
     void QuinticBezierSplines::initVisuHelper()
@@ -395,12 +438,12 @@ namespace path_planner
                                                        this->tangent_marker_identificator_);
     }
 
-    void QuinticBezierSplines::addBezierSplineToVisuHelper()
+    void QuinticBezierSplines::addBezierSplineToVisuHelper(int resolution)
     {
         std::vector<Eigen::Vector2f> bezier_spline;
         std::vector<geometry_msgs::Point> line;
 
-        bezier_spline = this->calcBezierSpline(0.1);
+        bezier_spline = this->calcBezierSpline(resolution);
 
         for(Eigen::Vector2f point_on_spline: bezier_spline)
         {

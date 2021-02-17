@@ -147,12 +147,13 @@ namespace path_planner
         return result_vector;
     }
 
-    std::vector<Eigen::Matrix<float, 2, 1>> CubicBezierSplines::calcBezierSpline(float resolution)
+    std::vector<Eigen::Matrix<float, 2, 1>> CubicBezierSplines::calcBezierSpline(int resolution)
     {
         std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
-        for(float counter = 0; counter < 1.0; counter = counter + resolution)
+        for(int counter = 0; counter < resolution; counter++)
         {
-            bezier_spline.push_back(this->calcPointOnBezierSpline(counter));
+			float iterator = (counter == 0) ? 0.0 : (float(counter) / float(resolution));
+            bezier_spline.push_back(this->calcPointOnBezierSpline(iterator));
         }
 
 		if(this->next_spline_ == nullptr)
@@ -314,12 +315,12 @@ namespace path_planner
                                                        this->tangent_marker_identificator_);
     }
 
-    void CubicBezierSplines::addBezierSplineToVisuHelper()
+    void CubicBezierSplines::addBezierSplineToVisuHelper(int resolution)
     {
         std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
         std::vector<geometry_msgs::Point> line;
 
-        bezier_spline = this->calcBezierSpline(0.1);
+        bezier_spline = this->calcBezierSpline(resolution);
 
         for(Eigen::Matrix<float, 2, 1> point_on_spline: bezier_spline)
         {

@@ -274,7 +274,12 @@ namespace path_planner
 			spline_list.back()->setEndTangent(end_quaternion);
 
 			// Optimize the curvature of the splines to be under a certain threshold
-
+			ROS_INFO_STREAM("Optimizing the curvature of the splines");
+			for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
+			{
+				ROS_INFO_STREAM("spline counter: " << spline_counter);
+				ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
+			}
 
 			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
 			{
@@ -282,7 +287,7 @@ namespace path_planner
 				spline->addStartEndPointToVisuHelper();
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
-                spline->addBezierSplineToVisuHelper();
+                spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
 				spline->visualizeData();
 			}
 
@@ -292,7 +297,7 @@ namespace path_planner
             for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
             {
                 std::vector<Eigen::Matrix<float, 2, 1>> points;
-                points = spline->calcBezierSpline(1.0/this->planning_points_per_spline_);
+                points = spline->calcBezierSpline(this->planning_points_per_spline_);
                 points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
             }
             geometry_msgs::PoseStamped last_pose;

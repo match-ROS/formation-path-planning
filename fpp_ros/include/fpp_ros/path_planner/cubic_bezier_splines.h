@@ -34,13 +34,13 @@ namespace path_planner
 
             void calcControlPoints();
             Eigen::Vector2f calcPointOnBezierSpline(float iterator);
-            std::vector<Eigen::Vector2f> calcBezierSpline(float resolution);
+            std::vector<Eigen::Vector2f> calcBezierSpline(int resolution);
 			Eigen::Vector2f calcSecondDerivativeValue(float iterator);
 
             void visualizeData();
             void addStartEndPointToVisuHelper();
             void addControlPointsToVisuHelper();
-            void addBezierSplineToVisuHelper();
+            void addBezierSplineToVisuHelper(int resolution);
             void addTangentsToVisuHelper();
 
             Eigen::Vector2f getStartPose();
