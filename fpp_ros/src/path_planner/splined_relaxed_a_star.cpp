@@ -272,15 +272,7 @@ namespace path_planner
 			tf::Quaternion end_quaternion;
 			tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
 			spline_list.back()->setEndTangent(end_quaternion);
-
-			// Optimize the curvature of the splines to be under a certain threshold
-			ROS_INFO_STREAM("Optimizing the curvature of the splines");
-			for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
-			{
-				ROS_INFO_STREAM("spline counter: " << spline_counter);
-				ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
-			}
-
+			
 			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
 			{
 				spline->calcControlPoints();
@@ -289,6 +281,15 @@ namespace path_planner
                 spline->addControlPointsToVisuHelper();
                 spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
 				spline->visualizeData();
+			}
+
+			// Optimize the curvature of the splines to be under a certain threshold
+			ROS_INFO_STREAM("Optimizing the curvature of the splines");
+			for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
+			{
+				ROS_INFO_STREAM("spline counter: " << spline_counter);
+				spline_list[spline_counter]->printInfo();
+				ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
 			}
 
 			// Create plan by splines

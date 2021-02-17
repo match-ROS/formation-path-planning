@@ -275,7 +275,7 @@ namespace fpp
 		// Push FormationContour along the path and save each robot position in the plan list
 		for(geometry_msgs::PoseStamped formation_pose_in_plan: formation_plan)
 		{
-			ROS_INFO_STREAM("formation pose: " << formation_pose_in_plan.pose.position.x << " " << formation_pose_in_plan.pose.position.y << " " << tf::getYaw(formation_pose_in_plan.pose.orientation));
+			// ROS_INFO_STREAM("formation pose: " << formation_pose_in_plan.pose.position.x << " " << formation_pose_in_plan.pose.position.y << " " << tf::getYaw(formation_pose_in_plan.pose.orientation));
 			Eigen::Vector2f new_lead_vector_world_cs;
 			new_lead_vector_world_cs << formation_pose_in_plan.pose.position.x,
 				formation_pose_in_plan.pose.position.y;

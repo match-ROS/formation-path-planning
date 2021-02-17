@@ -38,6 +38,8 @@ namespace path_planner
         tf::Vector3 rotated_vector = tf::quatRotate(robot_orientation, direction_vector);
         rotated_vector = 0.5 * rotated_vector * start_to_end_length; // see setEndTangent for 0.5 explanation
         this->start_pose_tangent_ << rotated_vector[0], rotated_vector[1];
+
+		ROS_INFO_STREAM("start_pose_tangent:" << this->start_pose_tangent_[0] << " | " << this->start_pose_tangent_[1]);
     }
 
     void QuinticBezierSplines::setStartTangent(Eigen::Vector2f start_pose_tangent)
@@ -53,6 +55,8 @@ namespace path_planner
         tf::Vector3 rotated_vector = tf::quatRotate(robot_end_orientation, direction_vector);
         rotated_vector = 0.5 * rotated_vector * start_to_end_length;
         this->end_pose_tangent_ << rotated_vector[0], rotated_vector[1];
+
+		ROS_INFO_STREAM("end_pose_tangent:" << this->end_pose_tangent_[0] << " | " << this->end_pose_tangent_[1]);
     }
 
     void QuinticBezierSplines::setEndTangent(Eigen::Vector2f next_pose)
@@ -112,9 +116,9 @@ namespace path_planner
 
     void QuinticBezierSplines::calcControlPoints()
     {
-		// Ich glaube den Bruch hier kann ich anpassen um die Controlpoints weiter zu strecken
-        this->cp1_ = (1.0 / 2.0) * this->start_pose_tangent_ + this->start_pose_;
-        this->cp4_ = -(1.0 / 2.0) * this->end_pose_tangent_ + this->end_pose_;
+		// This formula comes from S'(0) and S'(1). Has to be (1/5)
+        this->cp1_ = (1.0 / 5.0) * this->start_pose_tangent_ + this->start_pose_;
+        this->cp4_ = -(1.0 / 5.0) * this->end_pose_tangent_ + this->end_pose_;
 
 		std::shared_ptr<path_planner::CubicBezierSplines> previous_spline = nullptr;
 		std::shared_ptr<path_planner::CubicBezierSplines> current_spline = nullptr;
@@ -133,7 +137,7 @@ namespace path_planner
 		if(this->previous_spline_ != nullptr)
 		{
 			previous_spline->setNextSpline(current_spline);
-			current_spline->setPreviousSpline(current_spline);
+			current_spline->setPreviousSpline(previous_spline);
 		}
 		if(this->next_spline_ != nullptr)
 		{
@@ -153,7 +157,7 @@ namespace path_planner
 		{
 			average_start_second_derivative_val = curr_spline_second_derivative_val;
 		}
-		this->cp2_ = (1 / 20) * average_start_second_derivative_val + 2 * this->cp1_ - this->start_pose_;
+		this->cp2_ = (1.0 / 20.0) * average_start_second_derivative_val + 2.0 * this->cp1_ - this->start_pose_;
 
 		curr_spline_second_derivative_val = current_spline->calcSecondDerivativeValue(1.0);
 		Eigen::Vector2f average_end_second_derivative_val;
@@ -167,7 +171,7 @@ namespace path_planner
 		{
 			average_end_second_derivative_val = curr_spline_second_derivative_val;
 		}
-		this->cp3_ = (1 / 20) * average_end_second_derivative_val + 2 * this->cp4_ - this->end_pose_;
+		this->cp3_ = (1.0 / 20.0) * average_end_second_derivative_val + 2.0 * this->cp4_ - this->end_pose_;
     }
 
     Eigen::Vector2f QuinticBezierSplines::calcPointOnBezierSpline(float iterator)
@@ -271,7 +275,6 @@ namespace path_planner
 
 	float QuinticBezierSplines::calcCurveRadius(float iterator)
 	{
-
 		float radius_value = 1 / this->calcCurvation(iterator);
 		// ROS_INFO_STREAM("radius: " << radius_value);
 		return radius_value;
@@ -286,15 +289,26 @@ namespace path_planner
 	{
 		for(int counter = 0; counter <= resolution; counter++)
 		{
-			// ROS_INFO_STREAM("iterator: " << counter);
+			// ROS_INFO_STREAM("iterator: " << counter << " | " << float(counter) / float(resolution));
+			// Eigen::Vector2f point = this->calcPointOnBezierSpline(float(counter) / float(resolution));
+			// ROS_INFO_STREAM("x: " << point[0] << " y: " << point[1]);
+
 			if(!this->checkMinCurveRadiusAtPoint((float(counter) / float(resolution)), min_curve_radius))
 			{
-				// ROS_INFO_STREAM("------------------------------------------------------");
-				// ROS_INFO_STREAM("radius: " << this->calcCurveRadius((float(counter) / float(resolution))));
-				// return false;
+				return false;
 			}
 		}
 		return true;
+	}
+
+	void QuinticBezierSplines::printInfo()
+	{
+		ROS_INFO_STREAM("Start_point: " << this->start_pose_[0] << " | " << this->start_pose_[1]);
+		ROS_INFO_STREAM("cp1: " << this->cp1_[0] << " | " << this->cp1_[1]);
+		ROS_INFO_STREAM("cp2: " << this->cp2_[0] << " | " << this->cp2_[1]);
+		ROS_INFO_STREAM("cp3: " << this->cp3_[0] << " | " << this->cp3_[1]);
+		ROS_INFO_STREAM("cp4: " << this->cp4_[0] << " | " << this->cp4_[1]);
+		ROS_INFO_STREAM("End_point: " << this->end_pose_[0] << " | " << this->end_pose_[1]);
 	}
 
     void QuinticBezierSplines::initVisuHelper()
@@ -412,6 +426,12 @@ namespace path_planner
     {
         this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_identificator_,
                                                            this->visu_helper_->createGeometryPose(this->cp1_[0], this->cp1_[1]),
+                                                           this->control_point_marker_identificator_);
+		this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_identificator_,
+                                                           this->visu_helper_->createGeometryPose(this->cp2_[0], this->cp2_[1]),
+                                                           this->control_point_marker_identificator_);
+		this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_identificator_,
+                                                           this->visu_helper_->createGeometryPose(this->cp3_[0], this->cp3_[1]),
                                                            this->control_point_marker_identificator_);
         this->visu_helper_->addMarkerToExistingMarkerArray(this->control_point_marker_identificator_,
                                                            this->visu_helper_->createGeometryPose(this->cp4_[0], this->cp4_[1]),

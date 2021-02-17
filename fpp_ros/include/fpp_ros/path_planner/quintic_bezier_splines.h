@@ -74,6 +74,8 @@ namespace path_planner
 
 			std::shared_ptr<path_planner::CubicBezierSplines> convertToCubicBezierSpline();
 
+			void printInfo();
+
         private:
             float calcStartToEndLength();
 
