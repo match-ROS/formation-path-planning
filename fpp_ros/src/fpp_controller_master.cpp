@@ -222,7 +222,7 @@ namespace fpp
 		for(std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> &slave_move_base_as: this->slave_move_base_as_list_)
 		{
 			mbf_msgs::MoveBaseGoal msg;
-			msg.controller = "dwa";
+			msg.controller = "FormationPathController";
 			msg.planner = "FormationPathPlanner";
 			msg.recovery_behaviors.push_back("rotate_recovery");
 			msg.recovery_behaviors.push_back("clear_costmap");

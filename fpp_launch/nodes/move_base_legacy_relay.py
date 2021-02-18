@@ -25,7 +25,7 @@ calls (note that some parameters have changed names; see http://wiki.ros.org/mov
 
 # keep configured base local and global planners to send to MBF
 bgp = "FormationPathPlanner"
-blp = "dwa"
+blp = "FormationPathController"
 
 
 def simple_goal_cb(msg):
