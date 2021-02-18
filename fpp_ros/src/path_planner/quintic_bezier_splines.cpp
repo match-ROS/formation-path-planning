@@ -27,24 +27,24 @@ namespace path_planner
 	void QuinticBezierSplines::setNextSpline(const std::shared_ptr<QuinticBezierSplines> &next_spline)
 	{
 		this->next_spline_ = next_spline;
-		this->setEndTangent(this->next_spline_->getEndPose());
+		this->setEndTangentByNextPose(this->next_spline_->getEndPose());
 	}
 
     void QuinticBezierSplines::setStartTangent(tf::Quaternion robot_orientation)
     {
-        float start_to_end_length = this->calcStartToEndLength();
+		float start_to_end_length = this->calcStartToEndLength();
 
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_orientation, direction_vector);
         rotated_vector = 0.5 * rotated_vector * start_to_end_length; // see setEndTangent for 0.5 explanation
-        this->start_pose_tangent_ << rotated_vector[0], rotated_vector[1];
+        this->start_tangent_ << rotated_vector[0], rotated_vector[1];
 
-		ROS_INFO_STREAM("start_pose_tangent:" << this->start_pose_tangent_[0] << " | " << this->start_pose_tangent_[1]);
+		ROS_INFO_STREAM("start_pose_tangent:" << this->start_tangent_[0] << " | " << this->start_tangent_[1]);
     }
 
-    void QuinticBezierSplines::setStartTangent(Eigen::Vector2f start_pose_tangent)
+    void QuinticBezierSplines::setStartTangent(Eigen::Vector2f start_tangent)
     {
-        this->start_pose_tangent_ = start_pose_tangent;
+        this->start_tangent_ = start_tangent;
     }
 
     void QuinticBezierSplines::setEndTangent(tf::Quaternion robot_end_orientation)
@@ -54,12 +54,17 @@ namespace path_planner
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_end_orientation, direction_vector);
         rotated_vector = 0.5 * rotated_vector * start_to_end_length;
-        this->end_pose_tangent_ << rotated_vector[0], rotated_vector[1];
+        this->end_tangent_ << rotated_vector[0], rotated_vector[1];
 
-		ROS_INFO_STREAM("end_pose_tangent:" << this->end_pose_tangent_[0] << " | " << this->end_pose_tangent_[1]);
+		ROS_INFO_STREAM("end_pose_tangent:" << this->end_tangent_[0] << " | " << this->end_tangent_[1]);
     }
 
-    void QuinticBezierSplines::setEndTangent(Eigen::Vector2f next_pose)
+	void QuinticBezierSplines::setEndTangent(Eigen::Vector2f end_tangent)
+	{
+		this->end_tangent_ = end_tangent;
+	}
+
+    void QuinticBezierSplines::setEndTangentByNextPose(Eigen::Vector2f next_pose)
     {
         Eigen::Vector2f diff_vector_start_to_end;
         Eigen::Vector2f diff_vector_end_to_next;
@@ -75,7 +80,7 @@ namespace path_planner
         Eigen::Vector2f angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
         angular_bisector.normalize();
         float length_diff_vector_end_to_next = diff_vector_end_to_next.norm(); // Use length of end point and next point to calculate the length of the tangent
-        this->end_pose_tangent_ = 0.5 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper (p. 32 then links to Linear Geometry with Computer Graphics page 318)
+        this->end_tangent_ = 0.5 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper (p. 32 then links to Linear Geometry with Computer Graphics page 318)
     }
 
     void QuinticBezierSplines::visualizeData()
@@ -101,12 +106,12 @@ namespace path_planner
 
     Eigen::Vector2f QuinticBezierSplines::getStartTangent()
     {
-        return this->start_pose_tangent_;
+        return this->start_tangent_;
     }
 
     Eigen::Vector2f QuinticBezierSplines::getEndTangent()
     {
-        return this->end_pose_tangent_;
+        return this->end_tangent_;
     }
 
     float QuinticBezierSplines::calcStartToEndLength()
@@ -117,8 +122,8 @@ namespace path_planner
     void QuinticBezierSplines::calcControlPoints()
     {
 		// This formula comes from S'(0) and S'(1). Has to be (1/5)
-        this->cp1_ = (1.0 / 5.0) * this->start_pose_tangent_ + this->start_pose_;
-        this->cp4_ = -(1.0 / 5.0) * this->end_pose_tangent_ + this->end_pose_;
+        this->cp1_ = (1.0 / 5.0) * this->start_tangent_ + this->start_pose_;
+        this->cp4_ = -(1.0 / 5.0) * this->end_tangent_ + this->end_pose_;
 
 		std::shared_ptr<path_planner::CubicBezierSplines> previous_spline = nullptr;
 		std::shared_ptr<path_planner::CubicBezierSplines> current_spline = nullptr;
@@ -136,42 +141,61 @@ namespace path_planner
 
 		if(this->previous_spline_ != nullptr)
 		{
+			previous_spline->setStartTangent(this->previous_spline_->getStartTangent());
 			previous_spline->setNextSpline(current_spline);
+			previous_spline->calcControlPoints(); // Everything is set for the previous spline. Control points can be calculated
 			current_spline->setPreviousSpline(previous_spline);
 		}
+		else
+		{
+			current_spline->setStartTangent(this->start_tangent_);
+		}
+
 		if(this->next_spline_ != nullptr)
 		{
 			current_spline->setNextSpline(next_spline);
 			next_spline->setPreviousSpline(current_spline);
+			next_spline->setEndTangent(this->next_spline_->getEndTangent());
+			next_spline->calcControlPoints(); // Everything is set for the next spline. Control points can be calculated
+		}
+		else
+		{
+			current_spline->setEndTangent(this->end_tangent_);
 		}
 
-		Eigen::Vector2f curr_spline_second_derivative_val = current_spline->calcSecondDerivativeValue(0.0);
+		current_spline->calcControlPoints(); // Everything is set for the current spline. Control points can be calculated
+
+		Eigen::Vector2f curr_spline_second_derivative_start_val = current_spline->calcSecondDerivativeValue(0.0);
 		Eigen::Vector2f average_start_second_derivative_val;
 		if(previous_spline != nullptr) // Calc second derivative value through average of both connecting splines
 		{
 			Eigen::Vector2f prev_spline_second_derivative_val = previous_spline->calcSecondDerivativeValue(1.0);
 			
-			average_start_second_derivative_val = 0.5 * (prev_spline_second_derivative_val + curr_spline_second_derivative_val);
+			average_start_second_derivative_val = 0.5 * (prev_spline_second_derivative_val + curr_spline_second_derivative_start_val);
 		}
 		else // Just use second derivative of the cubic spline
 		{
-			average_start_second_derivative_val = curr_spline_second_derivative_val;
+			average_start_second_derivative_val = curr_spline_second_derivative_start_val;
 		}
 		this->cp2_ = (1.0 / 20.0) * average_start_second_derivative_val + 2.0 * this->cp1_ - this->start_pose_;
 
-		curr_spline_second_derivative_val = current_spline->calcSecondDerivativeValue(1.0);
+		ROS_INFO_STREAM("Current Spline");
+		Eigen::Vector2f curr_spline_second_derivative_end_val = current_spline->calcSecondDerivativeValue(1.0);
 		Eigen::Vector2f average_end_second_derivative_val;
 		if(next_spline != nullptr) // Calc second derivative value through average of both connecting splines
 		{
+			ROS_INFO_STREAM("Next Spline");
 			Eigen::Vector2f next_spline_second_derivative_val = next_spline->calcSecondDerivativeValue(0.0);
 			
-			average_end_second_derivative_val = 0.5 * (next_spline_second_derivative_val + curr_spline_second_derivative_val);
+			average_end_second_derivative_val = 0.5 * (next_spline_second_derivative_val + curr_spline_second_derivative_end_val);
+			ROS_INFO_STREAM("average: " << average_end_second_derivative_val[0] << " | " << average_end_second_derivative_val[1] << " next: " << next_spline_second_derivative_val[0] << " | " << next_spline_second_derivative_val[1] << " curr: " << curr_spline_second_derivative_end_val[0] << " | " << curr_spline_second_derivative_end_val[1]);
 		}
 		else // Just use the second derivative of the cubic spline
 		{
-			average_end_second_derivative_val = curr_spline_second_derivative_val;
+			average_end_second_derivative_val = curr_spline_second_derivative_end_val;
 		}
 		this->cp3_ = (1.0 / 20.0) * average_end_second_derivative_val + 2.0 * this->cp4_ - this->end_pose_;
+		ROS_INFO_STREAM("cp3_: " << cp3_[0] << " | " << cp3_[1] << "cp4_: " << cp4_[0] << " | " << cp4_[1] << "end_pose_: " << end_pose_[0] << " | " << end_pose_[1]);
     }
 
     Eigen::Vector2f QuinticBezierSplines::calcPointOnBezierSpline(float iterator)
@@ -440,8 +464,8 @@ namespace path_planner
 
     void QuinticBezierSplines::addTangentsToVisuHelper()
     {
-        this->addTangentToVisuHelper(this->start_pose_, this->start_pose_tangent_);
-        this->addTangentToVisuHelper(this->end_pose_, this->end_pose_tangent_);
+        this->addTangentToVisuHelper(this->start_pose_, this->start_tangent_);
+        this->addTangentToVisuHelper(this->end_pose_, this->end_tangent_);
     }
 
     void QuinticBezierSplines::addTangentToVisuHelper(Eigen::Vector2f start_point, Eigen::Vector2f tangent)

@@ -30,7 +30,8 @@ namespace path_planner
             void setStartTangent(Eigen::Vector2f start_pose_tangent);
 
             void setEndTangent(tf::Quaternion robot_end_orientation);
-            void setEndTangent(Eigen::Vector2f next_pose);
+			void setEndTangent(Eigen::Vector2f end_tangent);
+            void setEndTangentByNextPose(Eigen::Vector2f next_pose);
 
             void calcControlPoints();
             Eigen::Vector2f calcPointOnBezierSpline(float iterator);
@@ -78,7 +79,7 @@ namespace path_planner
             Eigen::Vector2f cp1_;
             Eigen::Vector2f cp2_;
 
-            Eigen::Vector2f start_pose_tangent_;
-            Eigen::Vector2f end_pose_tangent_;
+            Eigen::Vector2f start_tangent_;
+            Eigen::Vector2f end_tangent_;
     };
 }
