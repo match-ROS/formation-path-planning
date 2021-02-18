@@ -47,7 +47,14 @@ namespace path_planner
             Eigen::Vector2f getStartPose();
             Eigen::Vector2f getEndPose();
             Eigen::Vector2f getStartTangent();
+			Eigen::Vector2f getMultipliedStartTangent();
             Eigen::Vector2f getEndTangent();
+			Eigen::Vector2f getMultipliedEndTangent();
+
+			void setStartTangentMagnitude(float start_tangent_magnitude);
+			void setEndTangentMagnitude(float end_tangent_magnitude);
+			float getStartTangentMagnitude();
+			float getEndTangentMagnitude();
 
         private:
             float calcStartToEndLength();
@@ -79,7 +86,13 @@ namespace path_planner
             Eigen::Vector2f cp1_;
             Eigen::Vector2f cp2_;
 
+			//! Stores the default value for the start tangent without any factor applied.
             Eigen::Vector2f start_tangent_;
+			//! Stores the default value for the end tangent without any factor applied
             Eigen::Vector2f end_tangent_;
+			//! Stores the dynamically changable parameter for changing the length of the start tangent
+			float start_tangent_magnitude_;
+			//! Stores the dynamically changable parameter for changing the length of the end tangent
+			float end_tangent_magnitude_;
     };
 }

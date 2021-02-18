@@ -288,8 +288,50 @@ namespace path_planner
 			for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
 			{
 				ROS_INFO_STREAM("spline counter: " << spline_counter);
-				spline_list[spline_counter]->printInfo();
 				ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
+
+				int timeout_counter = 0;
+
+				int point_of_failure = 0;
+				while(!spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_, point_of_failure))
+				{
+					// This process could be turned into an iterative optimization process, that tries to get to the limit of the minimal curve radius to minimize the distance the robots have to travel
+					if(point_of_failure < (this->planning_points_per_spline_ / 2))
+					{
+						float current_start_magnitude = spline_list[spline_counter]->getStartTangentMagnitude();
+						ROS_INFO_STREAM("Current_start_magnitude: " << current_start_magnitude);
+						spline_list[spline_counter]->setStartTangentMagnitude(1.5 * current_start_magnitude); // 1.5 ist just a value that I picked for the moment.
+					}
+					else
+					{
+						float current_end_magnitude = spline_list[spline_counter]->getEndTangentMagnitude();
+						ROS_INFO_STREAM("Current_end_magnitude: " << current_end_magnitude);
+						spline_list[spline_counter]->setEndTangentMagnitude(1.5 * current_end_magnitude); // 1.5 ist just a value that I picked for the moment.
+					}
+
+					spline_list[spline_counter]->calcControlPoints();
+
+					// Loop was not able to optimize the spline after x iterations. Maybe make parameter for this?
+					if(timeout_counter >= 100)
+					{
+						ROS_ERROR_STREAM("SplinedRelaxedAStar: Timeout while optimizing spline, number: " << spline_counter);
+						break;
+					}
+					timeout_counter++;
+				}
+
+				ROS_INFO_STREAM("spline counter: " << spline_counter);
+				ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
+			}
+
+			// Visualization
+			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
+			{
+				spline->addStartEndPointToVisuHelper();
+                spline->addTangentsToVisuHelper();
+                spline->addControlPointsToVisuHelper();
+                spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
+				spline->visualizeData();
 			}
 
 			// Create plan by splines

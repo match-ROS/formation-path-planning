@@ -3,7 +3,7 @@
 namespace path_planner
 {
     QuinticBezierSplines::QuinticBezierSplines(visualization_helper::VisualizationHelper *visu_helper)
-		: previous_spline_(nullptr), next_spline_(nullptr)
+		: previous_spline_(nullptr), next_spline_(nullptr), start_tangent_magnitude_(0.25), end_tangent_magnitude_(0.25)
     {
         this->visu_helper_ = visu_helper;
         this->initVisuHelper();
@@ -22,6 +22,7 @@ namespace path_planner
 	{
 		this->previous_spline_ = previous_spline;
 		this->setStartTangent(this->previous_spline_->getEndTangent());
+		this->setStartTangentMagnitude(this->previous_spline_->getEndTangentMagnitude());
 	}
 
 	void QuinticBezierSplines::setNextSpline(const std::shared_ptr<QuinticBezierSplines> &next_spline)
@@ -36,7 +37,10 @@ namespace path_planner
 
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_orientation, direction_vector);
-        rotated_vector = 0.5 * rotated_vector * start_to_end_length; // see setEndTangent for 0.5 explanation
+		// In the paper a factor of 0.5 was used to shorten the tangent. This will no longer be applied directly.
+		// The factor will now be applied through the Poperty "getMultipliedStartTangent"
+		// (p. 32 then links to Linear Geometry with Computer Graphics page 318)
+        rotated_vector = rotated_vector * start_to_end_length;
         this->start_tangent_ << rotated_vector[0], rotated_vector[1];
 
 		ROS_INFO_STREAM("start_pose_tangent:" << this->start_tangent_[0] << " | " << this->start_tangent_[1]);
@@ -47,13 +51,19 @@ namespace path_planner
         this->start_tangent_ = start_tangent;
     }
 
+	// void QuinticBezierSplines::setMultipliedStartTangent(Eigen::Vector2f start_tangent, float start_tangent_magnitude)
+	// {
+	// 	this->start_tangent_ = start_tangent;
+	// 	this->start_tangent_magnitude_ = start_tangent_magnitude;
+	// }
+
     void QuinticBezierSplines::setEndTangent(tf::Quaternion robot_end_orientation)
     {
         float start_to_end_length = this->calcStartToEndLength();
 
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_end_orientation, direction_vector);
-        rotated_vector = 0.5 * rotated_vector * start_to_end_length;
+        rotated_vector = rotated_vector * start_to_end_length;
         this->end_tangent_ << rotated_vector[0], rotated_vector[1];
 
 		ROS_INFO_STREAM("end_pose_tangent:" << this->end_tangent_[0] << " | " << this->end_tangent_[1]);
@@ -80,8 +90,17 @@ namespace path_planner
         Eigen::Vector2f angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
         angular_bisector.normalize();
         float length_diff_vector_end_to_next = diff_vector_end_to_next.norm(); // Use length of end point and next point to calculate the length of the tangent
-        this->end_tangent_ = 0.5 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper (p. 32 then links to Linear Geometry with Computer Graphics page 318)
+		// In the paper a factor of 0.5 was used to shorten the tangent. This will no longer be applied directly.
+		// The factor will now be applied through the Poperty "getMultipliedEndTangent"
+		// (p. 32 then links to Linear Geometry with Computer Graphics page 318)
+        this->end_tangent_ = length_diff_vector_end_to_next * angular_bisector; 
     }
+
+	// void QuinticBezierSplines::setMultipliedEndTangent(Eigen::Vector2f end_tangent, float end_tangent_magnitude)
+	// {
+	// 	this->end_tangent_ = end_tangent;
+	// 	this->end_tangent_magnitude_ = end_tangent_magnitude;
+	// }
 
     void QuinticBezierSplines::visualizeData()
     {
@@ -109,10 +128,40 @@ namespace path_planner
         return this->start_tangent_;
     }
 
+	Eigen::Vector2f QuinticBezierSplines::getMultipliedStartTangent()
+	{
+		return this->start_tangent_magnitude_ * this->start_tangent_;
+	}
+
     Eigen::Vector2f QuinticBezierSplines::getEndTangent()
     {
         return this->end_tangent_;
     }
+
+	Eigen::Vector2f QuinticBezierSplines::getMultipliedEndTangent()
+	{
+		return this->end_tangent_magnitude_ * this->end_tangent_;
+	}
+
+	void QuinticBezierSplines::setStartTangentMagnitude(float start_tangent_magnitude)
+	{
+		this->start_tangent_magnitude_ = start_tangent_magnitude;
+	}
+
+	void QuinticBezierSplines::setEndTangentMagnitude(float end_tangent_magnitude)
+	{
+		this->end_tangent_magnitude_ = end_tangent_magnitude;
+	}
+
+	float QuinticBezierSplines::getStartTangentMagnitude()
+	{
+		return this->start_tangent_magnitude_;
+	}
+
+	float QuinticBezierSplines::getEndTangentMagnitude()
+	{
+		return this->end_tangent_magnitude_;
+	}
 
     float QuinticBezierSplines::calcStartToEndLength()
     {
@@ -122,8 +171,8 @@ namespace path_planner
     void QuinticBezierSplines::calcControlPoints()
     {
 		// This formula comes from S'(0) and S'(1). Has to be (1/5)
-        this->cp1_ = (1.0 / 5.0) * this->start_tangent_ + this->start_pose_;
-        this->cp4_ = -(1.0 / 5.0) * this->end_tangent_ + this->end_pose_;
+        this->cp1_ = (1.0 / 5.0) * this->getMultipliedStartTangent() + this->start_pose_;
+        this->cp4_ = -(1.0 / 5.0) * this->getMultipliedEndTangent() + this->end_pose_;
 
 		std::shared_ptr<path_planner::CubicBezierSplines> previous_spline = nullptr;
 		std::shared_ptr<path_planner::CubicBezierSplines> current_spline = nullptr;
@@ -144,6 +193,7 @@ namespace path_planner
 			previous_spline->setStartTangent(this->previous_spline_->getStartTangent());
 			previous_spline->setNextSpline(current_spline);
 			previous_spline->calcControlPoints(); // Everything is set for the previous spline. Control points can be calculated
+
 			current_spline->setPreviousSpline(previous_spline);
 		}
 		else
@@ -226,14 +276,7 @@ namespace path_planner
         result_vector << 0, 0;
         for(int counter = 0; counter < point_matrix.size(); counter++)
         {
-			// ROS_INFO_STREAM("ITERATION");
-			// ROS_INFO_STREAM(bernstein_polynom_vector[counter]);
-			// ROS_INFO_STREAM(result_vector);
-			// ROS_INFO_STREAM(point_matrix[counter]);
-			// ROS_INFO_STREAM((bernstein_polynom_vector[counter] * point_matrix[counter]));
-			// ROS_INFO_STREAM(result_vector);
-			
-            result_vector = result_vector + (bernstein_polynom_vector[counter] * point_matrix[counter]);
+			result_vector = result_vector + (bernstein_polynom_vector[counter] * point_matrix[counter]);
         }
         return result_vector;
     }
@@ -242,6 +285,11 @@ namespace path_planner
 	{
 		std::shared_ptr<path_planner::CubicBezierSplines> cubic_spline =
 			std::make_shared<path_planner::CubicBezierSplines>(this->visu_helper_, this->start_pose_, this->end_pose_);
+
+		// Set the magnitudes as these are settings that affect the splines deeply
+		cubic_spline->setStartTangentMagnitude(this->start_tangent_magnitude_);
+		cubic_spline->setEndTangentMagnitude(this->end_tangent_magnitude_);
+
 		return cubic_spline;
 	}
 
@@ -311,13 +359,19 @@ namespace path_planner
 
 	bool QuinticBezierSplines::checkMinCurveRadiusOnSpline(int resolution, float min_curve_radius)
 	{
-		for(int counter = 0; counter <= resolution; counter++)
+		int point_of_failure_dummy = 0;
+		return this->checkMinCurveRadiusOnSpline(resolution, min_curve_radius, point_of_failure_dummy);
+	}
+
+	bool QuinticBezierSplines::checkMinCurveRadiusOnSpline(int resolution, float min_curve_radius, int &point_of_failure)
+	{
+		for(point_of_failure = 0; point_of_failure <= resolution; point_of_failure++)
 		{
 			// ROS_INFO_STREAM("iterator: " << counter << " | " << float(counter) / float(resolution));
 			// Eigen::Vector2f point = this->calcPointOnBezierSpline(float(counter) / float(resolution));
 			// ROS_INFO_STREAM("x: " << point[0] << " y: " << point[1]);
 
-			if(!this->checkMinCurveRadiusAtPoint((float(counter) / float(resolution)), min_curve_radius))
+			if(!this->checkMinCurveRadiusAtPoint((float(point_of_failure) / float(resolution)), min_curve_radius))
 			{
 				return false;
 			}

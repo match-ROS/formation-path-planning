@@ -35,7 +35,7 @@ namespace path_planner
 
         tf::Vector3 direction_vector(1, 0, 0);
         tf::Vector3 rotated_vector = tf::quatRotate(robot_orientation, direction_vector);
-        rotated_vector = 0.5 * rotated_vector * start_to_end_length; // see setEndTangent for 0.5 explanation
+        rotated_vector = rotated_vector * start_to_end_length; // see setEndTangent for 0.5 explanation
         this->start_tangent_ << rotated_vector[0], rotated_vector[1];
     }
 
@@ -75,7 +75,7 @@ namespace path_planner
         Eigen::Matrix<float, 2, 1> angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
         angular_bisector.normalize();
         float length_diff_vector_end_to_next = diff_vector_end_to_next.norm(); // Use length of end point and next point to calculate the length of the tangent
-        this->end_tangent_ = 2.0 * length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper (p. 32 then links to Linear Geometry with Computer Graphics page 318)
+        this->end_tangent_ = length_diff_vector_end_to_next * angular_bisector; // This 0.5 value is taken from the paper (p. 32 then links to Linear Geometry with Computer Graphics page 318)
     }
 
     void CubicBezierSplines::visualizeData()
@@ -89,25 +89,55 @@ namespace path_planner
         ros::Duration(0.1).sleep(); // Wait for markers to be shown, maybe this helps to visualize them every time
     }
 
-    Eigen::Matrix<float, 2, 1> CubicBezierSplines::getStartPose()
+    Eigen::Vector2f CubicBezierSplines::getStartPose()
     {
         return this->start_pose_;
     }
 
-    Eigen::Matrix<float, 2, 1> CubicBezierSplines::getEndPose()
+    Eigen::Vector2f CubicBezierSplines::getEndPose()
     {
         return this->end_pose_;
     }
 
-    Eigen::Matrix<float, 2, 1> CubicBezierSplines::getStartTangent()
+    Eigen::Vector2f CubicBezierSplines::getStartTangent()
     {
         return this->start_tangent_;
     }
 
-    Eigen::Matrix<float, 2, 1> CubicBezierSplines::getEndTangent()
+	Eigen::Vector2f CubicBezierSplines::getMultipliedStartTangent()
+	{
+		return this->start_tangent_magnitude_ * this->start_tangent_;
+	}
+
+    Eigen::Vector2f CubicBezierSplines::getEndTangent()
     {
         return this->end_tangent_;
     }
+
+	Eigen::Vector2f CubicBezierSplines::getMultipliedEndTangent()
+	{
+		return this->end_tangent_magnitude_ * this->end_tangent_;
+	}
+
+	void CubicBezierSplines::setStartTangentMagnitude(float start_tangent_magnitude)
+	{
+		this->start_tangent_magnitude_ = start_tangent_magnitude;
+	}
+
+	void CubicBezierSplines::setEndTangentMagnitude(float end_tangent_magnitude)
+	{
+		this->end_tangent_magnitude_ = end_tangent_magnitude;
+	}
+
+	float CubicBezierSplines::getStartTangentMagnitude()
+	{
+		return this->start_tangent_magnitude_;
+	}
+
+	float CubicBezierSplines::getEndTangentMagnitude()
+	{
+		return this->end_tangent_magnitude_;
+	}
 
     float CubicBezierSplines::calcStartToEndLength()
     {
@@ -117,8 +147,8 @@ namespace path_planner
     void CubicBezierSplines::calcControlPoints()
     {
 		// Ich glaube den Bruch hier kann ich anpassen um die Controlpoints weiter zu strecken
-        this->cp1_ = (1.0 / 5.0) * this->start_tangent_ + this->start_pose_;
-        this->cp2_ = -(1.0 / 5.0) * this->end_tangent_ + this->end_pose_;
+        this->cp1_ = (1.0 / 5.0) * this->getMultipliedStartTangent() + this->start_pose_;
+        this->cp2_ = -(1.0 / 5.0) * this->getMultipliedEndTangent() + this->end_pose_;
     }
 
     Eigen::Matrix<float, 2, 1> CubicBezierSplines::calcPointOnBezierSpline(float iterator)
@@ -303,8 +333,8 @@ namespace path_planner
 
     void CubicBezierSplines::addTangentsToVisuHelper()
     {
-        this->addTangentToVisuHelper(this->start_pose_, this->start_tangent_);
-        this->addTangentToVisuHelper(this->end_pose_, this->end_tangent_);
+        this->addTangentToVisuHelper(this->start_pose_, this->getMultipliedStartTangent());
+        this->addTangentToVisuHelper(this->end_pose_, this->getMultipliedEndTangent());
     }
 
     void CubicBezierSplines::addTangentToVisuHelper(Eigen::Matrix<float, 2, 1> start_point, Eigen::Matrix<float, 2, 1> tangent)
