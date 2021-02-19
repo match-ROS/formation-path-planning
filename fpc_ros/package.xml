@@ -21,6 +21,9 @@
 	<depend>pluginlib</depend>
 	<depend>mbf_costmap_core</depend>
 	<depend>nav_core</depend>
+	<depend>costmap_2d</depend>
+	<depend>geometry_msgs</depend>
+	<depend>tf2_ros</depend>
 
   	<!-- The export tag contains other, unspecified, tags -->
   	<export>

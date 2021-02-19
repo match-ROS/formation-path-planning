@@ -4,6 +4,17 @@
 
 #include <mbf_costmap_core/costmap_controller.h>
 #include <nav_core/base_local_planner.h>
+#include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
+
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <tf2_ros/buffer.h>
+
+#include <memory>
+#include <vector>
+#include <string>
 
 namespace fpc
 {
@@ -13,11 +24,41 @@ namespace fpc
 			FormationPathController();
 
 			/**
+			 * @brief Constructs the local planner
+			 * @param name The name to give this instance of the local planner
+			 * @param tf A pointer to a transform listener
+			 * @param costmap_ros The cost map to use for assigning costs to local plans
+			 */
+			void initialize(std::string name, tf2_ros::Buffer *tf, costmap_2d::Costmap2DROS *costmap_ros) override;
+
+			/**
+			 * @brief  Set the plan that the local planner is following
+			 * @param plan The plan to pass to the local planner
+			 * @return True if the plan was updated successfully, false otherwise
+			 */
+			bool setPlan(const std::vector<geometry_msgs::PoseStamped> &plan) override;
+
+			/**
+			 * @brief  Check if the goal pose has been achieved by the local planner
+			 * @return True if achieved, false otherwise
+			 */
+			bool isGoalReached() override;
+
+			/**
+			 * @brief Check if the goal pose has been achieved by the local planner within tolerance limits
+			 * @remark New on MBF API
+			 * @param xy_tolerance Distance tolerance in meters
+			 * @param yaw_tolerance Heading tolerance in radians
+			 * @return True if achieved, false otherwise
+			 */
+			bool isGoalReached(double xy_tolerance, double yaw_tolerance) override;
+
+			/**
 			 * @brief  Given the current position, orientation, and velocity of the robot, compute velocity commands to send to the base
 			 * @param cmd_vel Will be filled with the velocity command to be passed to the robot base
 			 * @return True if a valid velocity command was found, false otherwise
 			 */
-			bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
+			bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel) override;
 
 			/**
 			 * @brief Given the current position, orientation, and velocity of the robot, compute velocity commands
@@ -49,43 +90,22 @@ namespace fpc
 			uint32_t computeVelocityCommands(const geometry_msgs::PoseStamped &pose,
 											 const geometry_msgs::TwistStamped &velocity,
 											 geometry_msgs::TwistStamped &cmd_vel,
-											 std::string &message);
-
-			/**
-			 * @brief  Check if the goal pose has been achieved by the local planner
-			 * @return True if achieved, false otherwise
-			 */
-			bool isGoalReached();
-
-			/**
-			 * @brief Check if the goal pose has been achieved by the local planner within tolerance limits
-			 * @remark New on MBF API
-			 * @param xy_tolerance Distance tolerance in meters
-			 * @param yaw_tolerance Heading tolerance in radians
-			 * @return True if achieved, false otherwise
-			 */
-			bool isGoalReached(double xy_tolerance, double yaw_tolerance);
-
-			/**
-			 * @brief  Set the plan that the local planner is following
-			 * @param plan The plan to pass to the local planner
-			 * @return True if the plan was updated successfully, false otherwise
-			 */
-			bool setPlan(const std::vector<geometry_msgs::PoseStamped> &plan);
+											 std::string &message) override;
 
 			/**
 			 * @brief Requests the planner to cancel, e.g. if it takes too much time
 			 * @remark New on MBF API
 			 * @return True if a cancel has been successfully requested, false if not implemented.
 			 */
-			bool cancel();
+			bool cancel() override;
 
-			/**
-			 * @brief Constructs the local planner
-			 * @param name The name to give this instance of the local planner
-			 * @param tf A pointer to a transform listener
-			 * @param costmap_ros The cost map to use for assigning costs to local plans
-			 */
-			void initialize(std::string name, tf2_ros::Buffer *tf, costmap_2d::Costmap2DROS *costmap_ros);
+		private:
+			double xy_default_tolerance_;
+			double yaw_default_tolerance_;
+
+			std::shared_ptr<std::vector<geometry_msgs::PoseStamped>> global_plan_;
+
+			geometry_msgs::PoseStamped start_pose_;
+			geometry_msgs::PoseStamped end_pose_;
 	};
 }
