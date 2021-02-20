@@ -11,10 +11,14 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <tf2_ros/buffer.h>
+#include <tf/transform_listener.h>
 
 #include <memory>
 #include <vector>
 #include <string>
+#include <XmlRpc.h>
+
+#include <fpc_ros/data_classes/local_planner_robot_info.h>
 
 namespace fpc
 {
@@ -23,6 +27,10 @@ namespace fpc
 		public:
 			FormationPathController();
 
+
+			/////////////////////////////////////////////////////////
+			// Interface implementation
+			/////////////////////////////////////////////////////////
 			/**
 			 * @brief Constructs the local planner
 			 * @param name The name to give this instance of the local planner
@@ -99,13 +107,42 @@ namespace fpc
 			 */
 			bool cancel() override;
 
+
+			//////////////////////////////////////////////////
+			// Getter/Setter
+			//////////////////////////////////////////////////
+			geometry_msgs::PoseStamped getGlobalStartPose();
+			geometry_msgs::PoseStamped getGlobalGoalPose();
+
 		private:
+			//////////////////////////////////////////////////
+			// Parameter
+			//////////////////////////////////////////////////
 			double xy_default_tolerance_;
 			double yaw_default_tolerance_;
+			std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> robot_info_list_;
+			std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> current_robot_info_;
+
+			//////////////////////////////////////////////////
+			// Process Member
+			//////////////////////////////////////////////////
+			ros::NodeHandle nh_;
+			ros::NodeHandle planner_nh_;
+
+			std::string robot_name_;
+			std::string controller_name_;
+			std::string global_frame_;
+ 			std::string tf_prefix_;
+			std::string robot_ns_;
+			tf2_ros::Buffer *tf_buffer_;
+			costmap_2d::Costmap2DROS *costmap_ros_;
+			costmap_2d::Costmap2D *costmap_;
+
+			bool initialized_;
 
 			std::shared_ptr<std::vector<geometry_msgs::PoseStamped>> global_plan_;
 
-			geometry_msgs::PoseStamped start_pose_;
-			geometry_msgs::PoseStamped end_pose_;
+			// Methods
+			void getParams();
 	};
 }

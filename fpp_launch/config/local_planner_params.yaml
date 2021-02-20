@@ -1,3 +1,16 @@
 controllers:
-   - name: 'FormationPathController'
-     type: 'local_planner/FormationPathController'
+	- 	name: 'FormationPathController'
+		type: 'local_planner/FormationPathController'
+
+FormationPathController:
+	xy_default_tolerance: 0.1
+	yaw_default_tolerance: 0.1
+
+	formation_config:
+		robot0:
+			namespace: /robot0_ns
+			master: true
+		robot1:
+			namespace: /robot1_ns
+		robot2:
+			namespace: /robot2_ns
