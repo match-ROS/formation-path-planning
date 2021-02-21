@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <XmlRpc.h>
+#include <Eigen/Dense>
 
 #include <fpc_ros/data_classes/local_planner_robot_info.h>
 
@@ -112,8 +113,8 @@ namespace fpc
 			//////////////////////////////////////////////////
 			// Getter/Setter
 			//////////////////////////////////////////////////
-			geometry_msgs::PoseStamped getGlobalStartPose();
-			geometry_msgs::PoseStamped getGlobalGoalPose();
+			geometry_msgs::Pose getStartPose();
+			geometry_msgs::Pose getGoalPose();
 
 		private:
 			//////////////////////////////////////////////////
@@ -143,6 +144,7 @@ namespace fpc
 			bool initialized_;
 
 			std::vector<geometry_msgs::PoseStamped> global_plan_;
+			geometry_msgs::Pose current_robot_pose_;
 
 			/////////////////////////////////////////////////
 			// Subscriber / Publisher / Services / Actions
@@ -154,7 +156,11 @@ namespace fpc
 			////////////////////////////////////////////////
 			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
 
-			// Methods
+			////////////////////////////////////////////////
+			// Private Helper Methods
+			////////////////////////////////////////////////
 			void getParams();
+			Eigen::Vector2f getPosition(const geometry_msgs::Pose &pose);
+			Eigen::Vector3f getPose(const geometry_msgs::Pose &pose);
 	};
 }

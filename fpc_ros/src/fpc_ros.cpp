@@ -71,9 +71,38 @@ namespace fpc
 		// Glaube ich muss hier auch etwas übergreifendes implementieren, falls der Master meldet Ziel ist erreicht, dann müssen die anderen ROboter das auch melden
 		// Außer ich will vllt noch versuchen den restlichen Regelfehler auszugleichen, aber da sollte ja keiner sein
 
-		
+		ROS_INFO_STREAM("xy tolerance: " << xy_tolerance << " yaw tolerance: " << yaw_tolerance);
 
-		return false;
+		geometry_msgs::Pose goal_pose = this->getGoalPose();
+
+		// Check x for tolerance
+		if(goal_pose.position.x - this->current_robot_pose_.position.x > xy_tolerance)
+		{
+			return false;
+		}
+
+		// Check y for tolerance
+		if(goal_pose.position.y - this->current_robot_pose_.position.y > xy_tolerance)
+		{
+			return false;
+		}
+
+		// Check orientation for tolerance
+		tf::Quaternion inv_goal_orientation;
+		tf::quaternionMsgToTF(goal_pose.orientation, inv_goal_orientation);
+		inv_goal_orientation.setW(-inv_goal_orientation.getW()); // Negate w to get inverse quaternion
+
+		tf::Quaternion current_orientation;
+		tf::quaternionMsgToTF(this->current_robot_pose_.orientation, current_orientation);
+
+		tf::Quaternion diff_orientation = current_orientation * inv_goal_orientation;
+		float yaw_diff = tf::getYaw(diff_orientation);
+		if(yaw_diff > yaw_tolerance)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	bool FormationPathController::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
@@ -99,28 +128,30 @@ namespace fpc
 		ROS_ERROR_STREAM("cancel");
 	}
 
-
-	geometry_msgs::PoseStamped FormationPathController::getGlobalStartPose()
+	//////////////////////////////////////////////////
+	// Getter/Setter
+	//////////////////////////////////////////////////
+	geometry_msgs::Pose FormationPathController::getStartPose()
 	{
-		return this->global_plan_.front();
+		return this->global_plan_.front().pose;
 	}
 
-	geometry_msgs::PoseStamped FormationPathController::getGlobalGoalPose()
+	geometry_msgs::Pose FormationPathController::getGoalPose()
 	{
-		return this->global_plan_.back();
+		return this->global_plan_.back().pose;
 	}
 
 	////////////////////////////////////////////////
 	// Callback method
 	////////////////////////////////////////////////
-	void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
+	void FormationPathController::getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
 	{
-		HIER WEITER MACHEN. POSE SPEICHERN
+		this->current_robot_pose_ = msg->pose.pose;
 	}
 
-	//////////////////////////////////////////
-	// Private methods
-	//////////////////////////////////////////
+	////////////////////////////////////////////////
+	// Private Helper Methods
+	////////////////////////////////////////////////
 	void FormationPathController::getParams()
 	{
 		// Get robot name of the current robot
@@ -202,5 +233,20 @@ namespace fpc
 				}
             }
         }		
+	}
+
+	Eigen::Vector2f FormationPathController::getPosition(const geometry_msgs::Pose &pose)
+	{
+		Eigen::Vector2f position;
+		position << pose.position.x, pose.position.y;
+		return position;
+	}
+
+	Eigen::Vector3f FormationPathController::getPose(const geometry_msgs::Pose &pose)
+	{
+		Eigen::Vector3f eigen_pose;
+		float yaw = tf::getYaw(pose.orientation);
+		eigen_pose << this->getPosition(pose), yaw;
+		return eigen_pose;
 	}
 }
