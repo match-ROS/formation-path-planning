@@ -17,5 +17,7 @@ namespace fpc_data_classes
 		std::string robot_namespace;
 		//! True if the robot is the master of the formation
 		bool fpc_master;
+		//! Topic name where the pose of the robot can be received
+		std::string robot_pose_topic;
 	};
 }

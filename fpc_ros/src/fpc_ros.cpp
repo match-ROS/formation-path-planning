@@ -34,6 +34,13 @@ namespace fpc
 			// Read and store all params that are set by the yaml config
 			this->getParams();
 
+			// Initialize the topic subscriber/publisher, services and actions
+			this->robot_pose_subscriber_ = this->nh_.subscribe(
+				this->current_robot_info_->robot_namespace + "/" + this->robot_pose_topic_,
+				10,
+				&FormationPathController::getRobotPoseCb,
+				this);
+
 			// CREATE MASTER SLAVE OBJECTS HERE
 
 			this->initialized_ = true;
@@ -49,7 +56,7 @@ namespace fpc
 	{
 		ROS_ERROR_STREAM("setPlan");
 		// Save the complete global plan
-		this->global_plan_ = std::make_shared<std::vector<geometry_msgs::PoseStamped>>(plan);
+		this->global_plan_ = plan;
 
 		return true;
 	}
@@ -64,13 +71,15 @@ namespace fpc
 		// Glaube ich muss hier auch etwas übergreifendes implementieren, falls der Master meldet Ziel ist erreicht, dann müssen die anderen ROboter das auch melden
 		// Außer ich will vllt noch versuchen den restlichen Regelfehler auszugleichen, aber da sollte ja keiner sein
 
-		ROS_ERROR_STREAM("isGoalReached2");
+		
+
 		return false;
 	}
 
 	bool FormationPathController::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 	{
-		ROS_ERROR_STREAM("computeVelocityCommands1");
+		ROS_INFO_STREAM("computeVelocityCommands1");
+		ROS_ERROR_STREAM("Currently not implemented");
 	}
 
 	uint32_t FormationPathController::computeVelocityCommands(const geometry_msgs::PoseStamped &pose,
@@ -79,7 +88,9 @@ namespace fpc
 															  std::string &message)
 	{
 		ROS_ERROR_STREAM("computeVelocityCommands2");
-
+		ROS_INFO_STREAM("pose: " << pose.pose.position.x << " | " << pose.pose.position.y);
+		ROS_INFO_STREAM("velocity: " << velocity.twist.linear.x);
+		cmd_vel.twist.linear.x = 0.1;
 		return 0;
 	}
 
@@ -91,12 +102,20 @@ namespace fpc
 
 	geometry_msgs::PoseStamped FormationPathController::getGlobalStartPose()
 	{
-		return this->global_plan_->front();
+		return this->global_plan_.front();
 	}
 
 	geometry_msgs::PoseStamped FormationPathController::getGlobalGoalPose()
 	{
-		return this->global_plan_->back();
+		return this->global_plan_.back();
+	}
+
+	////////////////////////////////////////////////
+	// Callback method
+	////////////////////////////////////////////////
+	void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
+	{
+		HIER WEITER MACHEN. POSE SPEICHERN
 	}
 
 	//////////////////////////////////////////
@@ -118,7 +137,15 @@ namespace fpc
 		// Get default tolerances for the planner
         this->planner_nh_.param<double>("xy_default_tolerance", this->xy_default_tolerance_, 0.1);
 		this->planner_nh_.param<double>("yaw_default_tolerance", this->yaw_default_tolerance_, 0.1);
-	
+
+		// Get the topic name where the current pose of the robots will be published
+		std::string general_robot_pose_topic = "DefaultPoseTopicName";
+		std::string general_robot_pose_topic_key;
+		if(this->nh_.searchParam("robot_pose_topic", general_robot_pose_topic_key))
+		{
+			this->nh_.getParam(general_robot_pose_topic_key, general_robot_pose_topic);
+		}
+
 		// Get information about the robots that are participating in the formation
 		XmlRpc::XmlRpcValue formation_config;
         this->planner_nh_.getParam("formation_config", formation_config);
@@ -136,6 +163,7 @@ namespace fpc
 
                 if(robot_info_xmlrpc.getType() == XmlRpc::XmlRpcValue::TypeStruct)
                 {
+					// Set master flag to identify which robot is the master
                     if(robot_info_xmlrpc.hasMember("master") && robot_info_xmlrpc["master"].getType() == XmlRpc::XmlRpcValue::TypeBoolean)
                     {
                         robot_info->fpc_master = (bool)robot_info_xmlrpc["master"];
@@ -146,10 +174,25 @@ namespace fpc
                         robot_info->fpc_master = false;
                     }
 
+					// Set namespace for each robot to be able to access the topics in their namespace
                     if(robot_info_xmlrpc.hasMember("namespace") && robot_info_xmlrpc["namespace"].getType() == XmlRpc::XmlRpcValue::TypeString)
                     {
                         robot_info->robot_namespace = static_cast<std::string>(robot_info_xmlrpc["namespace"]);
                     }
+
+					// Set robot pose topic for each robot
+					if(robot_info_xmlrpc.hasMember("robot_pose_topic") && robot_info_xmlrpc["robot_pose_topic"].getType() == XmlRpc::XmlRpcValue::TypeString)
+					{
+						robot_info->robot_pose_topic = static_cast<std::string>(robot_info_xmlrpc["robot_pose_topic"]);
+					}
+					else if(general_robot_pose_topic != "DefaultPoseTopicName")
+					{
+						robot_info->robot_pose_topic = general_robot_pose_topic;
+					}
+					else
+					{
+						ROS_ERROR_STREAM("robot_pose_topic was not set for " << robot_info->robot_name);
+					}
                 }
 
                 this->robot_info_list_.push_back(robot_info);
@@ -158,6 +201,6 @@ namespace fpc
 					this->current_robot_info_ = robot_info;
 				}
             }
-        }
+        }		
 	}
 }

@@ -10,6 +10,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <tf2_ros/buffer.h>
 #include <tf/transform_listener.h>
 
@@ -120,6 +121,7 @@ namespace fpc
 			//////////////////////////////////////////////////
 			double xy_default_tolerance_;
 			double yaw_default_tolerance_;
+			std::string robot_pose_topic_;
 			std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> robot_info_list_;
 			std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> current_robot_info_;
 
@@ -140,7 +142,17 @@ namespace fpc
 
 			bool initialized_;
 
-			std::shared_ptr<std::vector<geometry_msgs::PoseStamped>> global_plan_;
+			std::vector<geometry_msgs::PoseStamped> global_plan_;
+
+			/////////////////////////////////////////////////
+			// Subscriber / Publisher / Services / Actions
+			/////////////////////////////////////////////////
+			ros::Subscriber robot_pose_subscriber_;
+
+			////////////////////////////////////////////////
+			// Callback method
+			////////////////////////////////////////////////
+			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
 
 			// Methods
 			void getParams();
