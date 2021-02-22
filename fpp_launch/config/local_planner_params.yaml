@@ -2,10 +2,11 @@ controllers:
   - name: 'FormationPathController'
     type: 'local_planner/FormationPathController'
 
-FormationPathController:
-  xy_default_tolerance: 0.1
-  yaw_default_tolerance: 0.1
+# Default tolerance values that are used for the controller by MoveBaseFlex
+dist_tolerance: 0.02 # Tolerance in [m]
+angle_tolerance: 1.0 # Tolerance in [°]
 
+FormationPathController:
   formation_config:
     robot0:
       namespace: /robot0_ns
