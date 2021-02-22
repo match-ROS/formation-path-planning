@@ -7,7 +7,7 @@ PLUGINLIB_EXPORT_CLASS(fpc::FormationPathController, nav_core::BaseLocalPlanner)
 namespace fpc
 {
 	FormationPathController::FormationPathController()
-		: initialized_(false)
+		: initialized_(false), pose_index_(1)
 	{
 		ROS_ERROR_STREAM("Constructor");
 	}
@@ -40,6 +40,17 @@ namespace fpc
 				10,
 				&FormationPathController::getRobotPoseCb,
 				this);
+			this->robot_odom_subscriber_ = this->nh_.subscribe(
+				this->current_robot_info_->robot_namespace + "/" + this->current_robot_info_->robot_odom_topic,
+				10,
+				&FormationPathController::getRobotOdomCb,
+				this);
+			
+			this->robot_ground_truth_subscriber_ = this->nh_.subscribe(
+				this->current_robot_info_->robot_namespace + "/base_pose_ground_truth",
+				10,
+				&FormationPathController::getRobotGroundTruthCb,
+				this);
 
 			// CREATE MASTER SLAVE OBJECTS HERE
 
@@ -55,9 +66,7 @@ namespace fpc
 	bool FormationPathController::setPlan(const std::vector<geometry_msgs::PoseStamped> &plan)
 	{
 		ROS_ERROR_STREAM("setPlan");
-		// Save the complete global plan
-		this->global_plan_ = plan;
-
+		this->global_plan_ = plan; // Save the complete global plan
 		return true;
 	}
 
@@ -133,9 +142,51 @@ namespace fpc
 															  std::string &message)
 	{
 		ROS_ERROR_STREAM("computeVelocityCommands2");
-		ROS_INFO_STREAM("pose: " << pose.pose.position.x << " | " << pose.pose.position.y);
-		ROS_INFO_STREAM("velocity: " << velocity.twist.linear.x);
-		cmd_vel.twist.linear.x = 0.1;
+		// ROS_INFO_STREAM("pose     : " << pose.pose.position.x << " | " << pose.pose.position.y);
+		// ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
+		// ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
+
+		double controller_freq = 5.0; // This must be a parameter later as the move base settings define this
+		double period_time_span = 1.0 / controller_freq;
+
+		// geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
+
+		double omega = 0.1;
+		double v = 0.3;
+
+		tf::Pose current_pose;
+		tf::poseMsgToTF(pose.pose, current_pose);
+		tf::Pose target_pose;
+		tf::poseMsgToTF(this->global_plan_[this->pose_index_].pose, target_pose);
+
+		tf::Transform control_dif=current_pose.inverseTimes(target_pose);
+
+		double x=control_dif.getOrigin().getX();
+		double y=control_dif.getOrigin().getY();   
+
+		double phi=tf::getYaw(control_dif.getRotation());
+		if(phi>=M_PI_2)
+		{
+			phi-=M_PI;
+			v=-v;    
+		}
+		else if( phi<=-M_PI_2)
+		{
+			phi=phi+M_PI;
+			v=-v;
+		}
+
+		ControlVector output;
+		output.v=this->parameter_.kx*x+v*cos(phi);
+		output.omega=omega+this->parameter_.ky*v*y+this->parameter_.kphi*sin(phi);
+		// COPY PASTED FROM MALTE END
+
+		cmd_vel.twist.angular.x = 0.0;
+		cmd_vel.twist.angular.y = 0.0;
+		// cmd_vel.twist.angular.z  // rad/s
+
+		this->pose_index_++;
+
 		return 0;
 	}
 
@@ -168,6 +219,11 @@ namespace fpc
 	void FormationPathController::getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg)
 	{
 		this->current_robot_odom_ = msg;
+	}
+
+	void FormationPathController::getRobotGroundTruthCb(const nav_msgs::OdometryConstPtr &msg)
+	{
+		this->current_robot_ground_truth_ = msg;
 	}
 
 	////////////////////////////////////////////////

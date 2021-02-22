@@ -148,17 +148,23 @@ namespace fpc
 			geometry_msgs::Pose current_robot_pose_;
 			nav_msgs::OdometryConstPtr current_robot_odom_;
 
+			int pose_index_;
+
 			/////////////////////////////////////////////////
 			// Subscriber / Publisher / Services / Actions
 			/////////////////////////////////////////////////
 			ros::Subscriber robot_pose_subscriber_;
 			ros::Subscriber robot_odom_subscriber_;
+			ros::Subscriber robot_ground_truth_subscriber_; // This subscriber will only work in Gazebo where ground truth is published
 
 			////////////////////////////////////////////////
 			// Callback method
 			////////////////////////////////////////////////
 			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
 			void getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg);
+
+			void getRobotGroundTruthCb(const nav_msgs::OdometryConstPtr &msg);
+			nav_msgs::OdometryConstPtr current_robot_ground_truth_;
 
 			////////////////////////////////////////////////
 			// Private Helper Methods
