@@ -16,6 +16,7 @@ find_package(
 	nav_core
 	costmap_2d
 	geometry_msgs
+	nav_msgs
 	tf2_ros)
 
 ## System dependencies are found with CMake's conventions

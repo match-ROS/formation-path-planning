@@ -36,7 +36,7 @@ namespace fpc
 
 			// Initialize the topic subscriber/publisher, services and actions
 			this->robot_pose_subscriber_ = this->nh_.subscribe(
-				this->current_robot_info_->robot_namespace + "/" + this->robot_pose_topic_,
+				this->current_robot_info_->robot_namespace + "/" + this->current_robot_info_->robot_pose_topic,
 				10,
 				&FormationPathController::getRobotPoseCb,
 				this);
@@ -107,8 +107,24 @@ namespace fpc
 
 	bool FormationPathController::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 	{
-		ROS_INFO_STREAM("computeVelocityCommands1");
-		ROS_ERROR_STREAM("Currently not implemented");
+		geometry_msgs::PoseStamped current_robot_pose_stamped;
+		current_robot_pose_stamped.header.frame_id = this->global_frame_;
+		current_robot_pose_stamped.header.stamp = ros::Time::now();
+		current_robot_pose_stamped.pose = this->current_robot_pose_;
+
+		geometry_msgs::TwistStamped current_velocity;
+		current_velocity.header.frame_id = this->current_robot_odom_->header.frame_id;
+		current_velocity.header.stamp = ros::Time::now();
+		current_velocity.twist = this->current_robot_odom_->twist.twist;
+
+		geometry_msgs::TwistStamped cmd_vel_stamped;
+		std::string message;
+		bool result;
+
+		result = this->computeVelocityCommands(current_robot_pose_stamped, current_velocity, cmd_vel_stamped, message);
+
+		cmd_vel = cmd_vel_stamped.twist;
+		return result;
 	}
 
 	uint32_t FormationPathController::computeVelocityCommands(const geometry_msgs::PoseStamped &pose,
@@ -149,6 +165,11 @@ namespace fpc
 		this->current_robot_pose_ = msg->pose.pose;
 	}
 
+	void FormationPathController::getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg)
+	{
+		this->current_robot_odom_ = msg;
+	}
+
 	////////////////////////////////////////////////
 	// Private Helper Methods
 	////////////////////////////////////////////////
@@ -166,15 +187,25 @@ namespace fpc
         }
 
 		// Get default tolerances for the planner
-        this->planner_nh_.param<double>("xy_default_tolerance", this->xy_default_tolerance_, 0.1);
-		this->planner_nh_.param<double>("yaw_default_tolerance", this->yaw_default_tolerance_, 0.1);
+		this->planner_nh_.param<double>("xy_default_tolerance", this->xy_default_tolerance_, 0.1);
+		this->planner_nh_.param<double>("yaw_default_tolerance", this->yaw_default_tolerance_, ((2.0 * M_PI) / (360.0)) * 5.0);
 
 		// Get the topic name where the current pose of the robots will be published
+		// This param is used to set the topic name of each robot to the same name. Special "robot_pose_topic" params in the robot params override this.
 		std::string general_robot_pose_topic = "DefaultPoseTopicName";
 		std::string general_robot_pose_topic_key;
 		if(this->nh_.searchParam("robot_pose_topic", general_robot_pose_topic_key))
 		{
 			this->nh_.getParam(general_robot_pose_topic_key, general_robot_pose_topic);
+		}
+
+		// Get the topic name where the odometry of the robots will be published
+		// This param is used to set the topic name of each robot to the same name. Special "robot_pose_topic" params in the robot params override this.
+		std::string general_robot_odom_topic = "DefaultOdomTopicName";
+		std::string general_robot_odom_topic_key;
+		if(this->nh_.searchParam("robot_odom_topic", general_robot_odom_topic_key))
+		{
+			this->nh_.getParam(general_robot_odom_topic_key, general_robot_odom_topic);
 		}
 
 		// Get information about the robots that are participating in the formation
@@ -211,7 +242,7 @@ namespace fpc
                         robot_info->robot_namespace = static_cast<std::string>(robot_info_xmlrpc["namespace"]);
                     }
 
-					// Set robot pose topic for each robot
+					// Set robot pose topic name for each robot
 					if(robot_info_xmlrpc.hasMember("robot_pose_topic") && robot_info_xmlrpc["robot_pose_topic"].getType() == XmlRpc::XmlRpcValue::TypeString)
 					{
 						robot_info->robot_pose_topic = static_cast<std::string>(robot_info_xmlrpc["robot_pose_topic"]);
@@ -223,6 +254,20 @@ namespace fpc
 					else
 					{
 						ROS_ERROR_STREAM("robot_pose_topic was not set for " << robot_info->robot_name);
+					}
+
+					// Set robot_odom topic name for each robot
+					if(robot_info_xmlrpc.hasMember("robot_odom_topic") && robot_info_xmlrpc["robot_odom_topic"].getType() == XmlRpc::XmlRpcValue::TypeString)
+					{
+						robot_info->robot_odom_topic = static_cast<std::string>(robot_info_xmlrpc["robot_odom_topic"]);
+					}
+					else if(general_robot_odom_topic != "DefaultOdomTopicName")
+					{
+						robot_info->robot_odom_topic = general_robot_odom_topic;
+					}
+					else
+					{
+						ROS_ERROR_STREAM("robot_odom_topic was not set for " << robot_info->robot_name);
 					}
                 }
 

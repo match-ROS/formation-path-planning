@@ -11,6 +11,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <tf2_ros/buffer.h>
 #include <tf/transform_listener.h>
 
@@ -122,7 +123,6 @@ namespace fpc
 			//////////////////////////////////////////////////
 			double xy_default_tolerance_;
 			double yaw_default_tolerance_;
-			std::string robot_pose_topic_;
 			std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> robot_info_list_;
 			std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> current_robot_info_;
 
@@ -144,17 +144,21 @@ namespace fpc
 			bool initialized_;
 
 			std::vector<geometry_msgs::PoseStamped> global_plan_;
+
 			geometry_msgs::Pose current_robot_pose_;
+			nav_msgs::OdometryConstPtr current_robot_odom_;
 
 			/////////////////////////////////////////////////
 			// Subscriber / Publisher / Services / Actions
 			/////////////////////////////////////////////////
 			ros::Subscriber robot_pose_subscriber_;
+			ros::Subscriber robot_odom_subscriber_;
 
 			////////////////////////////////////////////////
 			// Callback method
 			////////////////////////////////////////////////
 			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
+			void getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg);
 
 			////////////////////////////////////////////////
 			// Private Helper Methods

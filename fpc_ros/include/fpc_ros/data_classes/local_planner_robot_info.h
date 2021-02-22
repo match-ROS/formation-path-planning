@@ -19,5 +19,7 @@ namespace fpc_data_classes
 		bool fpc_master;
 		//! Topic name where the pose of the robot can be received
 		std::string robot_pose_topic;
+		//! Topic name where the odometry of the robot can be received
+		std::string robot_odom_topic;
 	};
 }
