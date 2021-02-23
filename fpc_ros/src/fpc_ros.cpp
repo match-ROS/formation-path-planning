@@ -80,8 +80,6 @@ namespace fpc
 		// Glaube ich muss hier auch etwas übergreifendes implementieren, falls der Master meldet Ziel ist erreicht, dann müssen die anderen ROboter das auch melden
 		// Außer ich will vllt noch versuchen den restlichen Regelfehler auszugleichen, aber da sollte ja keiner sein
 
-		ROS_INFO_STREAM("xy tolerance: " << xy_tolerance << " yaw tolerance: " << yaw_tolerance);
-
 		geometry_msgs::Pose goal_pose = this->getGoalPose();
 
 		// Check x for tolerance
@@ -146,44 +144,65 @@ namespace fpc
 		// ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
 		// ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
 
-		double controller_freq = 5.0; // This must be a parameter later as the move base settings define this
+		double controller_freq = 1.0; // This must be a parameter later as the move base settings define this
 		double period_time_span = 1.0 / controller_freq;
 
 		// geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
-
-		double omega = 0.1;
-		double v = 0.3;
 
 		tf::Pose current_pose;
 		tf::poseMsgToTF(pose.pose, current_pose);
 		tf::Pose target_pose;
 		tf::poseMsgToTF(this->global_plan_[this->pose_index_].pose, target_pose);
 
-		tf::Transform control_dif=current_pose.inverseTimes(target_pose);
+		tf::Transform control_diff=current_pose.inverseTimes(target_pose);
+		// tf::Transform control_dif = target_pose.inverseTimes(current_pose);
 
-		double x=control_dif.getOrigin().getX();
-		double y=control_dif.getOrigin().getY();   
+		ROS_INFO_STREAM("current_dir: " << tf::getYaw(pose.pose.orientation) << " target_dir: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) << " diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(pose.pose.orientation));
 
-		double phi=tf::getYaw(control_dif.getRotation());
-		if(phi>=M_PI_2)
-		{
-			phi-=M_PI;
-			v=-v;    
-		}
-		else if( phi<=-M_PI_2)
-		{
-			phi=phi+M_PI;
-			v=-v;
-		}
+		double x=control_diff.getOrigin().getX();
+		double y=control_diff.getOrigin().getY();   
 
-		ControlVector output;
-		output.v=this->parameter_.kx*x+v*cos(phi);
-		output.omega=omega+this->parameter_.ky*v*y+this->parameter_.kphi*sin(phi);
+		double phi=tf::getYaw(control_diff.getRotation());
+
+		double v = std::sqrt(std::pow(x, 2) + std::pow(y, 2)) / period_time_span;
+		double omega = phi / period_time_span;
+
+		ROS_INFO_STREAM("Control: x: " << x << " y: " << y << " phi: " << phi);
+
+		// if(phi>=M_PI_2)
+		// {
+		// 	phi-=M_PI;
+		// 	v=-v;    
+		// }
+		// else if( phi<=-M_PI_2)
+		// {
+		// 	phi=phi+M_PI;
+		// 	v=-v;
+		// }
+
+		double kx = 3.0;
+		double ky = 4.0;
+		double kphi = 1.0;
+
+		double output_v;
+		double output_omega;
+
+		output_v = kx * x + v * cos(phi);
+		ROS_INFO_STREAM("kx: " << kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
+
+		output_omega = omega + ky * v * y + kphi * sin(phi);
+		ROS_INFO_STREAM("omega: " << omega << " ky: " << ky << " v: " << v << " y: " << y << " kphi: " << kphi << " phi: " << phi << " sin(phi): " << sin(phi));
 		// COPY PASTED FROM MALTE END
+
+		ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
+
+		cmd_vel.twist.linear.x = output_v;
+		cmd_vel.twist.linear.y = 0.0;
+		cmd_vel.twist.linear.z = 0.0;
 
 		cmd_vel.twist.angular.x = 0.0;
 		cmd_vel.twist.angular.y = 0.0;
-		// cmd_vel.twist.angular.z  // rad/s
+		cmd_vel.twist.angular.z = omega;  // rad/s
 
 		this->pose_index_++;
 
