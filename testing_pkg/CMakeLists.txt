@@ -22,7 +22,8 @@ find_package(
     nav_msgs
     geometry_msgs
     visualization_msgs
-	costmap_2d)
+	costmap_2d
+	fp_utils)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures

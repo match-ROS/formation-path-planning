@@ -12,7 +12,7 @@ FormationPathController:
   # This parameter is only necessary if move-base pkg is used, for move-base-flex please use dist_tolerance
   # Parameter is defining the tolerance when arriving at the goal in the x and y direction.
   # Parameter is defined in meters
-  xy_default_tolerance: 0.1 
+  xy_default_tolerance: 0.03 
   # This parameter is only necessary if move-base pkg is used, for move-base-flex please use angle_tolerance
   # Parameter is defining the tolerance when arriving at the goal for the orientation.
   # Parameter is defined in radian

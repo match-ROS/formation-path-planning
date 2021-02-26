@@ -280,7 +280,7 @@ namespace path_planner
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
                 spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
-				spline->visualizeData();
+				// spline->visualizeData();
 			}
 
 			// Optimize the curvature of the splines to be under a certain threshold
@@ -331,7 +331,7 @@ namespace path_planner
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
                 spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
-				spline->visualizeData();
+				// spline->visualizeData();
 			}
 
 			// Create plan by splines

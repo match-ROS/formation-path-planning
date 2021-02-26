@@ -26,7 +26,7 @@
 #include <Eigen/Dense>
 
 #include <fpp_ros/data_classes/path_planner_types.h>
-#include <fpp_ros/visualization_helper/visualization_helper.h>
+#include <fp_utils/visualization_helper/visualization_helper.h>
 
 namespace relaxed_a_star
 {

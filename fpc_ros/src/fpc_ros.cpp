@@ -139,12 +139,12 @@ namespace fpc
 															  geometry_msgs::TwistStamped &cmd_vel,
 															  std::string &message)
 	{
-		ROS_ERROR_STREAM("computeVelocityCommands2");
+		ROS_ERROR_STREAM(this->current_robot_info_->robot_name);
 		// ROS_INFO_STREAM("pose     : " << pose.pose.position.x << " | " << pose.pose.position.y);
 		// ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
 		// ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
 
-		double controller_freq = 1.0; // This must be a parameter later as the move base settings define this
+		double controller_freq = 0.2; // This must be a parameter later as the move base settings define this
 		double period_time_span = 1.0 / controller_freq;
 
 		// geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
@@ -157,7 +157,8 @@ namespace fpc
 		tf::Transform control_diff=current_pose.inverseTimes(target_pose);
 		// tf::Transform control_dif = target_pose.inverseTimes(current_pose);
 
-		ROS_INFO_STREAM("current_dir: " << tf::getYaw(pose.pose.orientation) << " target_dir: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) << " diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(pose.pose.orientation));
+		// ROS_INFO_STREAM("current_dir: " << tf::getYaw(pose.pose.orientation) << " target_dir: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) << " diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(pose.pose.orientation));
+
 
 		double x=control_diff.getOrigin().getX();
 		double y=control_diff.getOrigin().getY();   
@@ -166,8 +167,11 @@ namespace fpc
 
 		double v = std::sqrt(std::pow(x, 2) + std::pow(y, 2)) / period_time_span;
 		double omega = phi / period_time_span;
-
-		ROS_INFO_STREAM("Control: x: " << x << " y: " << y << " phi: " << phi);
+		if(this->current_robot_info_->robot_name == "robot0")
+		{
+			ROS_INFO_STREAM("Control: x: " << x << " y: " << y << " phi: " << phi);
+			ROS_INFO_STREAM("v: " << v << " omega: " << omega << " time: " << period_time_span);
+		}
 
 		// if(phi>=M_PI_2)
 		// {
@@ -180,21 +184,26 @@ namespace fpc
 		// 	v=-v;
 		// }
 
-		double kx = 3.0;
-		double ky = 4.0;
-		double kphi = 1.0;
+		double kx = 3.4;
+		double ky = 10.0;
+		double kphi = 2.5;
+
+		// double kx = 0.0;
+		// double ky = 0.0;
+		// double kphi = 0.0;
 
 		double output_v;
 		double output_omega;
 
 		output_v = kx * x + v * cos(phi);
-		ROS_INFO_STREAM("kx: " << kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
+		// ROS_INFO_STREAM("kx: " << kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
 
 		output_omega = omega + ky * v * y + kphi * sin(phi);
-		ROS_INFO_STREAM("omega: " << omega << " ky: " << ky << " v: " << v << " y: " << y << " kphi: " << kphi << " phi: " << phi << " sin(phi): " << sin(phi));
+		// ROS_INFO_STREAM("omega: " << omega << " ky: " << ky << " v: " << v << " y: " << y << " kphi: " << kphi << " phi: " << phi << " sin(phi): " << sin(phi));
 		// COPY PASTED FROM MALTE END
 
-		ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
+		if(this->current_robot_info_->robot_name == "robot0")
+			ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
 
 		cmd_vel.twist.linear.x = output_v;
 		cmd_vel.twist.linear.y = 0.0;
@@ -202,7 +211,7 @@ namespace fpc
 
 		cmd_vel.twist.angular.x = 0.0;
 		cmd_vel.twist.angular.y = 0.0;
-		cmd_vel.twist.angular.z = omega;  // rad/s
+		cmd_vel.twist.angular.z = output_omega;  // rad/s
 
 		this->pose_index_++;
 

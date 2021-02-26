@@ -26,9 +26,11 @@
 #include <Eigen/Dense>
 
 #include <fpp_ros/data_classes/path_planner_types.h>
-#include <fpp_ros/visualization_helper/visualization_helper.h>
-#include <fpp_ros/path_planner/cubic_bezier_splines.h>
-#include <fpp_ros/path_planner/quintic_bezier_splines.h>
+
+#include <fp_utils/visualization_helper/visualization_helper.h>
+#include <fp_utils/bezier_splines/cubic_bezier_spline.h>
+#include <fp_utils/bezier_splines/quintic_bezier_spline.h>
+
 
 namespace path_planner
 {

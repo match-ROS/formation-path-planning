@@ -1,0 +1,3 @@
+# This service allows the local planner to get the plan from the global planner as a continous function (multiple Bezier Splines)
+---
+fpp_msgs/BezierSpline[] splined_plan

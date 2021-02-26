@@ -7,9 +7,6 @@ add_compile_options(-std=c++14)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
-
-## System dependencies are found with CMake's conventions
 find_package(
 	catkin REQUIRED COMPONENTS 
 	roscpp
@@ -22,7 +19,10 @@ find_package(
 	visualization_msgs
 	std_srvs
 	costmap_2d
-	dynamic_reconfigure)
+	dynamic_reconfigure
+	fp_utils)
+
+find_package(Eigen3 REQUIRED)
 
 
 ## System dependencies are found with CMake's conventions
@@ -130,6 +130,7 @@ catkin_package(
 		geometry_msgs
 		tf
 		dynamic_reconfigure
+		fp_utils
 )
 
 ###########
@@ -138,6 +139,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
@@ -145,7 +147,6 @@ include_directories(
 
 ## Declare a C++ library
 set(FPP_ROS_SOURCES
-
 	include/fpp_ros/fpp_ros.h
 	src/fpp_ros.cpp
 
@@ -160,22 +161,9 @@ set(FPP_ROS_SOURCES
 add_library(fpp_ros ${FPP_ROS_SOURCES})
 
 set(PATH_PLANNER_SOURCES
-
 	include/fpp_ros/path_planner/splined_relaxed_a_star.h
-	src/path_planner/splined_relaxed_a_star.cpp
-
-	include/fpp_ros/path_planner/cubic_bezier_splines.h
-	src/path_planner/cubic_bezier_splines.cpp
-
-	include/fpp_ros/path_planner/quintic_bezier_splines.h
-	src/path_planner/quintic_bezier_splines.cpp
-	)
+	src/path_planner/splined_relaxed_a_star.cpp)
 add_library(path_planner ${PATH_PLANNER_SOURCES})
-
-add_library(visualization_helper 
-
-	include/fpp_ros/visualization_helper/visualization_helper.h
-	src/visualization_helper/visualization_helper.cpp)
 
 set(GEOMETRY_INFO_SOURCES
 	include/fpp_ros/geometry_info/edge_info.h
@@ -230,16 +218,11 @@ target_link_libraries(fpp_ros
 	data_classes
 	geometry_info
 	path_planner
-	visualization_helper
 	${catkin_LIBRARIES})
 
 target_link_libraries(path_planner 
 	data_classes
-	visualization_helper 
 	${catkin_LIBRARIES})
-
-target_link_libraries(visualization_helper
- 	${catkin_LIBRARIES})
 
 target_link_libraries(geometry_info 
 	${catkin_LIBRARIES})

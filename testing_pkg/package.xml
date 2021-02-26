@@ -77,6 +77,7 @@
   <exec_depend>dynamic_reconfigure</exec_depend>
 
   <depend>fpp_ros</depend>
+  <depend>fp_utils</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

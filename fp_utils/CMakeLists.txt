@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(fpp_msgs)
+project(fp_utils)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -7,15 +7,14 @@ add_compile_options(-std=c++14)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-    std_msgs
-    geometry_msgs
-	nav_msgs
-    message_generation)
+find_package(
+	catkin REQUIRED COMPONENTS
+	roscpp
+	tf
+	geometry_msgs
+	visualization_msgs)
 
-## System dependencies are found with CMake's conventions
-# find_package(REQUIRED COMPONENTS)
-
+find_package(Eigen3 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -47,18 +46,18 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  BezierSpline.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  DynReconfigure.srv
-  GetRobotPlan.srv
-  SplinedPlan.srv
-)
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -68,12 +67,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  nav_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -105,10 +102,8 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES fpp-msgs
-  CATKIN_DEPENDS std_msgs geometry_msgs nav_msgs message_runtime
-#  DEPENDS system_lib
+	INCLUDE_DIRS 
+		include
 )
 
 ###########
@@ -117,15 +112,33 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+	include
+	${catkin_INCLUDE_DIRS}
 )
+
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/fpp-msgs.cpp
+#   src/${PROJECT_NAME}/fp_utils.cpp
 # )
+
+set(BEZIER_SPLINE_SOURCES
+	# include/fp_utils/bezier_splines/bezier_spline_base.h
+	# src/bezier_splines/bezier_spline_base.cpp
+
+	include/fp_utils/bezier_splines/cubic_bezier_spline.h
+	src/bezier_splines/cubic_bezier_spline.cpp
+
+	include/fp_utils/bezier_splines/quintic_bezier_spline.h
+	src/bezier_splines/quintic_bezier_spline.cpp)
+add_library(bezier_splines ${BEZIER_SPLINE_SOURCES})
+
+set(VISUALIZATION_HELPER_SOURCES
+	include/fp_utils/visualization_helper/visualization_helper.h
+	src/visualization_helper/visualization_helper.cpp)
+add_library(visualization_helper ${VISUALIZATION_HELPER_SOURCES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -135,7 +148,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/fpp-msgs_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/fp_utils_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -151,6 +164,13 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+target_link_libraries(bezier_splines 
+	visualization_helper
+	${catkin_LIBRARIES})
+
+target_link_libraries(visualization_helper
+	${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -199,7 +219,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_fpp-msgs.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_fp_utils.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

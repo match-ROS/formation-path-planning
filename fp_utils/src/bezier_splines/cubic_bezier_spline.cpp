@@ -1,4 +1,4 @@
-#include <fpp_ros/path_planner/cubic_bezier_splines.h>
+#include <fp_utils/bezier_splines/cubic_bezier_spline.h>
 
 namespace path_planner
 {
