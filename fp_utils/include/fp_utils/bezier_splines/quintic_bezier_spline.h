@@ -14,7 +14,7 @@
 #include <fp_utils/visualization_helper/visualization_helper.h>
 #include <fp_utils/bezier_splines/cubic_bezier_spline.h>
 
-namespace path_planner
+namespace bezier_splines
 {
 	class QuinticBezierSplines
     {

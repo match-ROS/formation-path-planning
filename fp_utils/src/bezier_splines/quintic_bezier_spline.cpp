@@ -1,6 +1,6 @@
 #include <fp_utils/bezier_splines/quintic_bezier_spline.h>
 
-namespace path_planner
+namespace bezier_splines
 {
     QuinticBezierSplines::QuinticBezierSplines(visualization_helper::VisualizationHelper *visu_helper)
 		: previous_spline_(nullptr), next_spline_(nullptr), start_tangent_magnitude_(0.25), end_tangent_magnitude_(0.25)
