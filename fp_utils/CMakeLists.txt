@@ -104,6 +104,9 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
 	INCLUDE_DIRS 
 		include
+	LIBRARIES
+		bezier_splines
+		visualization_helper
 )
 
 ###########
@@ -116,6 +119,7 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
+	${Eigen3_INCLUDE_DIRS}
 )
 
 
@@ -125,8 +129,8 @@ include_directories(
 # )
 
 set(BEZIER_SPLINE_SOURCES
-	# include/fp_utils/bezier_splines/bezier_spline_base.h
-	# src/bezier_splines/bezier_spline_base.cpp
+	include/fp_utils/bezier_splines/base_bezier_spline.h
+	src/bezier_splines/base_bezier_spline.cpp
 
 	include/fp_utils/bezier_splines/cubic_bezier_spline.h
 	src/bezier_splines/cubic_bezier_spline.cpp
@@ -149,6 +153,7 @@ add_library(visualization_helper ${VISUALIZATION_HELPER_SOURCES})
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/fp_utils_node.cpp)
+add_executable(test_node src/test_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -170,6 +175,10 @@ target_link_libraries(bezier_splines
 	${catkin_LIBRARIES})
 
 target_link_libraries(visualization_helper
+	${catkin_LIBRARIES})
+
+target_link_libraries(test_node
+	bezier_splines
 	${catkin_LIBRARIES})
 
 #############

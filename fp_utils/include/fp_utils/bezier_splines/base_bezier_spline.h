@@ -3,8 +3,9 @@
 #include "ros/ros.h"
 
 #include <vector>
-#include <Eigen>
+#include <Eigen/Dense>
 #include <string>
+#include <iostream>
 
 #include <fp_utils/visualization_helper/visualization_helper.h>
 
@@ -14,20 +15,25 @@ namespace bezier_splines
 	{
 		public:
 			#pragma region Constructors
-			BaseBezierSpline();
-			BaseBezierSpline(visualization_helper::VisualizationHelper *visu_helper);
-			BaseBezierSpline(Eigen::Vector2f start_pose,
-							 Eigen::Vector2f end_pose);
-			BaseBezierSpline(visualization_helper::VisualizationHelper *visu_helper,
+			BaseBezierSpline(int bezier_degree);
+			BaseBezierSpline(int bezier_degree,
+							 visualization_helper::VisualizationHelper *visu_helper);
+			BaseBezierSpline(int bezier_degree,
 							 Eigen::Vector2f start_pose,
 							 Eigen::Vector2f end_pose);
-			BaseBezierSpline(Eigen::Vector2f start_pose,
+			BaseBezierSpline(int bezier_degree,
+							 visualization_helper::VisualizationHelper *visu_helper,
+							 Eigen::Vector2f start_pose,
+							 Eigen::Vector2f end_pose);
+			BaseBezierSpline(int bezier_degree,
+							 Eigen::Vector2f start_pose,
 							 Eigen::Vector2f start_tangent,
 							 float start_tangent_magnitude,
 							 Eigen::Vector2f end_pose,
 							 Eigen::Vector2f end_tangent,
 							 float end_tangent_magnitude);
-			BaseBezierSpline(visualization_helper::VisualizationHelper *visu_helper,
+			BaseBezierSpline(int bezier_degree,
+							 visualization_helper::VisualizationHelper *visu_helper,
 							 Eigen::Vector2f start_pose,
 							 Eigen::Vector2f start_tangent,
 							 float start_tangent_magnitude,
@@ -54,8 +60,55 @@ namespace bezier_splines
 			Eigen::Vector2f getMultipliedEndTangent();
 			#pragma endregion
 
+			#pragma region DataManagement
+			void setPreviousSpline(const std::shared_ptr<BaseBezierSpline> &previous_spline);
+			void setNextSpline(const std::shared_ptr<BaseBezierSpline> &next_spline);
+			#pragma endregion
+
 			#pragma region BezierMethods
-			virtual std::vector<Eigen::Vector2f> calcBezierSpline(int resolution) = 0;
+			void setStartTangentByQuaternion(tf::Quaternion robot_orientation);
+            void setEndTangentByQuaternion(tf::Quaternion robot_end_orientation);
+			void setEndTangentByNextPose(Eigen::Vector2f next_pose);
+			virtual void calcControlPoints() = 0;
+
+			virtual Eigen::Vector2f calcPointOnBezierSpline(float iterator) = 0;
+			std::vector<Eigen::Vector2f> calcBezierSpline(int resolution);
+
+			virtual Eigen::Vector2f calcFirstDerivativeValue(float iterator) = 0;
+			virtual Eigen::Vector2f calcSecondDerivativeValue(float iterator) = 0;
+			float calcCurvation(float iterator);
+			float calcCurveRadius(float iterator);
+
+			/**
+			 * @brief 
+			 * 
+			 * @param iterator 
+			 * @param min_curve_radius 
+			 * @param point_of_failure Iterator index where the curve is to tight
+			 * @return true Curve Radius is greater or equal to min curve radius. Curve is fine.
+			 * @return false Curve radius is smaller than min curve radius. Curve is not finde.
+			 */
+			bool checkMinCurveRadiusAtPoint(float iterator, float min_curve_radius);
+			/**
+			 * @brief 
+			 * 
+			 * @param resolution 
+			 * @param min_curve_radius 
+			 * @param point_of_failure Iterator index where the curve is to tight
+			 * @return true Curve Radius is greater or equal to min curve radius. Curve is fine.
+			 * @return false Curve radius is smaller than min curve radius. Curve is not finde.
+			 */
+			bool checkMinCurveRadiusOnSpline(int resolution, float min_curve_radius);
+			/**
+			 * @brief 
+			 * 
+			 * @param resolution 
+			 * @param min_curve_radius 
+			 * @param point_of_failure Iterator index where the curve is to tight
+			 * @return true Curve Radius is greater or equal to min curve radius. Curve is fine.
+			 * @return false Curve radius is smaller than min curve radius. Curve is not finde.
+			 */
+			bool checkMinCurveRadiusOnSpline(int resolution, float min_curve_radius, int &point_of_failure);
 			#pragma endregion
 
 			#pragma region PublicVisuHelper
@@ -64,14 +117,15 @@ namespace bezier_splines
             void addControlPointsToVisuHelper();
             void addBezierSplineToVisuHelper(int resolution);
             void addTangentsToVisuHelper();
+
+			virtual void printInfo();
 			#pragma endregion
 
 		protected:
 			std::shared_ptr<BaseBezierSpline> previous_spline_;
 			std::shared_ptr<BaseBezierSpline> next_spline_;
 
-			Eigen::Vector2f start_pose_;
-            Eigen::Vector2f end_pose_;
+			const int BEZIER_DEGREE = 0;
 
 			std::vector<Eigen::Vector2f> control_points_;
 
@@ -93,6 +147,10 @@ namespace bezier_splines
 
             std::string debug_marker_identificator_;
 
+			#pragma region InitHelper
+			virtual void initControlPointList();
+			#pragma endregion
+
 			#pragma region MathHelper
 			float calcStartToEndLength();
 			long calcFactorial(long n);
@@ -108,6 +166,7 @@ namespace bezier_splines
 								std::string debug_marker_identificator);
 			void addTangentToVisuHelper(Eigen::Vector2f start_point, Eigen::Vector2f tangent);
 			void addDebugVectorToVisuHelper(Eigen::Vector2f start_point, Eigen::Vector2f vector);
+			bool isVisuHelperNull();
 			#pragma endregion
 	};
 }

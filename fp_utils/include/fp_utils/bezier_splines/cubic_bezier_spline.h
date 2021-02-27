@@ -10,31 +10,47 @@
 #include <list>
 #include <Eigen/Dense>
 
+#include <fp_utils/bezier_splines/base_bezier_spline.h>
 #include <fp_utils/visualization_helper/visualization_helper.h>
 
 
 namespace bezier_splines
 {
-	class CubicBezierSplines
+	class CubicBezierSplines : public BaseBezierSpline
     {
         public:
-            CubicBezierSplines(visualization_helper::VisualizationHelper *visu_helper);
-            CubicBezierSplines(visualization_helper::VisualizationHelper *visu_helper,
-                               Eigen::Vector2f start_pose,
-                               Eigen::Vector2f end_pose);
+			// using BaseBezierSpline::BaseBezierSpline; // Use constructors of base class
+			CubicBezierSplines();
+			CubicBezierSplines(visualization_helper::VisualizationHelper *visu_helper);
+			CubicBezierSplines(Eigen::Vector2f start_pose,
+							   Eigen::Vector2f end_pose);
+			CubicBezierSplines(visualization_helper::VisualizationHelper *visu_helper,
+							   Eigen::Vector2f start_pose,
+							   Eigen::Vector2f end_pose);
+			CubicBezierSplines(Eigen::Vector2f start_pose,
+							   Eigen::Vector2f start_tangent,
+							   float start_tangent_magnitude,
+							   Eigen::Vector2f end_pose,
+							   Eigen::Vector2f end_tangent,
+							   float end_tangent_magnitude);
+			CubicBezierSplines(visualization_helper::VisualizationHelper *visu_helper,
+							   Eigen::Vector2f start_pose,
+							   Eigen::Vector2f start_tangent,
+							   float start_tangent_magnitude,
+							   Eigen::Vector2f end_pose,
+							   Eigen::Vector2f end_tangent,
+							   float end_tangent_magnitude);
 
-			void setPreviousSpline(const std::shared_ptr<CubicBezierSplines> &previous_spline);
-			void setNextSpline(const std::shared_ptr<CubicBezierSplines> &next_spline);
+#pragma region BezierMethods
+			void calcControlPoints() override;
 
-            void setStartTangent(tf::Quaternion robot_orientation);
-            void setEndTangent(tf::Quaternion robot_end_orientation);
-			void setEndTangentByNextPose(Eigen::Vector2f next_pose);
+			Eigen::Vector2f calcPointOnBezierSpline(float iterator) override;
 
-            void calcControlPoints();
-            Eigen::Vector2f calcPointOnBezierSpline(float iterator);
-            std::vector<Eigen::Vector2f> calcBezierSpline(int resolution);
-			Eigen::Vector2f calcSecondDerivativeValue(float iterator);
+			Eigen::Vector2f calcFirstDerivativeValue(float iterator) override;
+			Eigen::Vector2f calcSecondDerivativeValue(float iterator) override;
+			#pragma endregion
 
-        private:
+			void printInfo() override;
+
     };
 }

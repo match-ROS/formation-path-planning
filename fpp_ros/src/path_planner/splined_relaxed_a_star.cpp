@@ -246,15 +246,15 @@ namespace path_planner
             selected_poses.push_back(last);
 
 			// Create splines
-            std::vector<std::shared_ptr<path_planner::QuinticBezierSplines>> spline_list;
+            std::vector<std::shared_ptr<bezier_splines::QuinticBezierSplines>> spline_list;
             for(int pose_counter = 0; pose_counter < (selected_poses.size()-1); pose_counter++)
             {
                 Eigen::Matrix<float, 2, 1> start_pose;
                 Eigen::Matrix<float, 2, 1> end_pose;
                 start_pose << selected_poses[pose_counter].pose.position.x, selected_poses[pose_counter].pose.position.y;
                 end_pose << selected_poses[pose_counter + 1].pose.position.x, selected_poses[pose_counter + 1].pose.position.y;
-				std::shared_ptr<path_planner::QuinticBezierSplines> spline =
-					std::make_shared<path_planner::QuinticBezierSplines>(&this->visu_helper_, start_pose, end_pose);
+				std::shared_ptr<bezier_splines::QuinticBezierSplines> spline =
+					std::make_shared<bezier_splines::QuinticBezierSplines>(&this->visu_helper_, start_pose, end_pose);
 				
 				if(spline_list.size() > 0)
 				{
@@ -267,13 +267,13 @@ namespace path_planner
 			// Set start tangent of first spline
 			tf::Quaternion start_quaternion;
             tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
-            spline_list.front()->setStartTangent(start_quaternion);
+            spline_list.front()->setStartTangentByQuaternion(start_quaternion);
 			// Set end tangent of last spline
 			tf::Quaternion end_quaternion;
 			tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
-			spline_list.back()->setEndTangent(end_quaternion);
+			spline_list.back()->setEndTangentByQuaternion(end_quaternion);
 			
-			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
+			for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
 			{
 				spline->calcControlPoints();
 				spline->addStartEndPointToVisuHelper();
@@ -325,19 +325,19 @@ namespace path_planner
 			}
 
 			// Visualization
-			for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
+			for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
 			{
 				spline->addStartEndPointToVisuHelper();
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
                 spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
-				// spline->visualizeData();
+				spline->visualizeData();
 			}
 
 			// Create plan by splines
             plan.clear();
             std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
-            for(std::shared_ptr<QuinticBezierSplines> &spline: spline_list)
+            for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
             {
                 std::vector<Eigen::Matrix<float, 2, 1>> points;
                 points = spline->calcBezierSpline(this->planning_points_per_spline_);
@@ -371,7 +371,7 @@ namespace path_planner
                 plan.insert(plan.begin() + plan.size(), pose);
             }
         }
-        ROS_INFO("Planning finished %i", plan.size());
+        // ROS_INFO("Planning finished %i", plan.size());
         this->publishPlan(plan);
         return 0;
     }
