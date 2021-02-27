@@ -53,43 +53,29 @@ namespace bezier_splines
 		std::shared_ptr<bezier_splines::CubicBezierSplines> current_spline = nullptr;
 		std::shared_ptr<bezier_splines::CubicBezierSplines> next_spline = nullptr;
 
-		if (this->previous_spline_ != nullptr &&
-			std::is_same<decltype(this->previous_spline_), bezier_splines::QuinticBezierSplines>::value)
+		if (this->previous_spline_ != nullptr)
 		{
-			ROS_INFO_STREAM("prev");
-			previous_spline = std::dynamic_pointer_cast<bezier_splines::QuinticBezierSplines>(this->previous_spline_)->convertToCubicBezierSpline();
+			previous_spline = this->createCubicBezierSpline(this->previous_spline_);
 		}
-		current_spline = this->convertToCubicBezierSpline();
+		current_spline = this->createCubicBezierSpline(std::make_shared<bezier_splines::QuinticBezierSplines>(*this));
 		if(this->next_spline_ != nullptr)
 		{
-			ROS_INFO_STREAM("next");
-			next_spline = std::dynamic_pointer_cast<bezier_splines::QuinticBezierSplines>(this->next_spline_)->convertToCubicBezierSpline();
+			next_spline = this->createCubicBezierSpline(this->next_spline_);
 		}
 
-		ROS_INFO_STREAM("1 | " << this->previous_spline_);
 		if(this->previous_spline_ != nullptr)
 		{
-			ROS_INFO_STREAM("2");
-			ROS_INFO_STREAM(this->previous_spline_->getStartTangent());
-			ROS_INFO_STREAM(previous_spline);
-			ROS_INFO_STREAM("2.5");
-
 			previous_spline->setStartTangent(this->previous_spline_->getStartTangent());
-			ROS_INFO_STREAM("3");
 			previous_spline->setNextSpline(current_spline);
-			ROS_INFO_STREAM("4");
 			previous_spline->calcControlPoints(); // Everything is set for the previous spline. Control points can be calculated
 
-			ROS_INFO_STREAM("5");
 			current_spline->setPreviousSpline(previous_spline);
 		}
 		else
 		{
-			ROS_INFO_STREAM("6");
 			current_spline->setStartTangent(this->start_tangent_);
 		}
 
-		ROS_INFO_STREAM("7");
 		if(this->next_spline_ != nullptr)
 		{
 			current_spline->setNextSpline(next_spline);
@@ -118,16 +104,14 @@ namespace bezier_splines
 		}
 		this->control_points_[2] = (1.0 / 20.0) * average_start_second_derivative_val + 2.0 * this->control_points_[1] - this->control_points_.front();
 
-		ROS_INFO_STREAM("Current Spline");
 		Eigen::Vector2f curr_spline_second_derivative_end_val = current_spline->calcSecondDerivativeValue(1.0);
 		Eigen::Vector2f average_end_second_derivative_val;
 		if(next_spline != nullptr) // Calc second derivative value through average of both connecting splines
 		{
-			ROS_INFO_STREAM("Next Spline");
 			Eigen::Vector2f next_spline_second_derivative_val = next_spline->calcSecondDerivativeValue(0.0);
 			
 			average_end_second_derivative_val = 0.5 * (next_spline_second_derivative_val + curr_spline_second_derivative_end_val);
-			ROS_INFO_STREAM("average: " << average_end_second_derivative_val[0] << " | " << average_end_second_derivative_val[1] << " next: " << next_spline_second_derivative_val[0] << " | " << next_spline_second_derivative_val[1] << " curr: " << curr_spline_second_derivative_end_val[0] << " | " << curr_spline_second_derivative_end_val[1]);
+			// ROS_INFO_STREAM("average: " << average_end_second_derivative_val[0] << " | " << average_end_second_derivative_val[1] << " next: " << next_spline_second_derivative_val[0] << " | " << next_spline_second_derivative_val[1] << " curr: " << curr_spline_second_derivative_end_val[0] << " | " << curr_spline_second_derivative_end_val[1]);
 		}
 		else // Just use the second derivative of the cubic spline
 		{
@@ -152,7 +136,7 @@ namespace bezier_splines
 
         Eigen::Vector2f result_vector;
         result_vector << 0, 0;
-        for(int counter = 0; counter < this->BEZIER_DEGREE; counter++)
+        for(int counter = 0; counter <= this->BEZIER_DEGREE; counter++)
         {
 			result_vector = result_vector + (bernstein_polynom_vector[counter] * this->control_points_[counter]);
         }
@@ -184,14 +168,15 @@ namespace bezier_splines
 
 	#pragma endregion
 
-	std::shared_ptr<bezier_splines::CubicBezierSplines> QuinticBezierSplines::convertToCubicBezierSpline()
+	std::shared_ptr<bezier_splines::CubicBezierSplines> QuinticBezierSplines::createCubicBezierSpline(std::shared_ptr<bezier_splines::BaseBezierSpline> base_spline)
 	{
 		std::shared_ptr<bezier_splines::CubicBezierSplines> cubic_spline =
-			std::make_shared<bezier_splines::CubicBezierSplines>(this->control_points_.front(), this->control_points_.back());
-
-		// Set the magnitudes as these are settings that affect the splines deeply
-		cubic_spline->setStartTangentMagnitude(this->start_tangent_magnitude_);
-		cubic_spline->setEndTangentMagnitude(this->end_tangent_magnitude_);
+			std::make_shared<bezier_splines::CubicBezierSplines>(base_spline->getStartPose(),
+																 base_spline->getStartTangent(),
+																 base_spline->getStartTangentMagnitude(),
+																 base_spline->getEndPose(),
+																 base_spline->getEndTangent(),
+																 base_spline->getEndTangentMagnitude());
 
 		return cubic_spline;
 	}

@@ -5,7 +5,12 @@ namespace bezier_splines
 	#pragma region Constructors
 
 	BaseBezierSpline::BaseBezierSpline(int bezier_degree)
-		: visu_helper_(nullptr), BEZIER_DEGREE(bezier_degree)
+		: visu_helper_(nullptr),
+		  BEZIER_DEGREE(bezier_degree),
+		  previous_spline_(nullptr),
+		  next_spline_(nullptr),
+		  start_tangent_magnitude_(0.25),
+		  end_tangent_magnitude_(0.25)
 	{
 		this->initControlPointList();
 	}
@@ -15,6 +20,7 @@ namespace bezier_splines
 		: BaseBezierSpline(bezier_degree)
 	{
 		this->visu_helper_ = visu_helper;
+		this->initVisuHelper();
 	}
 
 	BaseBezierSpline::BaseBezierSpline(int bezier_degree,
@@ -33,6 +39,7 @@ namespace bezier_splines
 		: BaseBezierSpline(bezier_degree, start_pose, end_pose)
 	{
 		this->visu_helper_ = visu_helper;
+		this->initVisuHelper();
 	}
 
 	BaseBezierSpline::BaseBezierSpline(int bezier_degree,
@@ -67,6 +74,7 @@ namespace bezier_splines
 						   end_tangent_magnitude)
 	{
 		this->visu_helper_ = visu_helper;
+		this->initVisuHelper();
 	}
 	#pragma endregion
 
@@ -171,20 +179,20 @@ namespace bezier_splines
         this->end_tangent_ << rotated_vector[0], rotated_vector[1];
     }
 
-    void BaseBezierSpline::setEndTangentByNextPose(Eigen::Matrix<float, 2, 1> next_pose)
+    void BaseBezierSpline::setEndTangentByNextPose(Eigen::Vector2f next_pose)
     {
-        Eigen::Matrix<float, 2, 1> diff_vector_start_to_end;
-        Eigen::Matrix<float, 2, 1> diff_vector_end_to_next;
+        Eigen::Vector2f diff_vector_start_to_end;
+        Eigen::Vector2f diff_vector_end_to_next;
 
         diff_vector_start_to_end = this->control_points_.back() - this->control_points_.front();
         diff_vector_end_to_next = next_pose - this->control_points_.back();
 
-        Eigen::Matrix<float, 2, 1> normalized_diff_vector_start_to_end = diff_vector_start_to_end;
+        Eigen::Vector2f normalized_diff_vector_start_to_end = diff_vector_start_to_end;
         normalized_diff_vector_start_to_end.normalize();
-        Eigen::Matrix<float, 2, 1> normalized_diff_vector_end_to_next = diff_vector_end_to_next;
+        Eigen::Vector2f normalized_diff_vector_end_to_next = diff_vector_end_to_next;
         normalized_diff_vector_end_to_next.normalize();
 
-        Eigen::Matrix<float, 2, 1> angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
+        Eigen::Vector2f angular_bisector = normalized_diff_vector_end_to_next + normalized_diff_vector_start_to_end;
         angular_bisector.normalize();
         float length_diff_vector_end_to_next = diff_vector_end_to_next.norm(); // Use length of end point and next point to calculate the length of the tangent
         // In the paper a factor of 0.5 was used to shorten the tangent. This will no longer be applied directly.
@@ -317,13 +325,15 @@ namespace bezier_splines
 			return;
 		}
 
-        std::vector<Eigen::Matrix<float, 2, 1>> bezier_spline;
+        std::vector<Eigen::Vector2f> bezier_spline;
         std::vector<geometry_msgs::Point> line;
 
         bezier_spline = this->calcBezierSpline(resolution);
 
-        for(Eigen::Matrix<float, 2, 1> point_on_spline: bezier_spline)
+		ROS_INFO_STREAM("addBezierSplineToVisuHelper");
+        for(Eigen::Vector2f point_on_spline: bezier_spline)
         {
+			ROS_INFO_STREAM("x: " << point_on_spline[0] << " | " << point_on_spline[1]);
             line.push_back(this->visu_helper_->createGeometryPoint(point_on_spline[0], point_on_spline[1]));
         }
 
@@ -359,7 +369,6 @@ namespace bezier_splines
 
 	void BaseBezierSpline::initControlPointList()
 	{
-		ROS_INFO_STREAM("Bezier Degree: " << this->BEZIER_DEGREE);
 		for(int control_point_counter = 0; control_point_counter <= this->BEZIER_DEGREE; control_point_counter++)
 		{
 			this->control_points_.push_back(Eigen::Vector2f::Zero());
@@ -563,7 +572,6 @@ namespace bezier_splines
 	{
 		if(this->visu_helper_ == nullptr)
 		{
-			std::cout << "BaseBezierSpline: visu_helper is not set. Not able to visualize data.";
 			return true;
 		}
 		return false;

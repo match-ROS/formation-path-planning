@@ -54,7 +54,7 @@ namespace bezier_splines
 			Eigen::Vector2f calcSecondDerivativeValue(float iterator) override;
 			#pragma endregion
 
-			std::shared_ptr<bezier_splines::CubicBezierSplines> convertToCubicBezierSpline();
+			std::shared_ptr<bezier_splines::CubicBezierSplines> createCubicBezierSpline(std::shared_ptr<bezier_splines::BaseBezierSpline> base_spline);
 
 			void printInfo() override;
 
