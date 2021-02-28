@@ -9,8 +9,12 @@
             "includePath": [
                 "/home/hlurz/catkin_ws/devel/include/**",
                 "/opt/ros/melodic/include/**",
-                "/home/hlurz/catkin_ws/src/formation-path-planning/relaxed_a_star/include/**",
+                "/home/hlurz/catkin_ws/src/formation-path-planning/fp_utils/include/**",
+                "/home/hlurz/catkin_ws/src/formation-path-planning/fpp_ros/include/**",
+                "/home/hlurz/catkin_ws/src/formation-path-planning/fpc_ros/include/**",
+                "/home/hlurz/catkin_ws/src/formation-path-planning/testing_pkg/include/**",
                 "/home/hlurz/catkin_ws/src/cooperative-object-pick-up/**",
+                "/home/hlurz/catkin_ws/src/Collaborative_Transport/multi_robot_controller/include/multi_robot_controller/**",
                 "/usr/include/**"
             ],
             "name": "ROS",
@@ -56,15 +60,35 @@
 {
 	"version": "2.0.0",
 	"tasks": [
+		// {
+        //     "label": "catkin_make",
+        //     "type": "shell",
+        //     "command": "catkin_make",
+        //     "args": [
+        //         "-j4",
+        //         "-DCMAKE_BUILD_TYPE=Debug",
+        //         "-DCMAKE_EXPORT_COMPILE_COMMANDS=1",
+        //         "-DCMAKE_CXX_STANDARD=14"
+        //     ],
+        //     "problemMatcher": [],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+		// }, 
 		{
-            "label": "catkin_make",
+            "label": "catkin build fpp packages",
             "type": "shell",
-            "command": "catkin_make",
+            "command": "catkin",
             "args": [
-                "-j4",
-                "-DCMAKE_BUILD_TYPE=Debug",
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=1",
-                "-DCMAKE_CXX_STANDARD=14"
+				"build", 
+				"fpp_ros",
+				"fpp_msgs",
+				"fpp_launch",
+				"fpp_gazebo",
+				"testing_pkg",
+				"fpc_ros",
+				"fp_utils"
             ],
             "problemMatcher": [],
             "group": {
