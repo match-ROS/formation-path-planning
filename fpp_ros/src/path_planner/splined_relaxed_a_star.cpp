@@ -276,7 +276,6 @@ namespace path_planner
 			for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
 			{
 				spline->calcControlPoints();
-				spline->printInfo();
 				spline->addStartEndPointToVisuHelper();
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
@@ -288,8 +287,8 @@ namespace path_planner
 			ROS_INFO_STREAM("Optimizing the curvature of the splines");
 			for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
 			{
-				ROS_INFO_STREAM("spline counter: " << spline_counter);
-				ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
+				// ROS_INFO_STREAM("spline counter: " << spline_counter);
+				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
 
 				int timeout_counter = 0;
 
@@ -321,10 +320,8 @@ namespace path_planner
 					timeout_counter++;
 				}
 
-				spline_list[spline_counter]->printInfo();
-
-				ROS_INFO_STREAM("spline counter: " << spline_counter);
-				ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
+				// ROS_INFO_STREAM("spline counter: " << spline_counter);
+				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
 			}
 
 			// Visualization

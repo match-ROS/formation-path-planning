@@ -7,7 +7,7 @@ dist_tolerance: 0.02 # Tolerance in [m]
 angle_tolerance: 0.05 # Tolerance in [rad]
 
 FormationPathController:
-  max_vel_x:  0.8
+  max_vel_x:  0.3
 
   # This parameter is only necessary if move-base pkg is used, for move-base-flex please use dist_tolerance
   # Parameter is defining the tolerance when arriving at the goal in the x and y direction.

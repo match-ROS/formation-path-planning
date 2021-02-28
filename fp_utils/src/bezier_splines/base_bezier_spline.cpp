@@ -330,10 +330,8 @@ namespace bezier_splines
 
         bezier_spline = this->calcBezierSpline(resolution);
 
-		ROS_INFO_STREAM("addBezierSplineToVisuHelper");
         for(Eigen::Vector2f point_on_spline: bezier_spline)
         {
-			ROS_INFO_STREAM("x: " << point_on_spline[0] << " | " << point_on_spline[1]);
             line.push_back(this->visu_helper_->createGeometryPoint(point_on_spline[0], point_on_spline[1]));
         }
 
