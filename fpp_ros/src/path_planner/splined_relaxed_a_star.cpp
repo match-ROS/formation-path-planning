@@ -300,13 +300,13 @@ namespace path_planner
 					{
 						float current_start_magnitude = spline_list[spline_counter]->getStartTangentMagnitude();
 						// ROS_INFO_STREAM("Current_start_magnitude: " << current_start_magnitude);
-						spline_list[spline_counter]->setStartTangentMagnitude(1.5 * current_start_magnitude); // 1.5 ist just a value that I picked for the moment.
+						spline_list[spline_counter]->setStartTangentMagnitude(1.05 * current_start_magnitude); // 1.5 ist just a value that I picked for the moment.
 					}
 					else
 					{
 						float current_end_magnitude = spline_list[spline_counter]->getEndTangentMagnitude();
 						// ROS_INFO_STREAM("Current_end_magnitude: " << current_end_magnitude);
-						spline_list[spline_counter]->setEndTangentMagnitude(1.5 * current_end_magnitude); // 1.5 ist just a value that I picked for the moment.
+						spline_list[spline_counter]->setEndTangentMagnitude(1.05 * current_end_magnitude); // 1.5 ist just a value that I picked for the moment.
 					}
 
 					spline_list[spline_counter]->calcControlPoints();

@@ -17,7 +17,8 @@ find_package(
 	costmap_2d
 	geometry_msgs
 	nav_msgs
-	tf2_ros)
+	tf2_ros
+	fpp_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -128,11 +129,26 @@ include_directories(
 )
 
 ## Declare a C++ library
+set(FPC_DATA_CLASSES_SOURCES
+
+	include/fpc_ros/data_classes/local_planner_robot_info.hpp
+	include/fpc_ros/data_classes/lyapunov_params.hpp)
+add_library(fpc_data_classes ${FPC_DATA_CLASSES_SOURCES})
+
 set(FPC_ROS_SOURCES
 
 	include/fpc_ros/fpc_ros.h
 	src/fpc_ros.cpp
-)
+
+	include/fpc_ros/fpc_controller_base.h
+	src/fpc_controller_base.cpp
+
+	include/fpc_ros/fpc_controller_master.h
+	src/fpc_controller_master.cpp
+
+	include/fpc_ros/fpc_controller_slave.h
+	src/fpc_controller_slave.cpp
+	)
 add_library(fpc_ros ${FPC_ROS_SOURCES})
 
 ## Add cmake target dependencies of the library
@@ -150,6 +166,8 @@ add_library(fpc_ros ${FPC_ROS_SOURCES})
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+set_target_properties(fpc_data_classes PROPERTIES LINKER_LANGUAGE CXX)
+
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -157,6 +175,11 @@ add_library(fpc_ros ${FPC_ROS_SOURCES})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(fpc_ros
+	fpc_data_classes
+  	${catkin_LIBRARIES}
+)
+
+target_link_libraries(fpc_data_classes
   	${catkin_LIBRARIES}
 )
 

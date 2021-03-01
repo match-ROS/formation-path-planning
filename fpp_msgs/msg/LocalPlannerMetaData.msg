@@ -9,14 +9,14 @@ geometry_msgs/Twist current_vel
 geometry_msgs/Pose2D target_pose
 geometry_msgs/Twist target_vel
 
-# Aditional pose values
-geometry_msgs/Pose ground_truth_pose
-geometry_msgs/Pose odom_pose
-geometry_msgs/Pose amcl_pose
-
 # Diff values
 geometry_msgs/Pose2D current_to_target_pose_diff
 geometry_msgs/Twist current_to_target_vel_diff
+
+# Aditional pose values
+geometry_msgs/Pose2D ground_truth_pose
+geometry_msgs/Pose2D odom_pose
+geometry_msgs/Pose2D amcl_pose
 
 # Interesting info
 geometry_msgs/Pose2D current_to_amcl_pose_diff

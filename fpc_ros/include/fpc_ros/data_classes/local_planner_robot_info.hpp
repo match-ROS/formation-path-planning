@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <fpc_ros/data_classes/lyapunov_params.hpp>
 
 namespace fpc_data_classes
 {
@@ -21,5 +22,7 @@ namespace fpc_data_classes
 		std::string robot_pose_topic;
 		//! Topic name where the odometry of the robot can be received
 		std::string robot_odom_topic;
+		//! Params for the lyapunov controller
+		fpc_data_classes::LyapunovParams lyapunov_params;
 	};
 }

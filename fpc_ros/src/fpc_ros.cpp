@@ -20,21 +20,30 @@ namespace fpc
 
 			// Store all process info
 			this->controller_name_ = name;
-			this->tf_buffer_ = tf;
-			this->costmap_ros_ = costmap_ros;
-			this->costmap_ = this->costmap_ros_->getCostmap();
-			this->global_frame_ = this->costmap_ros_->getGlobalFrameID();
-
+			
 			this->nh_ = ros::NodeHandle();
-			this->planner_nh_ = ros::NodeHandle("~/" + this->controller_name_);
+			this->controller_nh_ = ros::NodeHandle("~/" + this->controller_name_);
 		
-			this->tf_prefix_ = tf::getPrefixParam(this->nh_);
-			this->robot_ns_ = this->nh_.getNamespace();
-
 			// Read and store all params that are set by the yaml config
 			this->getParams();
 
 			// CREATE MASTER SLAVE OBJECTS HERE
+			if(this->current_robot_info_->fpc_master)
+			{
+				this->fpc_controller_ = std::make_shared<fpc::FPCControllerMaster>(this->robot_info_list_,
+																				   this->current_robot_info_,
+																				   this->nh_,
+																				   this->controller_nh_);
+			}
+			else
+			{
+				this->fpc_controller_ = std::make_shared<fpc::FPCControllerSlave>(this->robot_info_list_,
+																				  this->current_robot_info_,
+																				  this->nh_,
+																				  this->controller_nh_);
+			}
+
+			this->fpc_controller_->initialize(this->controller_name_, tf, costmap_ros);
 
 			this->initialized_ = true;
 			ROS_INFO_STREAM("FormationPathController::initialize: FPC has been succesfully initialized");
@@ -97,8 +106,8 @@ namespace fpc
         }
 
 		// Get default tolerances for the planner
-		this->planner_nh_.param<double>("xy_default_tolerance", this->xy_default_tolerance_, 0.1);
-		this->planner_nh_.param<double>("yaw_default_tolerance", this->yaw_default_tolerance_, ((2.0 * M_PI) / (360.0)) * 5.0);
+		this->controller_nh_.param<double>("xy_default_tolerance", this->xy_default_tolerance_, 0.1);
+		this->controller_nh_.param<double>("yaw_default_tolerance", this->yaw_default_tolerance_, ((2.0 * M_PI) / (360.0)) * 5.0);
 
 		// Get the topic name where the current pose of the robots will be published
 		// This param is used to set the topic name of each robot to the same name. Special "robot_pose_topic" params in the robot params override this.
@@ -120,7 +129,7 @@ namespace fpc
 
 		// Get information about the robots that are participating in the formation
 		XmlRpc::XmlRpcValue formation_config;
-        this->planner_nh_.getParam("formation_config", formation_config);
+        this->controller_nh_.getParam("formation_config", formation_config);
         if(formation_config.getType() == XmlRpc::XmlRpcValue::TypeStruct)
         {
             XmlRpc::XmlRpcValue::ValueStruct::const_iterator robot_iterator;
@@ -179,6 +188,23 @@ namespace fpc
 					{
 						ROS_ERROR_STREAM("robot_odom_topic was not set for " << robot_info->robot_name);
 					}
+
+					// Set lyapunov params for each robot individually
+					if(robot_info_xmlrpc.hasMember("lyapunov_params") && robot_info_xmlrpc["lyapunov_params"].getType() == XmlRpc::XmlRpcValue::TypeArray)
+					{
+						float kx = getNumberFromXMLRPC(robot_info_xmlrpc["lyapunov_params"][0],
+													   "formation_config/" + robot_info->robot_name + "/lyapunov_params");
+						float ky = getNumberFromXMLRPC(robot_info_xmlrpc["lyapunov_params"][1],
+													   "formation_config/" + robot_info->robot_name + "/lyapunov_params");
+						float kphi = getNumberFromXMLRPC(robot_info_xmlrpc["lyapunov_params"][2],
+														 "formation_config/" + robot_info->robot_name + "/lyapunov_params");
+
+						robot_info->lyapunov_params = fpc_data_classes::LyapunovParams(kx, ky, kphi);
+					}
+					else
+					{
+						ROS_ERROR_STREAM("lyapunov_params was not set for " << robot_info->robot_name);
+					}
                 }
 
                 this->robot_info_list_.push_back(robot_info);
@@ -190,18 +216,31 @@ namespace fpc
         }		
 	}
 
-	Eigen::Vector2f FormationPathController::getPosition(const geometry_msgs::Pose &pose)
-	{
-		Eigen::Vector2f position;
-		position << pose.position.x, pose.position.y;
-		return position;
-	}
+	double FormationPathController::getNumberFromXMLRPC(XmlRpc::XmlRpcValue value, const std::string full_param_name)
+    {
+        if (value.getType() != XmlRpc::XmlRpcValue::TypeInt &&
+            value.getType() != XmlRpc::XmlRpcValue::TypeDouble)
+        {
+            std::string& value_string = value;
+            ROS_FATAL("Values in the XmlRpcValue specification (param %s) must be numbers. Found value %s.",
+                    full_param_name.c_str(), value_string.c_str());
+            throw std::runtime_error("Values for the " + full_param_name + " specification must be numbers");
+        }
+        return value.getType() == XmlRpc::XmlRpcValue::TypeInt ? (int)(value) : (double)(value);
+    }
 
-	Eigen::Vector3f FormationPathController::getPose(const geometry_msgs::Pose &pose)
-	{
-		Eigen::Vector3f eigen_pose;
-		float yaw = tf::getYaw(pose.orientation);
-		eigen_pose << this->getPosition(pose), yaw;
-		return eigen_pose;
-	}
+	// Eigen::Vector2f FormationPathController::getPosition(const geometry_msgs::Pose &pose)
+	// {
+	// 	Eigen::Vector2f position;
+	// 	position << pose.position.x, pose.position.y;
+	// 	return position;
+	// }
+
+	// Eigen::Vector3f FormationPathController::getPose(const geometry_msgs::Pose &pose)
+	// {
+	// 	Eigen::Vector3f eigen_pose;
+	// 	float yaw = tf::getYaw(pose.orientation);
+	// 	eigen_pose << this->getPosition(pose), yaw;
+	// 	return eigen_pose;
+	// }
 }

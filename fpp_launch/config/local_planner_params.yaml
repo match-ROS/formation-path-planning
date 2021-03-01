@@ -24,11 +24,14 @@ FormationPathController:
       master: true
       robot_pose_topic: amcl_pose
       robot_odom_topic: mobile_base_controller/odom
+      lyapunov_params: [3.4, 10.0, 2.5]
     robot1:
       namespace: /robot1_ns
       robot_pose_topic: amcl_pose
       robot_odom_topic: mobile_base_controller/odom
+      lyapunov_params: [3.4, 10.0, 2.5]
     robot2:
       namespace: /robot2_ns
       robot_pose_topic: amcl_pose
       robot_odom_topic: mobile_base_controller/odom
+      lyapunov_params: [3.4, 10.0, 2.5]

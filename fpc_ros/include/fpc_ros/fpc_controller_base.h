@@ -1,8 +1,11 @@
+#pragma once
+
 #include "ros/ros.h"
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <tf2_ros/buffer.h>
 #include <tf/transform_listener.h>
@@ -10,8 +13,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <eigen3/Eigen/Dense>
 
-#include <fpc_ros/data_classes/local_planner_robot_info.h>
+#include <fpc_ros/data_classes/local_planner_robot_info.hpp>
+#include <fpp_msgs/LocalPlannerMetaData.h>
 
 namespace fpc
 {
@@ -28,8 +33,8 @@ namespace fpc
 
 			#pragma region ControllerInterface
 			virtual void initialize(std::string controller_name,
-									costmap_2d::Costmap2D *costmap,
-									std::string global_frame);
+									tf2_ros::Buffer *tf,
+									costmap_2d::Costmap2DROS *costmap_ros);
 
 			virtual bool setPlan(const std::vector<geometry_msgs::PoseStamped> &plan);
 
@@ -61,8 +66,14 @@ namespace fpc
             std::string controller_name_;
             //! Direct pointer to the costmap to get updates instantly without the usage of topics
             costmap_2d::Costmap2D *costmap_;
+			costmap_2d::Costmap2DROS *costmap_ros_;
             //! Global frame which is used to transform points into map coordinate system
             std::string global_frame_;
+			
+			tf2_ros::Buffer *tf_buffer_;
+
+			std::string tf_prefix_;
+			std::string robot_ns_;
 
 			#pragma region ProcessInfo
 			//! This is all the information that was read from the config file about each robot
@@ -73,19 +84,23 @@ namespace fpc
 			const std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> master_robot_info_;
 
 			std::vector<geometry_msgs::PoseStamped> global_plan_;
+
+			int pose_index_;
+			bool controller_finished_;
 			#pragma endregion
 
 
 
 			#pragma region Topics/Services/Actions
 			ros::Subscriber robot_amcl_pose_subscriber_;
-			geometry_msgs::Pose current_robot_pose_;
+			geometry_msgs::Pose current_robot_amcl_pose_;
 			ros::Subscriber robot_odom_subscriber_;
 			nav_msgs::OdometryConstPtr current_robot_odom_;
 			ros::Subscriber robot_ground_truth_subscriber_; // This subscriber will only work in Gazebo where ground truth is published
 			nav_msgs::OdometryConstPtr current_robot_ground_truth_;
 
 			ros::Publisher meta_data_publisher_;
+			fpp_msgs::LocalPlannerMetaData meta_data_msg_; // This is the msg that will be published. Every info can be stored here and will be reset when message is published. 
 			#pragma endregion
 
 			#pragma CallbackMethods
@@ -115,6 +130,10 @@ namespace fpc
 
 			std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> getMasterRobotInfo(
 				const std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list);
+
+			geometry_msgs::Pose2D convertPose(geometry_msgs::Pose pose_to_convert);
+			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose);
+			geometry_msgs::Twist calcDiff(geometry_msgs::Twist start_vel, geometry_msgs::Twist end_vel);
 			#pragma endregion
 	};
 }

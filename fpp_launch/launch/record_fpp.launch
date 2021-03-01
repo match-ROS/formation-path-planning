@@ -5,7 +5,7 @@
     <node pkg="rosbag" type="record" name="record_fpp"
        args="record -e  (.*)/mobile_base_controller/odom
                         (.*)/mobile_base_controller/cmd_vel
-						(.*)/plan
+						(.*)/move_base_flex/FormationPathController/fpc_meta_data
 
                         
                     -o $(arg file_path)$(arg ros_bag_filename).bag"/>

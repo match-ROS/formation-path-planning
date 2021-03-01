@@ -7,22 +7,21 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
 
+#include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <nav_msgs/Odometry.h>
 #include <tf2_ros/buffer.h>
-#include <tf/transform_listener.h>
 
 #include <memory>
 #include <vector>
 #include <string>
 #include <XmlRpc.h>
-#include <Eigen/Dense>
 
-#include <fpc_ros/data_classes/local_planner_robot_info.h>
+#include <fpc_ros/data_classes/local_planner_robot_info.hpp>
+#include <fpc_ros/data_classes/lyapunov_params.hpp>
 #include <fpc_ros/fpc_controller_base.h>
+#include <fpc_ros/fpc_controller_master.h>
+#include <fpc_ros/fpc_controller_slave.h>
 
 namespace fpc
 {
@@ -112,40 +111,35 @@ namespace fpc
 			bool cancel() override;
 
 		private:
-			//////////////////////////////////////////////////
-			// Parameter
-			//////////////////////////////////////////////////
+			#pragma region ControllerParams
 			double xy_default_tolerance_;
 			double yaw_default_tolerance_;
 			std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> robot_info_list_;
 			std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> current_robot_info_;
+			#pragma endregion
 
-			//////////////////////////////////////////////////
-			// Process Member
-			//////////////////////////////////////////////////
+			#pragma region ProcessMember
 			ros::NodeHandle nh_;
-			ros::NodeHandle planner_nh_;
+			ros::NodeHandle controller_nh_;
 
 			std::string robot_name_;
 			std::string controller_name_;
-			std::string global_frame_;
- 			std::string tf_prefix_;
-			std::string robot_ns_;
-			tf2_ros::Buffer *tf_buffer_;
-			costmap_2d::Costmap2DROS *costmap_ros_;
-			costmap_2d::Costmap2D *costmap_;
 
 			bool initialized_;
 
 			std::shared_ptr<fpc::FPCControllerBase> fpc_controller_;
 
 			int pose_index_;
+			#pragma endregion
 
 			////////////////////////////////////////////////
 			// Private Helper Methods
 			////////////////////////////////////////////////
 			void getParams();
-			Eigen::Vector2f getPosition(const geometry_msgs::Pose &pose);
-			Eigen::Vector3f getPose(const geometry_msgs::Pose &pose);
+			double getNumberFromXMLRPC(XmlRpc::XmlRpcValue value, const std::string full_param_name);
+
+			
+			// Eigen::Vector2f getPosition(const geometry_msgs::Pose &pose);
+			// Eigen::Vector3f getPose(const geometry_msgs::Pose &pose);
 	};
 }
