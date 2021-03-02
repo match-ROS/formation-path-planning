@@ -290,13 +290,44 @@ namespace fpp
 				Eigen::Vector2f pose = path_planner_formation.getRobotPosWorldCS(robot_info_it->robot_name);
 				new_pose.pose.position.x = pose[0];
 				new_pose.pose.position.y = pose[1];
-				new_pose.pose.orientation = formation_pose_in_plan.pose.orientation;
+				new_pose.pose.position.z = 0.0;
+
+				// new_pose.pose.orientation = formation_pose_in_plan.pose.orientation;
 
 				this->robot_plan_list_[robot_info_it->robot_name].push_back(new_pose);
 			}
 		}
 
+		//Calc orientation for each point of the robot plans
+		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+		{
+			// for(geometry_msgs::PoseStamped formation_pose_in_plan_: this->robot_plan_list_[robot_info_it->robot_name])
+			// {
+				
+			// }
 
+			// < is necessary because we just copy elements from one vector (0 until size()) to the other
+            for(uint path_counter = 0; path_counter < this->robot_plan_list_[robot_info_it->robot_name].size(); path_counter++)
+            {
+                // Calculate orientation for each point of the plan with the current position and the last one
+                if(path_counter == 0) // No previous point so orientation of start will be taken
+                {
+                    this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.orientation = formation_plan[0].pose.orientation;
+                }
+                else // Some other points are before, so orientation can be calculated
+                {
+					float delta_x = this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.position.x -
+									this->robot_plan_list_[robot_info_it->robot_name][path_counter - 1].pose.position.x;
+					float delta_y = this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.position.y -
+									this->robot_plan_list_[robot_info_it->robot_name][path_counter - 1].pose.position.y;
+                    double yaw_angle = std::atan2(delta_y, delta_x);
+                    this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
+                }
+
+                // last_pose = pose; // Safe pose for next iteration
+                // plan.insert(plan.begin() + plan.size(), pose);
+            }
+		}
 	}
 
     void FPPControllerMaster::updateFootprint()
