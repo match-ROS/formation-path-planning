@@ -271,7 +271,6 @@ namespace fpp
 			this->robot_plan_list_.insert(std::pair<std::string, std::vector<geometry_msgs::PoseStamped>>(robot_info_it->robot_name,
 																										  std::vector<geometry_msgs::PoseStamped>()));
 		}
-
 		// Push FormationContour along the path and save each robot position in the plan list
 		for(geometry_msgs::PoseStamped formation_pose_in_plan: formation_plan)
 		{
@@ -296,6 +295,8 @@ namespace fpp
 				this->robot_plan_list_[robot_info_it->robot_name].push_back(new_pose);
 			}
 		}
+
+
 	}
 
     void FPPControllerMaster::updateFootprint()

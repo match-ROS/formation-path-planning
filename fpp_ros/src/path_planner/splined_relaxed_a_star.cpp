@@ -371,7 +371,7 @@ namespace path_planner
                 plan.insert(plan.begin() + plan.size(), pose);
             }
         }
-        // ROS_INFO("Planning finished %i", plan.size());
+        ROS_INFO("Planning finished %i", plan.size());
         this->publishPlan(plan);
         return 0;
     }

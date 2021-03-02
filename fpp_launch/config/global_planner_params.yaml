@@ -55,12 +55,12 @@ FormationPathPlanner:
       end_straight_distance: 1.0
       # Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
       # Every nth cell will act as a control point
-      control_point_distance: 80
+      control_point_distance: 100
       # This value defines how many points should be inserted into the plan from one spline.
       # F.e. control_point_distance = 50. With 0.05m per cell the control points are spaced every 2.5m.
       # With a planning_points_per_spline value of 20 this would generate 30 points into the plan that are in between two control points.
       # So roughly every 0.125m
-      planning_points_per_spline: 100
+      planning_points_per_spline: 200
       # Minimal radius of a curve the formation can drive in m.
       # This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.
       # Whichever radius is bigger will be selected for creating the splines

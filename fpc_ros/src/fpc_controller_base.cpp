@@ -42,6 +42,7 @@ namespace fpc
 	bool FPCControllerBase::setPlan(const std::vector<geometry_msgs::PoseStamped> &plan)
 	{
 		this->global_plan_ = plan;
+		this->last_target_pose_ = this->global_plan_[0];
 		return true;
 	}
 
@@ -115,7 +116,7 @@ namespace fpc
 		// ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
 		// ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
 
-		double controller_freq = 2; // This must be a parameter later as the move base settings define this
+		double controller_freq = 2.0; // This must be a parameter later as the move base settings define this
 		double period_time_span = 1.0 / controller_freq;
 
 		// geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
@@ -182,12 +183,12 @@ namespace fpc
 		double output_omega;
 
 		output_v = this->robot_info_->lyapunov_params.kx * x + v * cos(phi);
-		// ROS_INFO_STREAM("kx: " << kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
+		// ROS_INFO_STREAM("kx: " << this->robot_info_->lyapunov_params.kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
 
 		output_omega = omega +
 					   this->robot_info_->lyapunov_params.ky * v * y +
 					   this->robot_info_->lyapunov_params.kphi * sin(phi);
-		// ROS_INFO_STREAM("omega: " << omega << " ky: " << ky << " v: " << v << " y: " << y << " kphi: " << kphi << " phi: " << phi << " sin(phi): " << sin(phi));
+		// ROS_INFO_STREAM("omega: " << omega << " ky: " << this->robot_info_->lyapunov_params.ky << " v: " << v << " y: " << y << " kphi: " << this->robot_info_->lyapunov_params.kphi << " phi: " << phi << " sin(phi): " << sin(phi));
 		// COPY PASTED FROM MALTE END
 
 		if(this->robot_info_->robot_name == "robot0")
@@ -206,6 +207,10 @@ namespace fpc
 		this->meta_data_msg_.target_pose = this->convertPose(this->global_plan_[this->pose_index_].pose);
 		this->meta_data_msg_.current_pose = this->convertPose(pose.pose);
 		this->publishMetaData();
+
+		// if(this->robot_info_->robot_name == "robot0")
+		// 	ROS_INFO_STREAM("x_diff: " << this->global_plan_[this->pose_index_].pose.position.x - this->last_target_pose_.pose.position.x << " | y_diff: " << this->global_plan_[this->pose_index_].pose.position.y - this->last_target_pose_.pose.position.y << " | phi_diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(this->last_target_pose_.pose.orientation));
+		this->last_target_pose_ = this->global_plan_[this->pose_index_];
 
 		this->pose_index_++;
 

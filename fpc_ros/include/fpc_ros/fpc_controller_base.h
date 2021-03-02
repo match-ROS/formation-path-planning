@@ -87,6 +87,8 @@ namespace fpc
 
 			int pose_index_;
 			bool controller_finished_;
+
+			geometry_msgs::PoseStamped last_target_pose_;
 			#pragma endregion
 
 
