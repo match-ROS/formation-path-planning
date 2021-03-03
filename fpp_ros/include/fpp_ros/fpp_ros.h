@@ -52,6 +52,7 @@ namespace fpp
     class FormationPathPlanner : public nav_core::BaseGlobalPlanner, public mbf_costmap_core::CostmapPlanner
     {
         public: 
+			#pragma region Constructors
             /**
              * @brief Default constructor of the Relaxed A Star class
              * 
@@ -65,7 +66,9 @@ namespace fpp
              * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
              */
             FormationPathPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
+			#pragma endregion
 
+			#pragma region nav_core and mbf interface implementation
             // mbf_costmap_core::CostmapPlanner interface implementation
             /**
             * @brief Initialization function for the CostmapPlanner
@@ -128,6 +131,7 @@ namespace fpp
             * @return True if a cancel has been successfully requested, false if not implemented.
             */
             bool cancel();
+			#pragma endregion
 
         private:
             //! Nodehandle for the planner
@@ -142,8 +146,6 @@ namespace fpp
             
 			//! This object contains all params for the fpp and provides param reading
 			std::shared_ptr<fpp_data_classes::FPPParamManager> fpp_params_;
-
-            // Process information
 
             //! Object that defines if this planner acts as slave or master. Calls to this object execute the planner.
             std::shared_ptr<FPPControllerBase> fpp_controller_;

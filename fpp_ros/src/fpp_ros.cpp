@@ -6,6 +6,7 @@ PLUGINLIB_EXPORT_CLASS(fpp::FormationPathPlanner, nav_core::BaseGlobalPlanner)
 
 namespace fpp
 {
+	#pragma region Constructors
     FormationPathPlanner::FormationPathPlanner() : 
         initialized_(false)
     { }
@@ -19,7 +20,9 @@ namespace fpp
 			this->initialize(name, costmap_ros);
 		}
     }
+	#pragma endregion
 
+	#pragma region nav_core and mbf interface implementation
 	void FormationPathPlanner::initialize(std::string name,
 										  costmap_2d::Costmap2DROS *costmap_ros)
 	{
@@ -107,4 +110,5 @@ namespace fpp
         ROS_INFO_STREAM("FormationPathPlanner: CANCEL");
         return false; 
     }
+	#pragma endregion
 }
