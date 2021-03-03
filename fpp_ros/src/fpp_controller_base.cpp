@@ -36,7 +36,6 @@ namespace fpp
         path_to_publish.header.frame_id = plan[0].header.frame_id;
 
         path_to_publish.poses = plan;
-		// ROS_INFO_STREAM("publish: " << path_to_publish.poses.size() << " " << plan_publisher.getTopic());
         plan_publisher.publish(path_to_publish);
     }
 }

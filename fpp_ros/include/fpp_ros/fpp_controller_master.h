@@ -131,6 +131,8 @@ namespace fpp
             ros::ServiceClient dyn_rec_inflation_srv_client_;
 			//!
 			ros::ServiceServer get_robot_plan_srv_server_;
+			//! List that contains an action client linked to all slave robots in the formation
+			std::vector<std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>> slave_move_base_as_list_;
 
             //! Topic to publish the footprint of the formation
             ros::Publisher formation_footprint_pub_;
