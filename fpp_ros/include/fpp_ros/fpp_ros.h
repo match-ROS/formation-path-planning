@@ -41,6 +41,7 @@
 #include <fpp_ros/geometry_info/geometry_contour.h>
 #include <fpp_ros/geometry_info/formation_contour.h>
 #include <fpp_ros/data_classes/robot_info.h>
+#include <fpp_ros/data_classes/fpp_param_manager.h>
 
 #include <fpp_ros/fpp_controller_base.h>
 #include <fpp_ros/fpp_controller_master.h>
@@ -128,25 +129,7 @@ namespace fpp
             */
             bool cancel();
 
-        protected:
-            // ROS wrapper for the 2DCostmap object. Probably unnessecary to also store this next to the 2DCostmap object
-            costmap_2d::Costmap2DROS *costmap_ros_;
-            // This object is a pointer to the 2D costmap
-            costmap_2d::Costmap2D *costmap_;
-
         private:
-            /**
-             * @brief Helper method for reading all parameters from the global_planner_params.yaml
-             * 
-             */
-            void getParams();
-
-            Eigen::Vector2f MsgsPoseToEigenVector2f(geometry_msgs::Pose pose_to_convert);
-
-            double getNumberFromXMLRPC(XmlRpc::XmlRpcValue value, const std::string full_param_name);
-            std::vector<Eigen::Vector2f> createRobotOutlineFromXMLRPC(XmlRpc::XmlRpcValue footprint_xmlrpc,
-                                                                      const std::string full_param_name);
-
             //! Nodehandle for the planner
             ros::NodeHandle nh_;
             ros::NodeHandle planner_nh_;
@@ -155,34 +138,13 @@ namespace fpp
             bool initialized_;
 
             //! Name of the path planner
-            std::string path_planner_name_; 
-            //! Namespace the robot is located in
-            std::string robot_ns_;
-            //! Name of the robot
-            std::string robot_name_; 
-            //! Global frame of the robot
-            std::string global_frame_; 
-            //! tf_prefix that was defined in the launch files for the robot
-            std::string tf_prefix_; 
-
-
-            // Parameter list
-
-            //! The default tolerance that is used if the tolerance of the received goal is not valid
-            float default_tolerance_;
-            //! Contains all positions of every robot that is part of the formation
-            std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list_;
-            //! This is a pointer to the RobotInfo object in the robot_info_list for easier access
-            std::shared_ptr<fpp_data_classes::RobotInfo> current_robot_info_;
+            std::string path_planner_name_;
+            
+			//! This object contains all params for the fpp and provides param reading
+			std::shared_ptr<fpp_data_classes::FPPParamManager> fpp_params_;
 
             // Process information
 
-            //! This value defines the size of the arrays that are the 1D-representation of the costmap
-            int array_size_;
-            //! Storing the start position as pose from where the robot is starting
-            geometry_msgs::PoseStamped start_;
-            //! Storing the goal position as pose where the robot should arrive after following the calculated path
-            geometry_msgs::PoseStamped goal_;
             //! Object that defines if this planner acts as slave or master. Calls to this object execute the planner.
             std::shared_ptr<FPPControllerBase> fpp_controller_;
     };

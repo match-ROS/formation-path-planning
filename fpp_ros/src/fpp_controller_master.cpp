@@ -2,11 +2,10 @@
 
 namespace fpp
 {
-    FPPControllerMaster::FPPControllerMaster(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
-                                             std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
+    FPPControllerMaster::FPPControllerMaster(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
                                              ros::NodeHandle &nh,
                                              ros::NodeHandle &planner_nh)
-        : FPPControllerBase(robot_info_list, robot_info, nh, planner_nh)
+        : FPPControllerBase(fpp_params, nh, planner_nh)
     {
         this->initServices();
         this->initTopics();
@@ -17,15 +16,17 @@ namespace fpp
 		// Add master robot by amcl pose
 		Eigen::Vector2f master_robot_pose;
 		float master_yaw;
-		this->getAMCLPose(robot_info->robot_namespace, master_robot_pose, master_yaw);
-		geometry_info::RobotContour master_robot_contour = geometry_info::RobotContour(master_robot_pose, master_yaw, robot_info->robot_name);
-		this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(robot_info->robot_name, master_robot_contour));
+		this->getAMCLPose(this->fpp_params_->getCurrentRobotNamespace(), master_robot_pose, master_yaw);
+		geometry_info::RobotContour master_robot_contour = geometry_info::RobotContour(
+			master_robot_pose, master_yaw, this->fpp_params_->getCurrentRobotName());
+		this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(
+			this->fpp_params_->getCurrentRobotName(), master_robot_contour));
 		this->target_formation_contour_.addRobotToFormation(master_robot_contour);
 
 		// Add slave robots by relative offset to master robot. Take same yaw angle as this should be equal
-        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->robot_info_list_)
+        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->fpp_params_->getRobotInfoList())
         {
-			if(robot_info_it->robot_name != robot_info->robot_name)
+			if(robot_info_it->robot_name != this->fpp_params_->getCurrentRobotName())
 			{
 				Eigen::Vector2f robot_target_pose = master_robot_pose + robot_info_it->offset;
 
@@ -39,7 +40,8 @@ namespace fpp
 				}
 				slave_robot_contour.createContourEdges();
 
-				this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(robot_info->robot_name, slave_robot_contour));
+				this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(
+					robot_info_it->robot_name, slave_robot_contour));
 				this->target_formation_contour_.addRobotToFormation(slave_robot_contour);
 			}
         }
@@ -58,7 +60,7 @@ namespace fpp
 
 		// Initialize real footprint that takes purely AMCL position
 		this->real_formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
-		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->robot_info_list_)
+		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->fpp_params_->getRobotInfoList())
         {
 			Eigen::Vector2f real_robot_pose;
 			float real_yaw;
@@ -119,15 +121,16 @@ namespace fpp
                                                                         this->global_frame_);
         this->readParams(planner_name);
 
-		ROS_INFO_STREAM("robot_name: " << this->robot_info_->robot_name);
+		ROS_INFO_STREAM("robot_name: " << this->fpp_params_->getCurrentRobotName());
 
 		// Initialize move_base action servers to the slave robots
-		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->robot_info_list_)
+		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->fpp_params_->getRobotInfoList())
 		{
-			if(robot_info->robot_name != this->robot_info_->robot_name)
+			if(robot_info->robot_name != this->fpp_params_->getCurrentRobotName())
 			{
 				std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> slave_move_base_as =
-					std::make_shared<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>(robot_info->robot_namespace + "/move_base_flex/move_base", true);
+					std::make_shared<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>(
+						robot_info->robot_namespace + "/move_base_flex/move_base", true);
 				ROS_INFO_STREAM("FPPControllerMaster::initialize: Waiting for " << robot_info->robot_namespace << "/move_base_flex/move_base action server");
 				slave_move_base_as->waitForServer();
 
@@ -182,7 +185,7 @@ namespace fpp
 			// Check if calculated minimal radius is bigger than the param
 			// Minimal radius is calculated by getting the distance between the robot that is the furthest away from the formation centre
 			float max_calculated_minimal_curve_radius = 0.0;
-			for(std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info: this->robot_info_list_)
+			for(std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info: this->fpp_params_->getRobotInfoList())
 			{
 				float calculated_minimal_curve_radius = this->target_formation_contour_.getRobotPosGeometryCS(robot_info->robot_name).norm();
 				if(max_calculated_minimal_curve_radius < calculated_minimal_curve_radius)
@@ -196,8 +199,6 @@ namespace fpp
 				minimal_curve_radius = max_calculated_minimal_curve_radius;
 			}
 			this->initial_path_planner_.setMinimalCurveRadius(minimal_curve_radius);
-
-            ROS_INFO_STREAM("1: " << default_tolerance << " 2: " << neighbor_type << " 3: " << free_cell_thresshold << " 4: " << minimal_curve_radius);
         }
     }
 
@@ -216,7 +217,7 @@ namespace fpp
         this->initial_path_planner_.makePlan(formation_start, goal, formation_plan);
 
 		this->calcRobotPlans(formation_plan);
-		plan = this->robot_plan_list_[this->robot_info_->robot_name];
+		plan = this->robot_plan_list_[this->fpp_params_->getCurrentRobotName()];
 		
 		// Call move_base action servers of each slave robot to initialize the global planning of their path
 		for(std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> &slave_move_base_as: this->slave_move_base_as_list_)
@@ -266,7 +267,7 @@ namespace fpp
 		// Clear existing plans and create new empty lists for the plans for each robot
 		this->robot_plan_list_.clear();
 		geometry_info::FormationContour path_planner_formation = this->target_formation_contour_;
-		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
 		{
 			this->robot_plan_list_.insert(std::pair<std::string, std::vector<geometry_msgs::PoseStamped>>(robot_info_it->robot_name,
 																										  std::vector<geometry_msgs::PoseStamped>()));
@@ -281,7 +282,7 @@ namespace fpp
 			float new_rotation = tf::getYaw(formation_pose_in_plan.pose.orientation);
 			path_planner_formation.moveContour(new_lead_vector_world_cs, new_rotation);
 
-			for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+			for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
 			{
 				geometry_msgs::PoseStamped new_pose;
 				new_pose.header.stamp = formation_pose_in_plan.header.stamp;
@@ -299,7 +300,7 @@ namespace fpp
 		}
 
 		//Calc orientation for each point of the robot plans
-		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->robot_info_list_)
+		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
 		{
 			// for(geometry_msgs::PoseStamped formation_pose_in_plan_: this->robot_plan_list_[robot_info_it->robot_name])
 			// {
@@ -332,7 +333,7 @@ namespace fpp
 
     void FPPControllerMaster::updateFootprint()
     {
-        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->robot_info_list_)
+        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->fpp_params_->getRobotInfoList())
         {
             Eigen::Vector2f new_robot_pose;
             float new_rotation;
@@ -366,7 +367,7 @@ namespace fpp
     {
         fpp_msgs::DynReconfigure dyn_reconfig_msg;
         dyn_reconfig_msg.request.new_inflation_radius = this->formation_enclosing_circle_.getCircleRadius();
-        dyn_reconfig_msg.request.robot_namespace = this->robot_info_->robot_namespace;
+        dyn_reconfig_msg.request.robot_namespace = this->fpp_params_->getCurrentRobotNamespace();
         ros::Duration(0.1).sleep();
         this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
     }

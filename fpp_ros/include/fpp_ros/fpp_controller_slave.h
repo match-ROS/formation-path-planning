@@ -4,17 +4,19 @@
 
 #include <fpp_ros/fpp_controller_base.h>
 
+#include <fpp_ros/data_classes/robot_info.h>
+#include <fpp_ros/data_classes/fpp_param_manager.h>
+
 namespace fpp
 {
     class FPPControllerSlave : public FPPControllerBase
     {
         public:
-            FPPControllerSlave(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
-                               std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
-                               ros::NodeHandle &nh,
-                               ros::NodeHandle &planner_nh);
+			FPPControllerSlave(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
+							   ros::NodeHandle &nh,
+							   ros::NodeHandle &planner_nh);
 
-            void execute(const geometry_msgs::PoseStamped &start,
+			void execute(const geometry_msgs::PoseStamped &start,
                          const geometry_msgs::PoseStamped &goal,
                          std::vector<geometry_msgs::PoseStamped> &plan) override;
 

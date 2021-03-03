@@ -185,7 +185,10 @@ add_library(geometry_info ${GEOMETRY_INFO_SOURCES})
 set(DATA_CLASS_SOURCES
 	include/fpp_ros/data_classes/robot_info.h
 
-	include/fpp_ros/data_classes/path_planner_types.h)
+	include/fpp_ros/data_classes/path_planner_types.h
+	
+	include/fpp_ros/data_classes/fpp_param_manager.h
+	src/data_classes/fpp_param_manager.cpp)
 add_library(data_classes ${DATA_CLASS_SOURCES})
 
 ## Add cmake target dependencies of the library

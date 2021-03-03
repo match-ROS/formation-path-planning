@@ -23,6 +23,7 @@
 
 #include <fpp_msgs/DynReconfigure.h>
 #include <fpp_ros/data_classes/robot_info.h>
+#include <fpp_ros/data_classes/fpp_param_manager.h>
 
 #include <fpp_ros/geometry_info/geometry_contour.h>
 #include <fpp_ros/geometry_info/robot_contour.h>
@@ -41,8 +42,7 @@ namespace fpp
              * @param robot_info Reference to pointer that points to element in the robot_info_list that defines the information about the robot this controller is running on.
              * @param nh Nodehandle for topics/services and actions
              */
-            FPPControllerBase(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
-                              std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
+            FPPControllerBase(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
                               ros::NodeHandle &nh,
                               ros::NodeHandle &planner_nh);
 
@@ -66,16 +66,13 @@ namespace fpp
 			std::vector<std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>> slave_move_base_as_list_;
 
             //! This is all the information that was read from the config file about each robot
-            std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list_;
-
-            //! This points to the object in the robot_info_list_ that contains the information about this robot
-            std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_;
-			//! This point to the object in the robot_info_list that represents the master in the formation path planner
-			const std::shared_ptr<fpp_data_classes::RobotInfo> master_robot_info_;
+            std::shared_ptr<fpp_data_classes::FPPParamManager> fpp_params_;
 
             // Information for used planner
             //! Name of the planer that is used to generate the plan for the formation
             std::string planner_name_;
+			// ROS wrapper for the 2DCostmap object. Probably unnessecary to also store this next to the 2DCostmap object
+            costmap_2d::Costmap2DROS *costmap_ros_;
             //! Direct pointer to the costmap to get updates instantly without the usage of topics
             costmap_2d::Costmap2D *costmap_;
             //! Global frame which is used to transform points into map coordinate system
@@ -83,8 +80,6 @@ namespace fpp
 
 			//! Topic to publish the plan of the current robot.
             ros::Publisher robot_plan_pub_;
-
-			std::shared_ptr<fpp_data_classes::RobotInfo> getMasterRobotInfo(const std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list);
 
 			/**
              * @brief Helper method for intializing all services

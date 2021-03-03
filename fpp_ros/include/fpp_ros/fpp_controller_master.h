@@ -14,6 +14,9 @@
 
 #include <fpp_ros/fpp_controller_base.h>
 
+#include <fpp_ros/data_classes/fpp_param_manager.h>
+#include <fpp_ros/data_classes/robot_info.h>
+
 #include <fpp_ros/path_planner/splined_relaxed_a_star.h>
 #include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
 
@@ -22,8 +25,7 @@ namespace fpp
     class FPPControllerMaster : public FPPControllerBase
     {
         public:
-            FPPControllerMaster(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
-                                std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
+            FPPControllerMaster(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
                                 ros::NodeHandle &nh,
                                 ros::NodeHandle &planner_nh);
 

@@ -2,31 +2,13 @@
 
 namespace fpp
 {
-	FPPControllerBase::FPPControllerBase(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
-										 std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
+	FPPControllerBase::FPPControllerBase(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
 										 ros::NodeHandle &nh,
 										 ros::NodeHandle &planner_nh)
-		: robot_info_list_(robot_info_list),
-		  robot_info_(robot_info),
+		: fpp_params_(fpp_params),
 		  nh_(nh),
-		  planner_nh_(planner_nh),
-		  master_robot_info_(this->getMasterRobotInfo(robot_info_list))
-	{
-
-    }
-
-	std::shared_ptr<fpp_data_classes::RobotInfo> FPPControllerBase::getMasterRobotInfo(const std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list)
-	{
-		for(int robot_info_counter = 0; robot_info_counter < robot_info_list.size(); robot_info_counter++)
-		{
-			if(robot_info_list[robot_info_counter]->fpp_master)
-			{
-				return robot_info_list[robot_info_counter];
-			}
-		}
-		ROS_ERROR_STREAM("FPPControllerBase::getMasterRobotInfo: No master robot info found. Please check if flag is set in config.");
-		return NULL;
-	}
+		  planner_nh_(planner_nh)
+	{ }
 
     void FPPControllerBase::initialize(std::string planner_name,
                                        costmap_2d::Costmap2D *costmap,

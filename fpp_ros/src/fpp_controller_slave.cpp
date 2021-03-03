@@ -2,17 +2,13 @@
 
 namespace fpp
 {
-    FPPControllerSlave::FPPControllerSlave(std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> &robot_info_list,
-                                           std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info,
+    FPPControllerSlave::FPPControllerSlave(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
                                            ros::NodeHandle &nh,
                                            ros::NodeHandle &planner_nh)
-        : FPPControllerBase(robot_info_list, robot_info, nh, planner_nh)
+        : FPPControllerBase(fpp_params, nh, planner_nh), master_plan_(nullptr)
     {
-        this->master_plan_ = nullptr;
-
 		this->initServices();
 		this->initTopics();
-
 		this->initTimers();
     }
 
@@ -21,7 +17,7 @@ namespace fpp
                                      std::vector<geometry_msgs::PoseStamped> &plan)
     {
 		fpp_msgs::GetRobotPlan robot_plan_msg;
-		robot_plan_msg.request.robot_name = this->robot_info_->robot_name;
+		robot_plan_msg.request.robot_name = this->fpp_params_->getCurrentRobotName();
 		this->get_robot_plan_srv_client_.call(robot_plan_msg);
 
 		plan = robot_plan_msg.response.robot_plan.poses;
@@ -33,15 +29,17 @@ namespace fpp
 	{
 		FPPControllerBase::initTopics();
 
-		this->master_plan_subscriber_ = this->nh_.subscribe(this->master_robot_info_->robot_namespace + "/move_base_flex/plan",
-															10, &FPPControllerSlave::masterPlanCb, this);
+		this->master_plan_subscriber_ = this->nh_.subscribe(
+			this->fpp_params_->getMasterRobotInfo()->robot_namespace + "/move_base_flex/plan",
+			10, &FPPControllerSlave::masterPlanCb, this);
 	}
 
 	void FPPControllerSlave::initServices()
 	{
 		FPPControllerBase::initServices();
 
-		this->get_robot_plan_srv_client_ = this->nh_.serviceClient<fpp_msgs::GetRobotPlan>(this->master_robot_info_->robot_namespace + "/get_robot_plan");
+		this->get_robot_plan_srv_client_ = this->nh_.serviceClient<fpp_msgs::GetRobotPlan>(
+			this->fpp_params_->getMasterRobotInfo()->robot_namespace + "/get_robot_plan");
         this->get_robot_plan_srv_client_.waitForExistence();
 	}
 
