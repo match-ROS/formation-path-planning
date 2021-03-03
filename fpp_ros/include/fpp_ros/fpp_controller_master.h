@@ -1,24 +1,23 @@
 #pragma once
 
-#include <fpp_msgs/GetRobotPlan.h>
-
-#include <iostream>
-#include <string>
-#include <memory> // Usage of smart pointers
-#include <vector>
-#include <list>
-#include <set>
-#include <map>
-#include <algorithm>
-#include <Eigen/Dense>
-
 #include <fpp_ros/fpp_controller_base.h>
 
-#include <fpp_ros/data_classes/fpp_param_manager.h>
-#include <fpp_ros/data_classes/robot_info.h>
+#include <actionlib/client/simple_action_client.h>
+
+#include <mbf_msgs/MoveBaseAction.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <nav_msgs/Path.h>
+#include <fpp_msgs/GetRobotPlan.h>
+#include <fpp_msgs/DynReconfigure.h>
 
 #include <fpp_ros/path_planner/splined_relaxed_a_star.h>
+#include <fpp_ros/geometry_info/robot_contour.h>
+#include <fpp_ros/geometry_info/formation_contour.h>
 #include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
+
+#include <Eigen/Dense>
+#include <map>
 
 namespace fpp
 {

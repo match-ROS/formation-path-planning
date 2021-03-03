@@ -1,33 +1,16 @@
 #pragma once
 
 #include "ros/ros.h"
-#include <actionlib/client/simple_action_client.h>
-#include <costmap_2d/costmap_2d_ros.h>
-#include <costmap_2d/costmap_2d.h>
-#include <mbf_msgs/MoveBaseAction.h>
 
-#include <tf/transform_listener.h>
-#include <geometry_msgs/PolygonStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <costmap_2d/costmap_2d.h>
+
 #include <nav_msgs/Path.h>
 
-#include <iostream>
+#include <fpp_ros/data_classes/fpp_param_manager.h>
+
 #include <string>
 #include <memory> // Usage of smart pointers
 #include <vector>
-#include <list>
-#include <set>
-#include <map>
-#include <algorithm>
-#include <Eigen/Dense>
-
-#include <fpp_msgs/DynReconfigure.h>
-#include <fpp_ros/data_classes/robot_info.h>
-#include <fpp_ros/data_classes/fpp_param_manager.h>
-
-#include <fpp_ros/geometry_info/geometry_contour.h>
-#include <fpp_ros/geometry_info/robot_contour.h>
-#include <fpp_ros/geometry_info/formation_contour.h>
 
 namespace fpp
 {

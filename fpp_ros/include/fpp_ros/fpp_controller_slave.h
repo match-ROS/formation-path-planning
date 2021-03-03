@@ -1,11 +1,10 @@
 #pragma once
 
-#include <fpp_msgs/GetRobotPlan.h>
-
 #include <fpp_ros/fpp_controller_base.h>
 
-#include <fpp_ros/data_classes/robot_info.h>
-#include <fpp_ros/data_classes/fpp_param_manager.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
+#include <fpp_msgs/GetRobotPlan.h>
 
 namespace fpp
 {
