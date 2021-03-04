@@ -1,8 +1,6 @@
 #pragma once
 
-//Delete this later
-#include "ros/ros.h"
-
+#include <iostream>
 #include <memory> // Usage of smart pointers
 #include <vector>
 #include <list>
@@ -19,7 +17,7 @@ namespace geometry_info
              * @brief Default Constuctor for Geometry Contour object.
              * 
              */
-            GeometryContour() {};
+            GeometryContour();
             /**
              * @brief Construct for Geometry Contour object to specify the lead_vector and rotation
              * 
@@ -46,6 +44,12 @@ namespace geometry_info
              * @param corner_list_world_cs List of new corner points that are provided in the world coordinate system
              */
             void addContourCornersWorldCS(std::vector<Eigen::Vector2f> corner_list_world_cs);
+			/**
+             * @brief Add list of corner points to the contour. 
+             * 
+             * @param corner_list_geometry_cs List of new corner points that are provided in the geometry coordinate system
+             */
+            void addContourCornersGeometryCS(std::vector<Eigen::Vector2f> corner_list_geometry_cs);
 
             /**
              * @brief Calculate the edges of the contour using the corner points from first to last element

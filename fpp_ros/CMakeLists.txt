@@ -171,16 +171,18 @@ set(GEOMETRY_INFO_SOURCES
 	
 	include/fpp_ros/geometry_info/geometry_contour.h
 	src/geometry_info/geometry_contour.cpp
-	
-	include/fpp_ros/geometry_info/robot_contour.h
-	src/geometry_info/robot_contour.cpp
-	
-	include/fpp_ros/geometry_info/formation_contour.h
-	src/geometry_info/formation_contour.cpp
 
 	include/fpp_ros/geometry_info/minimal_enclosing_circle.h
 	src/geometry_info/minimal_enclosing_circle.cpp)
 add_library(geometry_info ${GEOMETRY_INFO_SOURCES})
+
+set(FOOTPRINT_GENERATION_SOURCES
+	include/fpp_ros/footprint_generation/robot_footprint_ros.h
+	src/footprint_generation/robot_footprint_ros.cpp
+
+	include/fpp_ros/footprint_generation/formation_footprint_ros.h
+	src/footprint_generation/formation_footprint_ros.cpp)
+add_library(footprint_generation ${FOOTPRINT_GENERATION_SOURCES})
 
 set(DATA_CLASS_SOURCES
 	include/fpp_ros/data_classes/robot_info.h
@@ -220,6 +222,7 @@ set_target_properties(data_classes PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(fpp_ros 
 	data_classes
 	geometry_info
+	footprint_generation
 	path_planner
 	${catkin_LIBRARIES})
 
@@ -228,6 +231,10 @@ target_link_libraries(path_planner
 	${catkin_LIBRARIES})
 
 target_link_libraries(geometry_info 
+	${catkin_LIBRARIES})
+
+target_link_libraries(footprint_generation
+	geometry_info
 	${catkin_LIBRARIES})
 
 target_link_libraries(dyn_reconfig_relay_node ${catkin_LIBRARIES})

@@ -27,6 +27,8 @@ namespace fpp
         this->robot_plan_pub_ = this->nh_.advertise<nav_msgs::Path>("move_base_flex/plan", 10);
 	}
 
+	void FPPControllerBase::initActions() { }
+
 	void FPPControllerBase::initTimers() { }
 
 	void FPPControllerBase::publishPlan(const ros::Publisher &plan_publisher, const std::vector<geometry_msgs::PoseStamped> &plan)

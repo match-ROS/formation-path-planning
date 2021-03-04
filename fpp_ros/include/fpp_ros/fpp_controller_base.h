@@ -85,6 +85,11 @@ namespace fpp
              * 
              */
             virtual void initTopics();
+			/**
+             * @brief Helper method for initializing all actions
+             * 
+             */
+			virtual void initActions();
             /**
              * @brief Helper method for initializing all timers
              * 

@@ -2,6 +2,12 @@
 
 namespace geometry_info
 {
+	GeometryContour::GeometryContour()
+	{
+		this->lead_vector_world_cs_ = Eigen::Vector2f::Zero();
+		this->world_to_geometry_cs_rotation_ = 0.0;
+	}
+
     GeometryContour::GeometryContour(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation)
     {
         this->lead_vector_world_cs_= lead_vector_world_cs;
@@ -40,6 +46,23 @@ namespace geometry_info
             }
         }
     }
+
+	void GeometryContour::addContourCornersGeometryCS(std::vector<Eigen::Vector2f> corner_list_geometry_cs)
+	{
+		for(Eigen::Vector2f corner_geometry_cs: corner_list_geometry_cs)
+        {
+            if (std::find(this->corner_points_geometry_cs_.begin(),
+                          this->corner_points_geometry_cs_.end(),
+                          corner_geometry_cs) == this->corner_points_geometry_cs_.end())
+            {
+                this->corner_points_geometry_cs_.push_back(corner_geometry_cs);
+            }
+            else
+            {
+                std::cout << "GeometryContour::addContourCornersGeometryCS: Corner point was already added, please check that all corners are different." << "\n";
+            }
+        }
+	}
 
     void GeometryContour::createContourEdges()
     {

@@ -493,8 +493,8 @@ namespace path_planner
                 if(counter_x == 0 && counter_y == 0)
                     continue;
 
-                if (this->neighbor_type_ == path_planner::NeighborType::EightWay ||
-                    (this->neighbor_type_ == path_planner::NeighborType::FourWay &&
+                if (this->neighbor_type_ == fpp_data_classes::NeighborType::EightWay ||
+                    (this->neighbor_type_ == fpp_data_classes::NeighborType::FourWay &&
                      ((counter_x == 0 && counter_y == -1) ||
                       (counter_x == -1 && counter_y == 0) ||
                       (counter_x == 1 && counter_y == 0) ||
@@ -701,7 +701,7 @@ namespace path_planner
 
     void SplinedRelaxedAStar::setNeighborType(int neighbor_type)
     {
-        this->neighbor_type_ = (NeighborType)neighbor_type;
+        this->neighbor_type_ = (fpp_data_classes::NeighborType)neighbor_type;
     }
 
     void SplinedRelaxedAStar::setFreeCellThreshhold(int free_cell_thresshold)

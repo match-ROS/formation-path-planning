@@ -34,18 +34,6 @@
 
 namespace path_planner
 {
-    enum NeighborType
-    {
-        FourWay = 4,
-        EightWay = 8
-    };
-
-    enum FreeNeighborMode
-    {
-        CostmapOnly = 0,
-        CostmapAndMinimalCurveRadius = 1
-    };
-
     class SplinedRelaxedAStar
     {
         public:
@@ -352,7 +340,7 @@ namespace path_planner
             //! How many of the neighbor cells should be used. Options:
             //! 4 - This means the cells in the north, south, west, east direction are used
             //! 8 - This means all cells around (also the diagonal ones) are used
-            path_planner::NeighborType neighbor_type_;
+            fpp_data_classes::NeighborType neighbor_type_;
 
             //! Threshold for the costmap values that define if a cell is free or not.
             //! This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.

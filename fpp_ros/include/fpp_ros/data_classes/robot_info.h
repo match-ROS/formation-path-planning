@@ -23,5 +23,9 @@ namespace fpp_data_classes
         Eigen::Vector2f offset;
         //! Definition for the outline of this robot
         std::vector<Eigen::Vector2f> robot_outline;
+
+		//! This is only important for the footprint generation. 
+		//! After putting this into an own costmap layer this can be removed.
+		std::string robot_pose_topic_name;
     };
 }

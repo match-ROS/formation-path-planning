@@ -7,110 +7,82 @@ namespace fpp
                                              ros::NodeHandle &planner_nh)
         : FPPControllerBase(fpp_params, nh, planner_nh)
     {
+		ros::Duration(3.0).sleep();
         this->initServices();
         this->initTopics();
+		this->initActions();
 
         // Initialize the target formation contour that takes amcl from master robot and then the wanted offset for the other robots
-        this->target_formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
+        // this->target_formation_contour_ = footprint_generation::FormationFootprintRos(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
         
 		// Add master robot by amcl pose
-		Eigen::Vector2f master_robot_pose;
-		float master_yaw;
-		this->getAMCLPose(this->fpp_params_->getCurrentRobotNamespace(), master_robot_pose, master_yaw);
-		geometry_info::RobotContour master_robot_contour = geometry_info::RobotContour(
-			master_robot_pose, master_yaw, this->fpp_params_->getCurrentRobotName());
-		this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(
-			this->fpp_params_->getCurrentRobotName(), master_robot_contour));
-		this->target_formation_contour_.addRobotToFormation(master_robot_contour);
+		// Eigen::Vector2f master_robot_pose;
+		// float master_yaw;
+		// this->getAMCLPose(this->fpp_params_->getCurrentRobotNamespace(), master_robot_pose, master_yaw);
+		// footprint_generation::RobotFootprintRos master_robot_contour = footprint_generation::RobotFootprintRos(
+		// 	this->nh_, 
+		// 	this->fpp_params_->getCurrentRobotName(), 
+		// 	this->fpp_params_->getCurrentRobotNamespace(),
+		// 	this->fpp_params_->getRobotInfoByRobotName(this->fpp_params_->getCurrentRobotName())->robot_pose_topic_name);
+		// this->robot_outline_list_.insert(std::pair<std::string, footprint_generation::RobotFootprintRos>(
+		// 	this->fpp_params_->getCurrentRobotName(), master_robot_contour));
+		// this->target_formation_contour_.addRobotToFormation(master_robot_contour);
 
 		// Add slave robots by relative offset to master robot. Take same yaw angle as this should be equal
-        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->fpp_params_->getRobotInfoList())
-        {
-			if(robot_info_it->robot_name != this->fpp_params_->getCurrentRobotName())
-			{
-				Eigen::Vector2f robot_target_pose = master_robot_pose + robot_info_it->offset;
+        // for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->fpp_params_->getRobotInfoList())
+        // {
+		// 	if(robot_info_it->robot_name != this->fpp_params_->getCurrentRobotName())
+		// 	{
+		// 		footprint_generation::RobotFootprintRos slave_robot_contour = footprint_generation::RobotFootprintRos(
+		// 			this->nh_, 
+		// 			robot_info_it->robot_name, 
+		// 			robot_info_it->robot_namespace,
+		// 			robot_info_it->robot_pose_topic_name);
 
-				geometry_info::RobotContour slave_robot_contour = geometry_info::RobotContour(robot_target_pose,
-																							  master_yaw,
-																							  robot_info_it->robot_name);
+		// 		slave_robot_contour.addContourCornersGeometryCS(robot_info_it->robot_outline);
+		// 		slave_robot_contour.createContourEdges();
 
-				for(Eigen::Vector2f corner: robot_info_it->robot_outline)
-				{
-					slave_robot_contour.addContourCornerGeometryCS(corner);
-				}
-				slave_robot_contour.createContourEdges();
-
-				this->robot_outline_list_.insert(std::pair<std::string, geometry_info::RobotContour>(
-					robot_info_it->robot_name, slave_robot_contour));
-				this->target_formation_contour_.addRobotToFormation(slave_robot_contour);
-			}
-        }
-        this->target_formation_contour_.updateFormationContour();
-		this->formation_centre_ = this->target_formation_contour_.calcCentroidWorldCS();
-		this->target_formation_contour_.moveCoordinateSystem(this->formation_centre_, 0.0);
+		// 		this->robot_outline_list_.insert(std::pair<std::string, footprint_generation::RobotFootprintRos>(
+		// 			robot_info_it->robot_name, slave_robot_contour));
+		// 		this->target_formation_contour_.addRobotToFormation(slave_robot_contour);
+		// 	}
+        // }
+        // this->target_formation_contour_.updateFormationContour();
+		// this->formation_centre_ = this->target_formation_contour_.calcCentroidWorldCS();
+		// this->target_formation_contour_.moveCoordinateSystem(this->formation_centre_, 0.0);
         
         // Initialize the minimal circle enclosing the formation
-        this->formation_enclosing_circle_ = geometry_info::MinimalEnclosingCircle();
+        // this->formation_enclosing_circle_ = geometry_info::MinimalEnclosingCircle();
 		// For now the minimal enclosing circle will be bigger than the smallest circle possible
-        this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->formation_centre_,
-                                                                     this->target_formation_contour_.getCornerPointsWorldCS());
+        // this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->formation_centre_,
+        //                                                              this->target_formation_contour_.getCornerPointsWorldCS());
         // this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->target_formation_contour_.getCornerPointsWorldCS());
 
         this->callDynamicCostmapReconfigure();
 
 		// Initialize real footprint that takes purely AMCL position
-		this->real_formation_contour_ = geometry_info::FormationContour(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
+		this->real_formation_contour_ = footprint_generation::FormationFootprintRos(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
 		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->fpp_params_->getRobotInfoList())
         {
-			Eigen::Vector2f real_robot_pose;
-			float real_yaw;
-			this->getAMCLPose(robot_info_it->robot_namespace, real_robot_pose, real_yaw);
-
-			geometry_info::RobotContour robot_contour = geometry_info::RobotContour(real_robot_pose,
-																					real_yaw,
-																					robot_info_it->robot_name);
+			ROS_INFO_STREAM(robot_info_it->robot_name);
+			std::shared_ptr<footprint_generation::RobotFootprintRos> robot_contour = std::make_shared<footprint_generation::RobotFootprintRos>(
+				this->nh_, 
+				robot_info_it->robot_name, 
+				robot_info_it->robot_namespace,
+				robot_info_it->robot_pose_topic_name);
 
 			for(Eigen::Vector2f corner: robot_info_it->robot_outline)
 			{
-				robot_contour.addContourCornerGeometryCS(corner);
+				robot_contour->addContourCornerGeometryCS(corner);
 			}
-			robot_contour.createContourEdges();
+			robot_contour->createContourEdges();
 			this->real_formation_contour_.addRobotToFormation(robot_contour);
         }
-        this->publishFootprint();
-        
+        // this->publishFootprint();
         this->initTimers();
     }
 
-    void FPPControllerMaster::initServices()
-    {
-		FPPControllerBase::initServices();
-        this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
-        this->dyn_rec_inflation_srv_client_.waitForExistence();
-
-		this->get_robot_plan_srv_server_ = this->nh_.advertiseService("get_robot_plan",
-																	  &FPPControllerMaster::getRobotPlanCb,
-																	  this);
-	}
-
-    void FPPControllerMaster::initTopics()
-    {
-		FPPControllerBase::initTopics();
-        this->formation_footprint_pub_ = this->nh_.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
-        while(this->formation_footprint_pub_.getNumSubscribers() < 1)
-            ros::Duration(0.01).sleep();
-
-        // Advertise new topic but dont wait for subscribers, as this topic is not init relevant
-        this->formation_plan_pub_ = this->nh_.advertise<nav_msgs::Path>("formation_plan", 10);
-    }
-
-    void FPPControllerMaster::initTimers()
-    {
-		FPPControllerBase::initTimers();
-        this->footprint_timer_ = this->nh_.createTimer(ros::Duration(1.0), &FPPControllerMaster::footprintTimerCallback, this);
-    }
-
-    void FPPControllerMaster::initialize(std::string planner_name,
+	void FPPControllerMaster::initialize(std::string planner_name,
                                          costmap_2d::Costmap2D *costmap,
                                          std::string global_frame)
     {
@@ -122,87 +94,9 @@ namespace fpp
         this->readParams(planner_name);
 
 		ROS_INFO_STREAM("robot_name: " << this->fpp_params_->getCurrentRobotName());
-
-		// Initialize move_base action servers to the slave robots
-		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->fpp_params_->getRobotInfoList())
-		{
-			if(robot_info->robot_name != this->fpp_params_->getCurrentRobotName())
-			{
-				std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> slave_move_base_as =
-					std::make_shared<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>(
-						robot_info->robot_namespace + "/move_base_flex/move_base", true);
-				ROS_INFO_STREAM("FPPControllerMaster::initialize: Waiting for " << robot_info->robot_namespace << "/move_base_flex/move_base action server");
-				slave_move_base_as->waitForServer();
-
-				this->slave_move_base_as_list_.push_back(slave_move_base_as);
-			}
-		}
     }
 
-    void FPPControllerMaster::readParams(std::string name)
-    {
-        std::string path_planner_name_key;
-        if(this->planner_nh_.searchParam("used_formation_planner", path_planner_name_key))
-        {
-            this->planner_nh_.param<std::string>(path_planner_name_key,
-                                                 this->used_formation_planner_,
-                                                 "SplinedRelaxedAStar");
-        }        
-        else
-        {
-            ROS_ERROR_STREAM("FPPControllerMaster: The planner that is used to generate the initial path of the formation must be defined in used_formation_planner");
-        }
-
-        std::string path_planner_key;
-        if (this->planner_nh_.searchParam("formation_path_planner/" + this->used_formation_planner_,
-                                          path_planner_key))
-        {
-            float default_tolerance;
-            this->planner_nh_.getParam(path_planner_key + "/default_tolerance", default_tolerance);
-            int neighbor_type;
-            this->planner_nh_.getParam(path_planner_key + "/neighbor_type", neighbor_type);
-            int free_cell_thresshold;
-            this->planner_nh_.getParam(path_planner_key + "/free_cell_threshold", free_cell_thresshold);
-			float start_straight_distance;
-			this->planner_nh_.getParam(path_planner_key + "/start_straight_distance", start_straight_distance);
-			float end_straight_distance;
-			this->planner_nh_.getParam(path_planner_key + "/end_straight_distance", end_straight_distance);
-			int control_point_distance;
-            this->planner_nh_.getParam(path_planner_key + "/control_point_distance", control_point_distance);
-			int planning_points_per_spline;
-			this->planner_nh_.getParam(path_planner_key + "/planning_points_per_spline", planning_points_per_spline);
-			float minimal_curve_radius;
-            this->planner_nh_.getParam(path_planner_key + "/minimal_curve_radius", minimal_curve_radius);
-
-            this->initial_path_planner_.setDefaultTolerance(default_tolerance);
-            this->initial_path_planner_.setNeighborType(neighbor_type);
-            this->initial_path_planner_.setFreeCellThreshhold(free_cell_thresshold);
-			this->initial_path_planner_.setStartStraightDistance(start_straight_distance);
-			this->initial_path_planner_.setEndStraightDistance(end_straight_distance);
-			this->initial_path_planner_.setControlPointDistance(control_point_distance);
-			this->initial_path_planner_.setPlanningPointsPerSpline(planning_points_per_spline);
-
-			// Check if calculated minimal radius is bigger than the param
-			// Minimal radius is calculated by getting the distance between the robot that is the furthest away from the formation centre
-			float max_calculated_minimal_curve_radius = 0.0;
-			for(std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info: this->fpp_params_->getRobotInfoList())
-			{
-				float calculated_minimal_curve_radius = this->target_formation_contour_.getRobotPosGeometryCS(robot_info->robot_name).norm();
-				if(max_calculated_minimal_curve_radius < calculated_minimal_curve_radius)
-				{
-					max_calculated_minimal_curve_radius = calculated_minimal_curve_radius;
-				}
-			}
-			
-			if(max_calculated_minimal_curve_radius > minimal_curve_radius)
-			{
-				minimal_curve_radius = max_calculated_minimal_curve_radius;
-			}
-			this->initial_path_planner_.setMinimalCurveRadius(minimal_curve_radius);
-        }
-    }
-
-    void FPPControllerMaster::execute(const geometry_msgs::PoseStamped &start,
+	void FPPControllerMaster::execute(const geometry_msgs::PoseStamped &start,
                                       const geometry_msgs::PoseStamped &goal,
                                       std::vector<geometry_msgs::PoseStamped> &plan)
     {
@@ -236,6 +130,71 @@ namespace fpp
 		this->publishPlan(this->robot_plan_pub_, plan);
     }
 
+	void FPPControllerMaster::readParams(std::string name)
+    {
+        std::string path_planner_name_key;
+        if(this->planner_nh_.searchParam("used_formation_planner", path_planner_name_key))
+        {
+            this->planner_nh_.param<std::string>(path_planner_name_key,
+                                                 this->used_formation_planner_,
+                                                 "SplinedRelaxedAStar");
+        }        
+        else
+        {
+			ROS_ERROR_STREAM("FPPControllerMaster: The planner that is used to generate the initial path "
+							 "of the formation must be defined in used_formation_planner");
+		}
+
+
+    }
+
+    void FPPControllerMaster::initServices()
+    {
+		FPPControllerBase::initServices();
+        this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
+        this->dyn_rec_inflation_srv_client_.waitForExistence();
+
+		this->get_robot_plan_srv_server_ = this->nh_.advertiseService("get_robot_plan",
+																	  &FPPControllerMaster::getRobotPlanCb,
+																	  this);
+	}
+
+    void FPPControllerMaster::initTopics()
+    {
+		FPPControllerBase::initTopics();
+        this->formation_footprint_pub_ = this->nh_.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
+        while(this->formation_footprint_pub_.getNumSubscribers() < 1)
+            ros::Duration(0.01).sleep();
+
+        // Advertise new topic but dont wait for subscribers, as this topic is not init relevant
+        this->formation_plan_pub_ = this->nh_.advertise<nav_msgs::Path>("formation_plan", 10);
+    }
+
+	void FPPControllerMaster::initActions()
+	{
+		// Initialize move_base action servers to the slave robots
+		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->fpp_params_->getRobotInfoList())
+		{
+			if(robot_info->robot_name != this->fpp_params_->getCurrentRobotName())
+			{
+				std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> slave_move_base_as =
+					std::make_shared<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>(
+						robot_info->robot_namespace + "/move_base_flex/move_base", true);
+				ROS_INFO_STREAM("FPPControllerMaster::initialize: Waiting for "
+								<< robot_info->robot_namespace << "/move_base_flex/move_base action server");
+				slave_move_base_as->waitForServer();
+
+				this->slave_move_base_as_list_.push_back(slave_move_base_as);
+			}
+		}
+	}
+
+    void FPPControllerMaster::initTimers()
+    {
+		FPPControllerBase::initTimers();
+        // this->footprint_timer_ = this->nh_.createTimer(ros::Duration(1.0), &FPPControllerMaster::footprintTimerCallback, this);
+    }
+
     geometry_msgs::PoseWithCovarianceStampedConstPtr FPPControllerMaster::getAMCLPose(std::string robot_namespace)
     {
         std::string amcl_pose_topic = robot_namespace + "/amcl_pose";
@@ -266,69 +225,69 @@ namespace fpp
 	{
 		// Clear existing plans and create new empty lists for the plans for each robot
 		this->robot_plan_list_.clear();
-		geometry_info::FormationContour path_planner_formation = this->target_formation_contour_;
-		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
-		{
-			this->robot_plan_list_.insert(std::pair<std::string, std::vector<geometry_msgs::PoseStamped>>(robot_info_it->robot_name,
-																										  std::vector<geometry_msgs::PoseStamped>()));
-		}
-		// Push FormationContour along the path and save each robot position in the plan list
-		for(geometry_msgs::PoseStamped formation_pose_in_plan: formation_plan)
-		{
-			// ROS_INFO_STREAM("formation pose: " << formation_pose_in_plan.pose.position.x << " " << formation_pose_in_plan.pose.position.y << " " << tf::getYaw(formation_pose_in_plan.pose.orientation));
-			Eigen::Vector2f new_lead_vector_world_cs;
-			new_lead_vector_world_cs << formation_pose_in_plan.pose.position.x,
-				formation_pose_in_plan.pose.position.y;
-			float new_rotation = tf::getYaw(formation_pose_in_plan.pose.orientation);
-			path_planner_formation.moveContour(new_lead_vector_world_cs, new_rotation);
+		// footprint_generation::FormationFootprintRos path_planner_formation = this->target_formation_contour_;
+		// for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
+		// {
+		// 	this->robot_plan_list_.insert(std::pair<std::string, std::vector<geometry_msgs::PoseStamped>>(robot_info_it->robot_name,
+		// 																								  std::vector<geometry_msgs::PoseStamped>()));
+		// }
+		// // Push FormationContour along the path and save each robot position in the plan list
+		// for(geometry_msgs::PoseStamped formation_pose_in_plan: formation_plan)
+		// {
+		// 	// ROS_INFO_STREAM("formation pose: " << formation_pose_in_plan.pose.position.x << " " << formation_pose_in_plan.pose.position.y << " " << tf::getYaw(formation_pose_in_plan.pose.orientation));
+		// 	Eigen::Vector2f new_lead_vector_world_cs;
+		// 	new_lead_vector_world_cs << formation_pose_in_plan.pose.position.x,
+		// 		formation_pose_in_plan.pose.position.y;
+		// 	float new_rotation = tf::getYaw(formation_pose_in_plan.pose.orientation);
+		// 	path_planner_formation.moveContour(new_lead_vector_world_cs, new_rotation);
 
-			for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
-			{
-				geometry_msgs::PoseStamped new_pose;
-				new_pose.header.stamp = formation_pose_in_plan.header.stamp;
-				new_pose.header.frame_id = formation_pose_in_plan.header.frame_id;
+		// 	for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
+		// 	{
+		// 		geometry_msgs::PoseStamped new_pose;
+		// 		new_pose.header.stamp = formation_pose_in_plan.header.stamp;
+		// 		new_pose.header.frame_id = formation_pose_in_plan.header.frame_id;
 
-				Eigen::Vector2f pose = path_planner_formation.getRobotPosWorldCS(robot_info_it->robot_name);
-				new_pose.pose.position.x = pose[0];
-				new_pose.pose.position.y = pose[1];
-				new_pose.pose.position.z = 0.0;
+		// 		Eigen::Vector2f pose = path_planner_formation.getRobotPosWorldCS(robot_info_it->robot_name);
+		// 		new_pose.pose.position.x = pose[0];
+		// 		new_pose.pose.position.y = pose[1];
+		// 		new_pose.pose.position.z = 0.0;
 
-				// new_pose.pose.orientation = formation_pose_in_plan.pose.orientation;
+		// 		// new_pose.pose.orientation = formation_pose_in_plan.pose.orientation;
 
-				this->robot_plan_list_[robot_info_it->robot_name].push_back(new_pose);
-			}
-		}
+		// 		this->robot_plan_list_[robot_info_it->robot_name].push_back(new_pose);
+		// 	}
+		// }
 
-		//Calc orientation for each point of the robot plans
-		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
-		{
-			// for(geometry_msgs::PoseStamped formation_pose_in_plan_: this->robot_plan_list_[robot_info_it->robot_name])
-			// {
+		// //Calc orientation for each point of the robot plans
+		// for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
+		// {
+		// 	// for(geometry_msgs::PoseStamped formation_pose_in_plan_: this->robot_plan_list_[robot_info_it->robot_name])
+		// 	// {
 				
-			// }
+		// 	// }
 
-			// < is necessary because we just copy elements from one vector (0 until size()) to the other
-            for(uint path_counter = 0; path_counter < this->robot_plan_list_[robot_info_it->robot_name].size(); path_counter++)
-            {
-                // Calculate orientation for each point of the plan with the current position and the last one
-                if(path_counter == 0) // No previous point so orientation of start will be taken
-                {
-                    this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.orientation = formation_plan[0].pose.orientation;
-                }
-                else // Some other points are before, so orientation can be calculated
-                {
-					float delta_x = this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.position.x -
-									this->robot_plan_list_[robot_info_it->robot_name][path_counter - 1].pose.position.x;
-					float delta_y = this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.position.y -
-									this->robot_plan_list_[robot_info_it->robot_name][path_counter - 1].pose.position.y;
-                    double yaw_angle = std::atan2(delta_y, delta_x);
-                    this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
-                }
+		// 	// < is necessary because we just copy elements from one vector (0 until size()) to the other
+        //     for(uint path_counter = 0; path_counter < this->robot_plan_list_[robot_info_it->robot_name].size(); path_counter++)
+        //     {
+        //         // Calculate orientation for each point of the plan with the current position and the last one
+        //         if(path_counter == 0) // No previous point so orientation of start will be taken
+        //         {
+        //             this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.orientation = formation_plan[0].pose.orientation;
+        //         }
+        //         else // Some other points are before, so orientation can be calculated
+        //         {
+		// 			float delta_x = this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.position.x -
+		// 							this->robot_plan_list_[robot_info_it->robot_name][path_counter - 1].pose.position.x;
+		// 			float delta_y = this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.position.y -
+		// 							this->robot_plan_list_[robot_info_it->robot_name][path_counter - 1].pose.position.y;
+        //             double yaw_angle = std::atan2(delta_y, delta_x);
+        //             this->robot_plan_list_[robot_info_it->robot_name][path_counter].pose.orientation = tf::createQuaternionMsgFromYaw(yaw_angle);
+        //         }
 
-                // last_pose = pose; // Safe pose for next iteration
-                // plan.insert(plan.begin() + plan.size(), pose);
-            }
-		}
+        //         // last_pose = pose; // Safe pose for next iteration
+        //         // plan.insert(plan.begin() + plan.size(), pose);
+        //     }
+		// }
 	}
 
     void FPPControllerMaster::updateFootprint()

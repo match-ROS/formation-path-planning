@@ -20,4 +20,10 @@ namespace fpp_data_classes
             return this->f_cost > rhs.f_cost;
         }
     };
+
+	enum NeighborType
+    {
+        FourWay = 4,
+        EightWay = 8
+    };
 }

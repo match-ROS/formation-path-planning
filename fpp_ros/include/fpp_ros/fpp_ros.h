@@ -39,7 +39,6 @@
 #include <fpp_msgs/DynReconfigure.h>
 
 #include <fpp_ros/geometry_info/geometry_contour.h>
-#include <fpp_ros/geometry_info/formation_contour.h>
 #include <fpp_ros/data_classes/robot_info.h>
 #include <fpp_ros/data_classes/fpp_param_manager.h>
 

@@ -68,6 +68,11 @@ namespace fpp_data_classes
 
                         robot_info->robot_outline = this->createRobotOutlineFromXMLRPC(robot_outline, robot_outline_key);
                     }
+
+					if(robot_info_xmlrpc.hasMember("robot_pose_topic") && robot_info_xmlrpc["robot_pose_topic"].getType() == XmlRpc::XmlRpcValue::TypeString)
+                    {
+                        robot_info->robot_pose_topic_name = static_cast<std::string>(robot_info_xmlrpc["robot_pose_topic"]);
+                    }
                 }
 
                 this->robot_info_list_.push_back(robot_info);

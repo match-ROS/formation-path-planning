@@ -1,35 +1,34 @@
 #pragma once
 
-//delete later
-#include "ros/ros.h"
-
 #include <iostream>
 #include <memory> // Usage of smart pointers
 #include <algorithm>
 #include <vector>
 #include <list>
+#include <map>
 #include <Eigen/Dense>
 
 #include <fpp_ros/geometry_info/edge_info.h>
-#include <fpp_ros/geometry_info/robot_contour.h>
+#include <fpp_ros/geometry_info/geometry_contour.h>
+#include <fpp_ros/footprint_generation/robot_footprint_ros.h>
 
-namespace geometry_info
+namespace footprint_generation
 {
-    class FormationContour : public GeometryContour
+    class FormationFootprintRos : public geometry_info::GeometryContour
     {
         public:
             /**
              * @brief Default constructor for the FormationContour object
              * 
              */
-            FormationContour() {};
+            FormationFootprintRos();
             /**
              * @brief Construct for Formation Contour object to specify the lead_vector and rotation
              * 
              * @param lead_vector_world_cs Lead vector from world coordinate system to the new coordinate system
              * @param world_to_geometry_cs_rotation Rotation from current to new coordinate system 
              */
-            FormationContour(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation);
+            FormationFootprintRos(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation);
 
             /**
              * @brief Method for executing the gift wrapping algorithm.
@@ -44,7 +43,7 @@ namespace geometry_info
              * 
              * @param robot_to_add RobotContour object that represents the robot that should be added to the formation
              */
-            void addRobotToFormation(geometry_info::RobotContour robot_to_add);
+            void addRobotToFormation(std::shared_ptr<RobotFootprintRos> robot_to_add);
 
             /**
              * @brief Method for updating the position of one individual robot
@@ -71,17 +70,25 @@ namespace geometry_info
              */
             void moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation) override;
 
-			// Pobably delete later!
-			//void moveContour(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation) override;
-
+			#pragma region Getter/Setter
 			Eigen::Vector2f getRobotPosGeometryCS(std::string robot_name);
 			Eigen::Vector2f getRobotPosWorldCS(std::string robot_name);
 
+			std::vector<std::shared_ptr<RobotFootprintRos>> getRobotContours();
+			std::shared_ptr<RobotFootprintRos> getRobotContour(std::string robot_name);
+			#pragma endregion
 
         private:
-            std::vector<geometry_info::RobotContour> robot_contours_;
+            std::vector<std::shared_ptr<RobotFootprintRos>> robot_contours_;
 
-            /**
+			std::map<std::string, bool> robot_position_updates_;
+
+			#pragma region EventCallbacks
+			void robotPositionChanged(std::string robot_name);
+			#pragma endregion
+
+			#pragma region Private Helper Methods
+			/**
              * @brief Helper method to find the next point during the gift wrapping algorithm
              * 
              * @param current_wrapping_point_geometry_cs Current point the gift wrapping algorithm has selected in the geometry cs
@@ -103,5 +110,14 @@ namespace geometry_info
              * @return float Angle in radian that define the orientation the vector is pointing in
              */
             float calcTan2(Eigen::Vector2f start_point_geometry_cs, Eigen::Vector2f end_point_geometry_cs);
+
+			/**
+			 * @brief Checks if all robots in the formation have send an position update
+			 * 
+			 * @return true All robots have sent an position update
+			 * @return false Not all robots have sent an position update
+			 */
+			bool allPositionUpdatesReceived();
+			#pragma endregion
     };
 }

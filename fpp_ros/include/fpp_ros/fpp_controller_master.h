@@ -12,8 +12,8 @@
 #include <fpp_msgs/DynReconfigure.h>
 
 #include <fpp_ros/path_planner/splined_relaxed_a_star.h>
-#include <fpp_ros/geometry_info/robot_contour.h>
-#include <fpp_ros/geometry_info/formation_contour.h>
+#include <fpp_ros/footprint_generation/robot_footprint_ros.h>
+#include <fpp_ros/footprint_generation/formation_footprint_ros.h>
 #include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
 
 #include <Eigen/Dense>
@@ -42,20 +42,10 @@ namespace fpp
              * 
              */
             void readParams(std::string name);
-            /**
-             * @brief Helper method for intializing all services
-             * 
-             */
+
             void initServices() override;
-            /**
-             * @brief Helper method for initializing all topics
-             * 
-             */
             void initTopics() override;
-            /**
-             * @brief Helper method for initializing all timers
-             * 
-             */
+			void initActions() override;
             void initTimers() override;
 
             /**
@@ -108,11 +98,11 @@ namespace fpp
             // Process information
             
             //! List of all outlines of the individual robots
-            std::map<std::string, geometry_info::RobotContour> robot_outline_list_;
+            std::map<std::string, footprint_generation::RobotFootprintRos> robot_outline_list_;
             //! Outline of the real formation that occures through amcl poses
-            geometry_info::FormationContour real_formation_contour_;
+            footprint_generation::FormationFootprintRos real_formation_contour_;
 			//! Outline of the formation of everything is ideal
-            geometry_info::FormationContour target_formation_contour_;
+            // footprint_generation::FormationFootprintRos target_formation_contour_;
             //! Centre of the formation
             Eigen::Vector2f formation_centre_;
             //! Minimal circle around the formation to change the costmap inflation
