@@ -5,7 +5,7 @@ namespace fpp
     FPPControllerSlave::FPPControllerSlave(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
                                            ros::NodeHandle &nh,
                                            ros::NodeHandle &planner_nh)
-        : FPPControllerBase(fpp_params, nh, planner_nh), master_plan_(nullptr)
+        : FPPControllerBase(fpp_params, nh, planner_nh)
     {
 		this->initServices();
 		this->initTopics();
@@ -25,15 +25,6 @@ namespace fpp
 		this->publishPlan(this->robot_plan_pub_, plan);
     }
 
-	void FPPControllerSlave::initTopics()
-	{
-		FPPControllerBase::initTopics();
-
-		this->master_plan_subscriber_ = this->nh_.subscribe(
-			this->fpp_params_->getMasterRobotInfo()->robot_namespace + "/move_base_flex/plan",
-			10, &FPPControllerSlave::masterPlanCb, this);
-	}
-
 	void FPPControllerSlave::initServices()
 	{
 		FPPControllerBase::initServices();
@@ -41,15 +32,5 @@ namespace fpp
 		this->get_robot_plan_srv_client_ = this->nh_.serviceClient<fpp_msgs::GetRobotPlan>(
 			this->fpp_params_->getMasterRobotInfo()->robot_namespace + "/get_robot_plan");
         this->get_robot_plan_srv_client_.waitForExistence();
-	}
-
-	void FPPControllerSlave::formationPlanCb(const nav_msgs::Path::ConstPtr& formation_plan)
-	{
-		this->formation_plan_ = std::make_shared<nav_msgs::Path>(*formation_plan);
-	}
-
-	void FPPControllerSlave::masterPlanCb(const nav_msgs::Path::ConstPtr& master_plan)
-	{
-		this->master_plan_ = std::make_shared<nav_msgs::Path>(*master_plan);
 	}
 }
