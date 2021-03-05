@@ -1,4 +1,4 @@
-#include <fpp_ros/geometry_info/edge_info.h>
+#include <fp_utils/geometry_info/edge_info.h>
 
 namespace geometry_info
 {

@@ -9,10 +9,12 @@ namespace path_planner
         ROS_ERROR("RELAXED A STAR DEFAULT CONSTRUCTOR");
     }
 
-    SplinedRelaxedAStar::SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap,
-                                             std::string global_frame)
-        : initialized_(false), costmap_(costmap), global_frame_(global_frame)
-    {
+	SplinedRelaxedAStar::SplinedRelaxedAStar(std::string name,
+											 costmap_2d::Costmap2D *costmap,
+											 std::string global_frame,
+											 std::shared_ptr<fpp_data_classes::RASParams> ras_params)
+		: initialized_(false), costmap_(costmap), global_frame_(global_frame), ras_params_(ras_params)
+	{
         ROS_ERROR("RELAXED A STAR OVERLOADED CONSTRUCTOR");
         this->initialize(name);
     }
@@ -30,61 +32,16 @@ namespace path_planner
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
 
-            this->visu_helper_ = visualization_helper::VisualizationHelper(name);
-            this->g_score_marker_identificator_ = "g_score";
-            this->theoretical_path_marker_identificator_ = "theoretical_path";
-
-            this->visu_helper_.addNewMarkerArray(this->g_score_marker_identificator_);
-            visualization_msgs::Marker marker_template_g_score;
-            marker_template_g_score.action = visualization_msgs::Marker::ADD;
-            marker_template_g_score.color.a = 1.0;
-            marker_template_g_score.color.r = 1.0;
-            marker_template_g_score.header.frame_id = "map";
-            marker_template_g_score.lifetime = ros::Duration(0.3);
-            marker_template_g_score.ns = "g_score";
-            marker_template_g_score.scale.x = 0.1;
-            marker_template_g_score.scale.y = 0.1;
-            marker_template_g_score.scale.z = 0.1;
-            marker_template_g_score.type = visualization_msgs::Marker::SPHERE;
-            this->visu_helper_.addMarkerTemplate(this->g_score_marker_identificator_, marker_template_g_score);
-            
-            this->visu_helper_.addNewMarkerArray(this->theoretical_path_marker_identificator_);
-            visualization_msgs::Marker marker_template_theoretical_path;
-            marker_template_theoretical_path.action = visualization_msgs::Marker::ADD;
-            marker_template_theoretical_path.color.a = 1.0;
-            marker_template_theoretical_path.color.b = 1.0;
-            marker_template_theoretical_path.header.frame_id = "map";
-            marker_template_theoretical_path.lifetime = ros::Duration(0.3);
-            marker_template_theoretical_path.ns = "theoretical_path";
-            marker_template_theoretical_path.scale.x = 0.1;
-            marker_template_theoretical_path.scale.y = 0.1;
-            marker_template_theoretical_path.scale.z = 0.1;
-            marker_template_theoretical_path.type = visualization_msgs::Marker::SPHERE;
-            this->visu_helper_.addMarkerTemplate(this->theoretical_path_marker_identificator_,
-                                                 marker_template_theoretical_path);
+            this->initVisuHelper(name);
 
             // Get the tf prefix
             ros::NodeHandle nh;
             this->tf_prefix_ = tf::getPrefixParam(nh);
 
-            initialized_ = true; // Initialized method was called so planner is now initialized
-
-            ROS_INFO("Relaxed AStar finished intitialization.");
-
             this->createOccupancyMap();
 
-            //TESTING THIS WORKS FOR SOLVING LIN EQUATIONS
-            // Eigen::Matrix<float, 4, 4> A;
-            // A << 0,0,0,1,1,1,1,1,0,0,1,0,3,2,1,0;
-            // Eigen::Matrix<float, 4, 1> b;
-            // b << 5, 0, -1 , 1;
-            // std::cout << "Matrix:\n" << A << std::endl;
-            // std::cout << "Vector:\n" << b << std::endl;
-            // Eigen::Matrix<float, 4, 1> result;
-            // result = A.colPivHouseholderQr().solve(b);
-            // std::cout << "Result:\n" << result << std::endl;
-            // ros::Duration(100).sleep();
-            //TESTING END
+			initialized_ = true; // Initialized method was called so planner is now initialized
+			ROS_INFO("Relaxed AStar finished intitialization.");
         }
         else
         {
@@ -97,7 +54,7 @@ namespace path_planner
     {
         double cost;
         std::string message;
-        return 10 > this->makePlan(start, goal, this->default_tolerance_, plan, cost, message);
+        return 10 > this->makePlan(start, goal, this->ras_params_->default_tolerance, plan, cost, message);
     }  
 
     uint32_t SplinedRelaxedAStar::makePlan(const geometry_msgs::PoseStamped &start, const geometry_msgs::PoseStamped &goal,
@@ -162,7 +119,7 @@ namespace path_planner
 
         if (tolerance == 0.0) // For the moment I will use the default tolerance if somebody want 0 tolerance at the goal. Later this should throw an error or warning!
         {
-            tolerance = this->default_tolerance_;
+            tolerance = this->ras_params_->default_tolerance;
         }
         
         if(!this->costmap_->worldToMap(world_goal_pose_x, world_goal_pose_y, map_goal_cell_x, map_goal_cell_y) ||
@@ -193,7 +150,7 @@ namespace path_planner
         g_score[array_start_cell] = 0;
 		
 		// Calculate the start straight line points
-		tf::Vector3 start_straight_vector = tf::Vector3(this->start_straight_distance_, 0, 0);
+		tf::Vector3 start_straight_vector = tf::Vector3(this->ras_params_->start_straight_distance, 0, 0);
 		tf::Quaternion start_quaternion;
 		tf::quaternionMsgToTF(start.pose.orientation, start_quaternion);
 		start_straight_vector = tf::quatRotate(start_quaternion, start_straight_vector);
@@ -204,7 +161,7 @@ namespace path_planner
 		int array_start_straight_end_cell = this->getArrayIndexByCostmapCell(start_straight_end_cell_x, start_straight_end_cell_y);
 		
 		// Calculate the end straight line points
-		tf::Vector3 goal_straight_vector = tf::Vector3(this->end_straight_distance_, 0, 0);
+		tf::Vector3 goal_straight_vector = tf::Vector3(this->ras_params_->end_straight_distance, 0, 0);
 		tf::Quaternion goal_quaternion;
 		tf::quaternionMsgToTF(goal.pose.orientation, goal_quaternion);
 		goal_straight_vector = tf::quatRotate(goal_quaternion, goal_straight_vector);
@@ -230,7 +187,7 @@ namespace path_planner
             this->createPoseArrayForPlan(array_plan, plan);
 
             // Select pose every so often
-			int control_point_amount = std::ceil(float(plan.size()) / float(this->control_point_distance_));
+			int control_point_amount = std::ceil(float(plan.size()) / float(this->ras_params_->control_point_distance));
 			int real_control_point_distance = int(plan.size() / control_point_amount);
 
 			std::vector<geometry_msgs::PoseStamped> selected_poses;
@@ -279,7 +236,7 @@ namespace path_planner
 				spline->addStartEndPointToVisuHelper();
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
-                spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
+                spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
 				spline->visualizeData();
 			}
 
@@ -293,10 +250,12 @@ namespace path_planner
 				int timeout_counter = 0;
 
 				int point_of_failure = 0;
-				while(!spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_, point_of_failure))
+				while (!spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->ras_params_->planning_points_per_spline,
+																				 this->ras_params_->minimal_curve_radius,
+																				 point_of_failure))
 				{
 					// This process could be turned into an iterative optimization process, that tries to get to the limit of the minimal curve radius to minimize the distance the robots have to travel
-					if(point_of_failure < (this->planning_points_per_spline_ / 2))
+					if(point_of_failure < (this->ras_params_->planning_points_per_spline / 2))
 					{
 						float current_start_magnitude = spline_list[spline_counter]->getStartTangentMagnitude();
 						// ROS_INFO_STREAM("Current_start_magnitude: " << current_start_magnitude);
@@ -330,7 +289,7 @@ namespace path_planner
 				spline->addStartEndPointToVisuHelper();
                 spline->addTangentsToVisuHelper();
                 spline->addControlPointsToVisuHelper();
-                spline->addBezierSplineToVisuHelper(this->planning_points_per_spline_);
+                spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
 				spline->visualizeData();
 			}
 
@@ -340,7 +299,7 @@ namespace path_planner
             for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
             {
                 std::vector<Eigen::Matrix<float, 2, 1>> points;
-                points = spline->calcBezierSpline(this->planning_points_per_spline_);
+                points = spline->calcBezierSpline(this->ras_params_->planning_points_per_spline);
                 points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
             }
             geometry_msgs::PoseStamped last_pose;
@@ -493,8 +452,8 @@ namespace path_planner
                 if(counter_x == 0 && counter_y == 0)
                     continue;
 
-                if (this->neighbor_type_ == fpp_data_classes::NeighborType::EightWay ||
-                    (this->neighbor_type_ == fpp_data_classes::NeighborType::FourWay &&
+                if (this->ras_params_->neighbor_type == fpp_data_classes::NeighborType::EightWay ||
+                    (this->ras_params_->neighbor_type == fpp_data_classes::NeighborType::FourWay &&
                      ((counter_x == 0 && counter_y == -1) ||
                       (counter_x == -1 && counter_y == 0) ||
                       (counter_x == 1 && counter_y == 0) ||
@@ -539,7 +498,7 @@ namespace path_planner
             {
                 unsigned int cell_cost = static_cast<unsigned int>(this->costmap_->getCost(cell_counter_x, cell_counter_y));
 
-                if(cell_cost <= this->free_cell_threshhold_) // Cell is free
+                if(cell_cost <= this->ras_params_->free_cell_threshold) // Cell is free
                 {
                     this->occupancy_map_[this->getArrayIndexByCostmapCell(cell_counter_x, cell_counter_y)] = false; // False because cell is not occupied
                 }
@@ -694,43 +653,46 @@ namespace path_planner
         return planning_points_orientation;
     }
 
-    void SplinedRelaxedAStar::setDefaultTolerance(float default_tolerance)
-    {   
-        this->default_tolerance_ = default_tolerance;
-    }
-
-    void SplinedRelaxedAStar::setNeighborType(int neighbor_type)
-    {
-        this->neighbor_type_ = (fpp_data_classes::NeighborType)neighbor_type;
-    }
-
-    void SplinedRelaxedAStar::setFreeCellThreshhold(int free_cell_thresshold)
-    {
-        this->free_cell_threshhold_ = free_cell_thresshold;
-    }
-
-	void SplinedRelaxedAStar::setStartStraightDistance(float start_straight_distance)
+	void SplinedRelaxedAStar::initVisuHelper(std::string topic_prefix)
 	{
-		this->start_straight_distance_ = start_straight_distance;
+		this->initVisuHelper(topic_prefix, "g_score", "theoretical_path");
+
 	}
-
-	void SplinedRelaxedAStar::setEndStraightDistance(float end_straight_distance)
+	void SplinedRelaxedAStar::initVisuHelper(std::string topic_prefix,
+											 std::string g_score_marker_identificator,
+											 std::string theoretical_path_marker_identificator)
 	{
-		this->end_straight_distance_ = end_straight_distance;
-	}
+		this->visu_helper_ = visualization_helper::VisualizationHelper(topic_prefix);
+		this->g_score_marker_identificator_ = g_score_marker_identificator;
+		this->theoretical_path_marker_identificator_ = theoretical_path_marker_identificator;
 
-	void SplinedRelaxedAStar::setControlPointDistance(int control_point_distance)
-	{
-		this->control_point_distance_ = control_point_distance;
-	}
-
-	void SplinedRelaxedAStar::setMinimalCurveRadius(float minimal_curve_radius)
-	{
-		this->minimal_curve_radius_ = minimal_curve_radius;
-	}
-
-	void SplinedRelaxedAStar::setPlanningPointsPerSpline(int planning_points_per_spline)
-	{
-		this->planning_points_per_spline_ = planning_points_per_spline;
+		this->visu_helper_.addNewMarkerArray(this->g_score_marker_identificator_);
+		visualization_msgs::Marker marker_template_g_score;
+		marker_template_g_score.action = visualization_msgs::Marker::ADD;
+		marker_template_g_score.color.a = 1.0;
+		marker_template_g_score.color.r = 1.0;
+		marker_template_g_score.header.frame_id = "map";
+		marker_template_g_score.lifetime = ros::Duration(0.3);
+		marker_template_g_score.ns = this->g_score_marker_identificator_;
+		marker_template_g_score.scale.x = 0.1;
+		marker_template_g_score.scale.y = 0.1;
+		marker_template_g_score.scale.z = 0.1;
+		marker_template_g_score.type = visualization_msgs::Marker::SPHERE;
+		this->visu_helper_.addMarkerTemplate(this->g_score_marker_identificator_, marker_template_g_score);
+		
+		this->visu_helper_.addNewMarkerArray(this->theoretical_path_marker_identificator_);
+		visualization_msgs::Marker marker_template_theoretical_path;
+		marker_template_theoretical_path.action = visualization_msgs::Marker::ADD;
+		marker_template_theoretical_path.color.a = 1.0;
+		marker_template_theoretical_path.color.b = 1.0;
+		marker_template_theoretical_path.header.frame_id = "map";
+		marker_template_theoretical_path.lifetime = ros::Duration(0.3);
+		marker_template_theoretical_path.ns = this->theoretical_path_marker_identificator_;
+		marker_template_theoretical_path.scale.x = 0.1;
+		marker_template_theoretical_path.scale.y = 0.1;
+		marker_template_theoretical_path.scale.z = 0.1;
+		marker_template_theoretical_path.type = visualization_msgs::Marker::SPHERE;
+		this->visu_helper_.addMarkerTemplate(this->theoretical_path_marker_identificator_,
+												marker_template_theoretical_path);
 	}
 }

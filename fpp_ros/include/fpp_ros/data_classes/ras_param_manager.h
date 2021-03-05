@@ -31,13 +31,13 @@ namespace fpp_data_classes
 			void getParams(std::string formation_planner_name);
 
 			#pragma region Getter/Setter
-			fpp_data_classes::RASParams getRASParams();
+			std::shared_ptr<fpp_data_classes::RASParams> getRASParams();
 			#pragma endregion
 
 		private:
 			ros::NodeHandle &nh_;
 			ros::NodeHandle &planner_nh_;
 
-			fpp_data_classes::RASParams ras_params_;			
+			std::shared_ptr<fpp_data_classes::RASParams> ras_params_;			
 	};
 }

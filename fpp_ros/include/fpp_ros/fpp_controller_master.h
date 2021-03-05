@@ -12,9 +12,10 @@
 #include <fpp_msgs/DynReconfigure.h>
 
 #include <fpp_ros/path_planner/splined_relaxed_a_star.h>
-#include <fpp_ros/footprint_generation/robot_footprint_ros.h>
-#include <fpp_ros/footprint_generation/formation_footprint_ros.h>
-#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
+// #include <fpp_ros/footprint_generation/robot_footprint_ros.h>
+// #include <fpp_ros/footprint_generation/formation_footprint_ros.h>
+#include <fp_utils/geometry_info/minimal_enclosing_circle.h>
+#include <fpp_ros/data_classes/ras_param_manager.h>
 
 #include <Eigen/Dense>
 #include <map>
@@ -48,8 +49,8 @@ namespace fpp
 			void initActions() override;
             void initTimers() override;
 
-			std::shared_ptr<footprint_generation::FormationFootprintRos> createFootprintObj(
-				std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list);
+			// std::shared_ptr<footprint_generation::FormationFootprintRos> createFootprintObj(
+			// 	std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list);
 
 			void calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan);
 
@@ -72,13 +73,13 @@ namespace fpp
             // Parameter information
             //! This parameter contains the name of the used planner for generating the initial plan
             std::string used_formation_planner_;
+			//!
+			std::shared_ptr<fpp_data_classes::RASParamManager> ras_param_manager_;
 
             // Process information
             
-            //! List of all outlines of the individual robots
-            std::map<std::string, footprint_generation::RobotFootprintRos> robot_outline_list_;
             //! Outline of the real formation that occures through amcl poses
-            std::shared_ptr<footprint_generation::FormationFootprintRos> real_formation_contour_;
+            // std::shared_ptr<footprint_generation::FormationFootprintRos> real_formation_contour_;
 			//! Outline of the formation of everything is ideal
             // footprint_generation::FormationFootprintRos target_formation_contour_;
             //! Centre of the formation

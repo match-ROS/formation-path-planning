@@ -59,9 +59,6 @@ namespace fpp
 
         this->callDynamicCostmapReconfigure();
 
-		// Initialize real footprint. This should be put into an own costmap layer later.
-		this->real_formation_contour_ = this->createFootprintObj(this->fpp_params_->getRobotInfoList());
-		
         this->initTimers();
     }
 
@@ -71,11 +68,16 @@ namespace fpp
     {
         FPPControllerBase::initialize(planner_name, costmap, global_frame);
 
-        this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
-                                                                        this->costmap_,
-                                                                        this->global_frame_);
-        this->readParams(planner_name);
+		this->readParams(planner_name);
+		
+		// Initialize real footprint. This should be put into an own costmap layer later.
+		// this->real_formation_contour_ = this->createFootprintObj(this->fpp_params_->getRobotInfoList());
 
+		this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
+																		this->costmap_,
+																		this->global_frame_,
+																		this->ras_param_manager_->getRASParams());
+		
 		ROS_INFO_STREAM("robot_name: " << this->fpp_params_->getCurrentRobotName());
     }
 
@@ -175,35 +177,35 @@ namespace fpp
     void FPPControllerMaster::initTimers()
     {
 		FPPControllerBase::initTimers();
-		this->footprint_timer_ = this->nh_.createTimer(ros::Duration(0.1),
-													   &FPPControllerMaster::footprintTimerCallback,
-													   this);
+		// this->footprint_timer_ = this->nh_.createTimer(ros::Duration(0.1),
+		// 											   &FPPControllerMaster::footprintTimerCallback,
+		// 											   this);
 	}
 
-	std::shared_ptr<footprint_generation::FormationFootprintRos> FPPControllerMaster::createFootprintObj(
-		std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list)
-	{
-		std::shared_ptr<footprint_generation::FormationFootprintRos> formation_footprint =
-			std::make_shared<footprint_generation::FormationFootprintRos>();
-		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: robot_info_list)
-        {
-			ROS_INFO_STREAM(robot_info_it->robot_name);
-			std::shared_ptr<footprint_generation::RobotFootprintRos> robot_contour =
-				std::make_shared<footprint_generation::RobotFootprintRos>(this->nh_,
-																		  robot_info_it->robot_name,
-																		  robot_info_it->robot_namespace,
-																		  robot_info_it->robot_pose_topic_name);
+	// std::shared_ptr<footprint_generation::FormationFootprintRos> FPPControllerMaster::createFootprintObj(
+	// 	std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list)
+	// {
+	// 	std::shared_ptr<footprint_generation::FormationFootprintRos> formation_footprint =
+	// 		std::make_shared<footprint_generation::FormationFootprintRos>();
+	// 	for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: robot_info_list)
+    //     {
+	// 		ROS_INFO_STREAM(robot_info_it->robot_name);
+	// 		std::shared_ptr<footprint_generation::RobotFootprintRos> robot_contour =
+	// 			std::make_shared<footprint_generation::RobotFootprintRos>(this->nh_,
+	// 																	  robot_info_it->robot_name,
+	// 																	  robot_info_it->robot_namespace,
+	// 																	  robot_info_it->robot_pose_topic_name);
 
-			for(Eigen::Vector2f corner: robot_info_it->robot_outline)
-			{
-				robot_contour->addContourCornerGeometryCS(corner);
-			}
-			robot_contour->createContourEdges();
-			formation_footprint->addRobotToFormation(robot_contour);
-        }
+	// 		for(Eigen::Vector2f corner: robot_info_it->robot_outline)
+	// 		{
+	// 			robot_contour->addContourCornerGeometryCS(corner);
+	// 		}
+	// 		robot_contour->createContourEdges();
+	// 		formation_footprint->addRobotToFormation(robot_contour);
+    //     }
 
-		return formation_footprint;
-	}
+	// 	return formation_footprint;
+	// }
 
 	void FPPControllerMaster::calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan)
 	{
@@ -283,10 +285,10 @@ namespace fpp
         this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
     }
 
-    void FPPControllerMaster::footprintTimerCallback(const ros::TimerEvent& e)
-    {
-        this->formation_footprint_pub_.publish(this->real_formation_contour_->getFormationFootprint());
-    }
+    // void FPPControllerMaster::footprintTimerCallback(const ros::TimerEvent& e)
+    // {
+    //     this->formation_footprint_pub_.publish(this->real_formation_contour_->getFormationFootprint());
+    // }
 
 	bool FPPControllerMaster::getRobotPlanCb(fpp_msgs::GetRobotPlan::Request &req, fpp_msgs::GetRobotPlan::Response &res)
 	{

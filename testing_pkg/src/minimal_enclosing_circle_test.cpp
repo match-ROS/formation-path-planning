@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 
-#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
+#include <fp_utils/geometry_info/minimal_enclosing_circle.h>
 
 int main(int argc, char **argv)
 {

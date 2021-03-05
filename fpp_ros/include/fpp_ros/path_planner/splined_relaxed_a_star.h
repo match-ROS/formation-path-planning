@@ -26,6 +26,7 @@
 #include <Eigen/Dense>
 
 #include <fpp_ros/data_classes/path_planner_types.h>
+#include <fpp_ros/data_classes/ras_param_manager.h>
 
 #include <fp_utils/visualization_helper/visualization_helper.h>
 #include <fp_utils/bezier_splines/cubic_bezier_spline.h>
@@ -49,10 +50,12 @@ namespace path_planner
              * @param name The name of this planner
              * @param costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
              */
-            SplinedRelaxedAStar(std::string name, costmap_2d::Costmap2D *costmap,
-                                std::string global_name);
+			SplinedRelaxedAStar(std::string name,
+								costmap_2d::Costmap2D *costmap,
+								std::string global_name,
+								std::shared_ptr<fpp_data_classes::RASParams> ras_params);
 
-            /**
+			/**
              * @brief Initialization method for the CostmapPlanner
              * 
              * @param name The name of this planner
@@ -106,15 +109,6 @@ namespace path_planner
             * @return True if a cancel has been successfully requested, false if not implemented.
             */
             bool cancel();
-        
-            void setDefaultTolerance(float default_tolerance);
-            void setNeighborType(int neighbor_type);
-            void setFreeCellThreshhold(int free_cell_thresshold);
-			void setStartStraightDistance(float start_straight_distance);
-			void setEndStraightDistance(float end_straight_distance);
-			void setControlPointDistance(int control_point_distance);
-			void setMinimalCurveRadius(float minimal_curve_radius);
-			void setPlanningPointsPerSpline(int planning_points_per_spline);
 
         protected:
 
@@ -327,46 +321,53 @@ namespace path_planner
 
             geometry_msgs::PoseArray createPoseArrayForOrientationVisu(std::vector<geometry_msgs::PoseStamped>& plan);
 
-            //!Global frame of the robot
+			void initVisuHelper(std::string topic_prefix);
+			void initVisuHelper(std::string topic_prefix,
+								std::string g_score_marker_identificator,
+								std::string theoretical_path_marker_identificator);
+
+			//!Global frame of the robot
             std::string global_frame_;
             //!tf_prefix that was defined in the launch files for the robot
             std::string tf_prefix_;
 
             // Parameter list
 
-            //! The default tolerance that is used if the tolerance of the received goal is not valid
-            float default_tolerance_;
+            // //! The default tolerance that is used if the tolerance of the received goal is not valid
+            // float default_tolerance_;
 
-            //! How many of the neighbor cells should be used. Options:
-            //! 4 - This means the cells in the north, south, west, east direction are used
-            //! 8 - This means all cells around (also the diagonal ones) are used
-            fpp_data_classes::NeighborType neighbor_type_;
+            // //! How many of the neighbor cells should be used. Options:
+            // //! 4 - This means the cells in the north, south, west, east direction are used
+            // //! 8 - This means all cells around (also the diagonal ones) are used
+            // fpp_data_classes::NeighborType neighbor_type_;
 
-            //! Threshold for the costmap values that define if a cell is free or not.
-            //! This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.
-            //! Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
-            //! The greater this value will be defined the closer the global path will be planed next to walls.
-            int free_cell_threshhold_;
+            // //! Threshold for the costmap values that define if a cell is free or not.
+            // //! This image: http://wiki.ros.org/costmap_2d?action=AttachFile&do=get&target=costmapspec.png explains the cell cost values.
+            // //! Value 0 means the farthest away from the wall. Value 254 defines a cell where an obstacle is located.
+            // //! The greater this value will be defined the closer the global path will be planed next to walls.
+            // int free_cell_threshhold_;
 
-			//! Distance that is added from the start point of the Relaxed A Star in the direction of the start orientation.
-			//! This should help no creating splines that instantly make a curve
-			float start_straight_distance_;
+			// //! Distance that is added from the start point of the Relaxed A Star in the direction of the start orientation.
+			// //! This should help no creating splines that instantly make a curve
+			// float start_straight_distance_;
 			
-			//! Distance that is subtracted from the end point of the Relaxed A Star in the direction of the end orientation.
-			//! This should help no creating splines that instantly make a curve before the end
-			float end_straight_distance_;
+			// //! Distance that is subtracted from the end point of the Relaxed A Star in the direction of the end orientation.
+			// //! This should help no creating splines that instantly make a curve before the end
+			// float end_straight_distance_;
 
-			//! Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
-      		//! Every nth cell will act as a control point
-			int control_point_distance_;
+			// //! Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
+      		// //! Every nth cell will act as a control point
+			// int control_point_distance_;
 
-			//! This value defines how many points should be inserted into the plan from one spline.
-			int planning_points_per_spline_;
+			// //! This value defines how many points should be inserted into the plan from one spline.
+			// int planning_points_per_spline_;
 
-			//! Minimal radius of a curve the formation can drive in m.
-			//! This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.
-			//! Whichever radius is bigger will be selected for creating the splines
-			float minimal_curve_radius_;
+			// //! Minimal radius of a curve the formation can drive in m.
+			// //! This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.
+			// //! Whichever radius is bigger will be selected for creating the splines
+			// float minimal_curve_radius_;
+
+			std::shared_ptr<fpp_data_classes::RASParams> ras_params_;
 
 
             // Process information

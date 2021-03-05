@@ -1,4 +1,4 @@
-#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
+#include <fp_utils/geometry_info/minimal_enclosing_circle.h>
 
 namespace geometry_info
 {

@@ -2,6 +2,10 @@
 
 #include <geometry_msgs/PolygonStamped.h>
 
+#include <fp_utils/geometry_info/edge_info.h>
+#include <fp_utils/geometry_info/geometry_contour.h>
+#include <formation_costmap/robot_footprint_ros.h>
+
 #include <iostream>
 #include <memory> // Usage of smart pointers
 #include <algorithm>
@@ -9,10 +13,6 @@
 #include <list>
 #include <map>
 #include <Eigen/Dense>
-
-#include <fpp_ros/geometry_info/edge_info.h>
-#include <fpp_ros/geometry_info/geometry_contour.h>
-#include <fpp_ros/footprint_generation/robot_footprint_ros.h>
 
 namespace footprint_generation
 {

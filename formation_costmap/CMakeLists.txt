@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(fpp_ros)
+project(formation_costmap)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -10,23 +10,10 @@ add_compile_options(-std=c++14)
 find_package(
 	catkin REQUIRED COMPONENTS 
 	roscpp
-	mbf_costmap_core
-	mbf_msgs
-	fpp_msgs
-	nav_core
-	nav_msgs
 	geometry_msgs
-	visualization_msgs
-	std_srvs
-	costmap_2d
-	dynamic_reconfigure
 	fp_utils)
 
 find_package(Eigen3 REQUIRED)
-
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -118,17 +105,8 @@ catkin_package(
 	INCLUDE_DIRS 
 		include
 	LIBRARIES 
-		fpp_ros
-	CATKIN_DEPENDS 
-		roscpp
-		pluginlib
-		mbf_costmap_core
-		mbf_msgs
-		fpp_msgs
-		nav_core
-		geometry_msgs
-		tf
-		dynamic_reconfigure
+		formation_costmap
+	CATKIN_DEPENDS
 		fp_utils
 )
 
@@ -145,36 +123,14 @@ include_directories(
 )
 
 ## Declare a C++ library
-set(FPP_ROS_SOURCES
-	include/fpp_ros/fpp_ros.h
-	src/fpp_ros.cpp
+set(FORMATION_COSTMAP_SOURCES
+	include/formation_costmap/robot_footprint_ros.h
+	src/robot_footprint_ros.cpp
 
-	include/fpp_ros/fpp_controller_base.h
-	src/fpp_controller_base.cpp
-	
-	include/fpp_ros/fpp_controller_master.h
-	src/fpp_controller_master.cpp
+	include/formation_costmap/formation_footprint_ros.h
+	src/formation_footprint_ros.cpp)
+add_library(formation_costmap ${FORMATION_COSTMAP_SOURCES})
 
-	include/fpp_ros/fpp_controller_slave.h
-	src/fpp_controller_slave.cpp)
-add_library(fpp_ros ${FPP_ROS_SOURCES})
-
-set(PATH_PLANNER_SOURCES
-	include/fpp_ros/path_planner/splined_relaxed_a_star.h
-	src/path_planner/splined_relaxed_a_star.cpp)
-add_library(path_planner ${PATH_PLANNER_SOURCES})
-
-set(DATA_CLASS_SOURCES
-	include/fpp_ros/data_classes/robot_info.h
-
-	include/fpp_ros/data_classes/path_planner_types.h
-	
-	include/fpp_ros/data_classes/fpp_param_manager.h
-	src/data_classes/fpp_param_manager.cpp
-
-	include/fpp_ros/data_classes/ras_param_manager.h
-	src/data_classes/ras_param_manager.cpp)
-add_library(data_classes ${DATA_CLASS_SOURCES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -184,34 +140,21 @@ add_library(data_classes ${DATA_CLASS_SOURCES})
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(dyn_reconfig_relay_node src/nodes/dyn_reconfig_relay_node.cpp)
+
+# add_executable(formation_footprint_node src/formation_footprint_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(general_types PROPERTIES LINKER_LANGUAGE CXX)
-
-## This setting of properties is so that I can only use a .h file without a .cpp file
-## cpp would be empty as these files only contain types
-set_target_properties(data_classes PROPERTIES LINKER_LANGUAGE CXX)
-# set_target_properties(path_planner_types PROPERTIES LINKER_LANGUAGE CXX)
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(fpp_ros 
-	data_classes
-	path_planner
-	${catkin_LIBRARIES})
-
-target_link_libraries(path_planner 
-	data_classes
-	${catkin_LIBRARIES})
-
-target_link_libraries(dyn_reconfig_relay_node 
+target_link_libraries(formation_costmap
 	${catkin_LIBRARIES})
 
 #############
@@ -256,23 +199,12 @@ target_link_libraries(dyn_reconfig_relay_node
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-# install(
-# 	TARGETS fpp_ros
-# 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-# 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-# 	RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
-# install(
-# 	DIRECTORY include/fpp_ros/
-# 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-# )
-
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_fpp_ros.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_formation_costmap.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

@@ -107,6 +107,7 @@ catkin_package(
 	LIBRARIES
 		bezier_splines
 		visualization_helper
+		geometry_info
 )
 
 ###########
@@ -144,6 +145,17 @@ set(VISUALIZATION_HELPER_SOURCES
 	src/visualization_helper/visualization_helper.cpp)
 add_library(visualization_helper ${VISUALIZATION_HELPER_SOURCES})
 
+set(GEOMETRY_INFO_SOURCES
+	include/fp_utils/geometry_info/edge_info.h
+	src/geometry_info/edge_info.cpp
+	
+	include/fp_utils/geometry_info/geometry_contour.h
+	src/geometry_info/geometry_contour.cpp
+
+	include/fp_utils/geometry_info/minimal_enclosing_circle.h
+	src/geometry_info/minimal_enclosing_circle.cpp)
+add_library(geometry_info ${GEOMETRY_INFO_SOURCES})
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -176,6 +188,10 @@ target_link_libraries(bezier_splines
 
 target_link_libraries(visualization_helper
 	${catkin_LIBRARIES})
+
+target_link_libraries(geometry_info 
+	${catkin_LIBRARIES})
+
 
 target_link_libraries(test_node
 	bezier_splines

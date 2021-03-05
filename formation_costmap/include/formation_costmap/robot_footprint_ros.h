@@ -5,7 +5,7 @@
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
-#include <fpp_ros/geometry_info/geometry_contour.h>
+#include <fp_utils/geometry_info/geometry_contour.h>
 
 #include <memory> // Usage of smart pointers
 #include <vector>

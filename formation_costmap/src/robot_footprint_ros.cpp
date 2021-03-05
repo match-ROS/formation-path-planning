@@ -1,4 +1,4 @@
-#include <fpp_ros/footprint_generation/robot_footprint_ros.h>
+#include <formation_costmap/robot_footprint_ros.h>
 
 namespace footprint_generation
 {

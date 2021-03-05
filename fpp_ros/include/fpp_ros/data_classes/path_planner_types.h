@@ -1,3 +1,5 @@
+#pragma once
+
 namespace fpp_data_classes
 {
     /**

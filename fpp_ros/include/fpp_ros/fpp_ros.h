@@ -35,10 +35,10 @@
 #include <boost/bind.hpp>
 #include <XmlRpc.h>
 
-#include <fpp_ros/geometry_info/minimal_enclosing_circle.h>
+#include <fp_utils/geometry_info/minimal_enclosing_circle.h>
 #include <fpp_msgs/DynReconfigure.h>
 
-#include <fpp_ros/geometry_info/geometry_contour.h>
+#include <fp_utils/geometry_info/geometry_contour.h>
 #include <fpp_ros/data_classes/robot_info.h>
 #include <fpp_ros/data_classes/fpp_param_manager.h>
 
