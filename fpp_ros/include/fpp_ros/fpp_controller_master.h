@@ -48,40 +48,18 @@ namespace fpp
 			void initActions() override;
             void initTimers() override;
 
-            /**
-             * @brief Method for getting the amcl pose of a specified robot. Methods waits until one amcl_pose msg is received.
-             * 
-             * @param robot_namespace Namespace the amcl node is located in
-             * @return geometry_msgs::PoseWithCovarianceStampedConstPtr Pose of the robot that was retrieved
-             */
-            geometry_msgs::PoseWithCovarianceStampedConstPtr getAMCLPose(std::string robot_namespace);
-            /**
-             * @brief Helper method for getting the amcl pose of the specified robot.
-             * Easier usability as it outputs the x/y position and yaw directly
-             * 
-             * @param robot_namespace Namespace the amcl node is located in
-             * @param robot_pose This will be overwritten by the node. Will contain the x/y pose of the robot
-             * @param yaw This will be overwritten by the node. Will contain the yaw of the robot
-             */
-            void getAMCLPose(std::string robot_namespace, Eigen::Vector2f &robot_pose, float &yaw);
+			std::shared_ptr<footprint_generation::FormationFootprintRos> createFootprintObj(
+				std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list);
 
 			void calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan);
 
-            /**
-             * @brief Update the footprint of the formation with the new positions of the individual robots
-             * 
-             */
-            void updateFootprint();
-            /**
-             * @brief Publish the current footprint through the "formation_footprint" topic
-             * 
-             */
-            void publishFootprint();
             /**
              * @brief Call the dynamic reconfigure relay node to reconfigure the costmap inflation
              * 
              */
             void callDynamicCostmapReconfigure();
+
+			
             /**
              * @brief Callback for the timer that triggers the publishing of the formation footprint
              * 
@@ -100,7 +78,7 @@ namespace fpp
             //! List of all outlines of the individual robots
             std::map<std::string, footprint_generation::RobotFootprintRos> robot_outline_list_;
             //! Outline of the real formation that occures through amcl poses
-            footprint_generation::FormationFootprintRos real_formation_contour_;
+            std::shared_ptr<footprint_generation::FormationFootprintRos> real_formation_contour_;
 			//! Outline of the formation of everything is ideal
             // footprint_generation::FormationFootprintRos target_formation_contour_;
             //! Centre of the formation

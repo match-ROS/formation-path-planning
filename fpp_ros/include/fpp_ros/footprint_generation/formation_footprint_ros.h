@@ -1,5 +1,7 @@
 #pragma once
 
+#include <geometry_msgs/PolygonStamped.h>
+
 #include <iostream>
 #include <memory> // Usage of smart pointers
 #include <algorithm>
@@ -76,6 +78,8 @@ namespace footprint_generation
 
 			std::vector<std::shared_ptr<RobotFootprintRos>> getRobotContours();
 			std::shared_ptr<RobotFootprintRos> getRobotContour(std::string robot_name);
+
+			geometry_msgs::PolygonStamped getFormationFootprint();
 			#pragma endregion
 
         private:
@@ -118,6 +122,8 @@ namespace footprint_generation
 			 * @return false Not all robots have sent an position update
 			 */
 			bool allPositionUpdatesReceived();
+
+			void resetPositionUpdateTable();
 			#pragma endregion
     };
 }

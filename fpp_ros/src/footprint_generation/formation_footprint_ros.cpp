@@ -182,6 +182,25 @@ namespace footprint_generation
 
 		ROS_ERROR_STREAM("FormationFootprintRos::getRobotContour: No robot name matched the robots in the formation.");
 	}
+
+	geometry_msgs::PolygonStamped FormationFootprintRos::getFormationFootprint()
+	{
+		geometry_msgs::PolygonStamped formation_footprint_msg;
+        formation_footprint_msg.header.frame_id = "map";
+        formation_footprint_msg.header.stamp = ros::Time::now();
+
+        std::vector<Eigen::Vector2f> formation_corner_points = this->corner_points_geometry_cs_;
+        for(Eigen::Vector2f corner: formation_corner_points)
+        {
+            geometry_msgs::Point32 corner_point;
+            corner_point.x = corner[0];
+            corner_point.y = corner[1];
+            corner_point.z = 0.0;
+            formation_footprint_msg.polygon.points.push_back(corner_point);
+        }
+
+		return formation_footprint_msg;
+	}
 	#pragma endregion
 
 	#pragma region EventCallbacks
@@ -191,7 +210,10 @@ namespace footprint_generation
 
 		if(this->allPositionUpdatesReceived())
 		{
+			ROS_INFO_STREAM("Update " << robot_name);
 			this->updateFormationContour();
+
+			this->resetPositionUpdateTable();
 		}
 	}
 	#pragma endregion
@@ -237,7 +259,7 @@ namespace footprint_generation
 
 	bool FormationFootprintRos::allPositionUpdatesReceived()
 	{
-		for(std::pair<std::string, bool> robot_pose_update: this->robot_position_updates_)
+		for(const std::pair<std::string, bool> &robot_pose_update: this->robot_position_updates_)
 		{
 			if(!robot_pose_update.second)
 			{
@@ -246,6 +268,14 @@ namespace footprint_generation
 		}
 
 		return true;
+	}
+
+	void FormationFootprintRos::resetPositionUpdateTable()
+	{
+		for(const std::pair<std::string, bool> &robot_pose_update: this->robot_position_updates_)
+		{
+			this->robot_position_updates_[robot_pose_update.first] = false;
+		}
 	}
 	#pragma endregion
 }

@@ -7,7 +7,6 @@ namespace fpp
                                              ros::NodeHandle &planner_nh)
         : FPPControllerBase(fpp_params, nh, planner_nh)
     {
-		ros::Duration(3.0).sleep();
         this->initServices();
         this->initTopics();
 		this->initActions();
@@ -60,25 +59,9 @@ namespace fpp
 
         this->callDynamicCostmapReconfigure();
 
-		// Initialize real footprint that takes purely AMCL position
-		this->real_formation_contour_ = footprint_generation::FormationFootprintRos(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
-		for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->fpp_params_->getRobotInfoList())
-        {
-			ROS_INFO_STREAM(robot_info_it->robot_name);
-			std::shared_ptr<footprint_generation::RobotFootprintRos> robot_contour = std::make_shared<footprint_generation::RobotFootprintRos>(
-				this->nh_, 
-				robot_info_it->robot_name, 
-				robot_info_it->robot_namespace,
-				robot_info_it->robot_pose_topic_name);
-
-			for(Eigen::Vector2f corner: robot_info_it->robot_outline)
-			{
-				robot_contour->addContourCornerGeometryCS(corner);
-			}
-			robot_contour->createContourEdges();
-			this->real_formation_contour_.addRobotToFormation(robot_contour);
-        }
-        // this->publishFootprint();
+		// Initialize real footprint. This should be put into an own costmap layer later.
+		this->real_formation_contour_ = this->createFootprintObj(this->fpp_params_->getRobotInfoList());
+		
         this->initTimers();
     }
 
@@ -192,34 +175,35 @@ namespace fpp
     void FPPControllerMaster::initTimers()
     {
 		FPPControllerBase::initTimers();
-        // this->footprint_timer_ = this->nh_.createTimer(ros::Duration(1.0), &FPPControllerMaster::footprintTimerCallback, this);
-    }
+		this->footprint_timer_ = this->nh_.createTimer(ros::Duration(0.1),
+													   &FPPControllerMaster::footprintTimerCallback,
+													   this);
+	}
 
-    geometry_msgs::PoseWithCovarianceStampedConstPtr FPPControllerMaster::getAMCLPose(std::string robot_namespace)
-    {
-        std::string amcl_pose_topic = robot_namespace + "/amcl_pose";
-        geometry_msgs::PoseWithCovarianceStampedConstPtr robot_pose_ptr;
-        robot_pose_ptr = ros::topic::waitForMessage<geometry_msgs::PoseWithCovarianceStamped>(amcl_pose_topic);
-        return robot_pose_ptr;
-    }
-
-    void FPPControllerMaster::getAMCLPose(std::string robot_namespace, Eigen::Vector2f &robot_pose, float &yaw)
-    {
-        geometry_msgs::PoseWithCovarianceStampedConstPtr robot_pose_ptr;
-        robot_pose_ptr = this->getAMCLPose(robot_namespace);
-
-        if(robot_pose_ptr == nullptr)
+	std::shared_ptr<footprint_generation::FormationFootprintRos> FPPControllerMaster::createFootprintObj(
+		std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list)
+	{
+		std::shared_ptr<footprint_generation::FormationFootprintRos> formation_footprint =
+			std::make_shared<footprint_generation::FormationFootprintRos>();
+		for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: robot_info_list)
         {
-            ROS_ERROR_STREAM("FormationPathPlanner: No message was received from the amcl_pose topic in the robot_namespace: " << robot_namespace);
-            robot_pose << 0, 0;
-            yaw = 0;
+			ROS_INFO_STREAM(robot_info_it->robot_name);
+			std::shared_ptr<footprint_generation::RobotFootprintRos> robot_contour =
+				std::make_shared<footprint_generation::RobotFootprintRos>(this->nh_,
+																		  robot_info_it->robot_name,
+																		  robot_info_it->robot_namespace,
+																		  robot_info_it->robot_pose_topic_name);
+
+			for(Eigen::Vector2f corner: robot_info_it->robot_outline)
+			{
+				robot_contour->addContourCornerGeometryCS(corner);
+			}
+			robot_contour->createContourEdges();
+			formation_footprint->addRobotToFormation(robot_contour);
         }
-        else
-        {
-            robot_pose << robot_pose_ptr->pose.pose.position.x, robot_pose_ptr->pose.pose.position.y;
-            yaw = tf::getYaw(robot_pose_ptr->pose.pose.orientation);
-        }
-    }
+
+		return formation_footprint;
+	}
 
 	void FPPControllerMaster::calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan)
 	{
@@ -290,38 +274,6 @@ namespace fpp
 		// }
 	}
 
-    void FPPControllerMaster::updateFootprint()
-    {
-        for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info: this->fpp_params_->getRobotInfoList())
-        {
-            Eigen::Vector2f new_robot_pose;
-            float new_rotation;
-            this->getAMCLPose(robot_info->robot_namespace, new_robot_pose, new_rotation);
-
-            this->real_formation_contour_.updateRobotPose(robot_info->robot_name, new_robot_pose, new_rotation);
-        }
-        this->real_formation_contour_.updateFormationContour();
-    }
-
-    void FPPControllerMaster::publishFootprint()
-    {
-        geometry_msgs::PolygonStamped formation_footprint_msg;
-        formation_footprint_msg.header.frame_id = "map";
-        formation_footprint_msg.header.stamp = ros::Time::now();
-
-        std::vector<Eigen::Vector2f> formation_corner_points = this->real_formation_contour_.getCornerPointsWorldCS();
-        for(Eigen::Vector2f corner: formation_corner_points)
-        {
-            geometry_msgs::Point32 corner_point;
-            corner_point.x = corner[0];
-            corner_point.y = corner[1];
-            corner_point.z = 0.0;
-            formation_footprint_msg.polygon.points.push_back(corner_point);
-        }
-
-        this->formation_footprint_pub_.publish(formation_footprint_msg);
-    }
-
     void FPPControllerMaster::callDynamicCostmapReconfigure()
     {
         fpp_msgs::DynReconfigure dyn_reconfig_msg;
@@ -333,8 +285,7 @@ namespace fpp
 
     void FPPControllerMaster::footprintTimerCallback(const ros::TimerEvent& e)
     {
-        this->updateFootprint();
-        this->publishFootprint();        
+        this->formation_footprint_pub_.publish(this->real_formation_contour_->getFormationFootprint());
     }
 
 	bool FPPControllerMaster::getRobotPlanCb(fpp_msgs::GetRobotPlan::Request &req, fpp_msgs::GetRobotPlan::Response &res)
