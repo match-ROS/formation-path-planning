@@ -1,6 +1,6 @@
 #include <formation_costmap/formation_footprint_ros.h>
 
-namespace footprint_generation
+namespace formation_costmap
 {
 	FormationFootprintRos::FormationFootprintRos()
 		: GeometryContour(Eigen::Vector2f::Zero(), 0.0)

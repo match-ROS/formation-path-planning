@@ -13,7 +13,7 @@
 #include <Eigen/Dense>
 #include <functional>
 
-namespace footprint_generation
+namespace formation_costmap
 {
     class RobotFootprintRos : public geometry_info::GeometryContour
     {

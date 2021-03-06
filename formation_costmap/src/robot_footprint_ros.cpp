@@ -1,6 +1,6 @@
 #include <formation_costmap/robot_footprint_ros.h>
 
-namespace footprint_generation
+namespace formation_costmap
 {
 	RobotFootprintRos::RobotFootprintRos(ros::NodeHandle &nh,
 									 std::string robot_name,

@@ -14,7 +14,7 @@
 #include <map>
 #include <Eigen/Dense>
 
-namespace footprint_generation
+namespace formation_costmap
 {
     class FormationFootprintRos : public geometry_info::GeometryContour
     {

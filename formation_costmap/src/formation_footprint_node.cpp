@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-std::string ns;
+#include <formation_costmap/formation_footprint_ros.h>
 
 int main(int argc, char **argv)
 {
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh = ros::NodeHandle();
 	ros::NodeHandle costmap_nh = ros::NodeHandle("~" + costmap_name);
 
-	
+	formation_costmap::FormationFootprintRos formation_footprint;
 
     while(ros::ok())
     {
