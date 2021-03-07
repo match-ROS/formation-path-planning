@@ -102,8 +102,6 @@ namespace fpp
 			//! List that contains an action client linked to all slave robots in the formation
 			std::vector<std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>> slave_move_base_as_list_;
 
-            //! Topic to publish the footprint of the formation
-            ros::Publisher formation_footprint_pub_;
             //! Topic to publish the plan of the formation. From this each robot has to calculate its own plan
             ros::Publisher formation_plan_pub_;
 

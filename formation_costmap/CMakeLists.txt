@@ -128,7 +128,10 @@ set(FORMATION_COSTMAP_SOURCES
 	src/robot_footprint_ros.cpp
 
 	include/formation_costmap/formation_footprint_ros.h
-	src/formation_footprint_ros.cpp)
+	src/formation_footprint_ros.cpp
+
+	include/formation_costmap/formation_costmap_params.h
+	src/formation_costmap_params.cpp)
 add_library(formation_costmap ${FORMATION_COSTMAP_SOURCES})
 
 
@@ -158,6 +161,7 @@ target_link_libraries(formation_costmap
 	${catkin_LIBRARIES})
 
 target_link_libraries(formation_footprint_node 
+	formation_costmap
 	${catkin_LIBRARIES})
 
 #############

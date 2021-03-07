@@ -70,9 +70,6 @@ namespace fpp
 
 		this->readParams(planner_name);
 		
-		// Initialize real footprint. This should be put into an own costmap layer later.
-		// this->real_formation_contour_ = this->createFootprintObj(this->fpp_params_->getRobotInfoList());
-
 		this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
 																		this->costmap_,
 																		this->global_frame_,
@@ -147,10 +144,7 @@ namespace fpp
     void FPPControllerMaster::initTopics()
     {
 		FPPControllerBase::initTopics();
-        this->formation_footprint_pub_ = this->nh_.advertise<geometry_msgs::PolygonStamped>("formation_footprint", 10);
-        while(this->formation_footprint_pub_.getNumSubscribers() < 1)
-            ros::Duration(0.01).sleep();
-
+        
         // Advertise new topic but dont wait for subscribers, as this topic is not init relevant
         this->formation_plan_pub_ = this->nh_.advertise<nav_msgs::Path>("formation_plan", 10);
     }
@@ -181,31 +175,6 @@ namespace fpp
 		// 											   &FPPControllerMaster::footprintTimerCallback,
 		// 											   this);
 	}
-
-	// std::shared_ptr<footprint_generation::FormationFootprintRos> FPPControllerMaster::createFootprintObj(
-	// 	std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list)
-	// {
-	// 	std::shared_ptr<footprint_generation::FormationFootprintRos> formation_footprint =
-	// 		std::make_shared<footprint_generation::FormationFootprintRos>();
-	// 	for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: robot_info_list)
-    //     {
-	// 		ROS_INFO_STREAM(robot_info_it->robot_name);
-	// 		std::shared_ptr<footprint_generation::RobotFootprintRos> robot_contour =
-	// 			std::make_shared<footprint_generation::RobotFootprintRos>(this->nh_,
-	// 																	  robot_info_it->robot_name,
-	// 																	  robot_info_it->robot_namespace,
-	// 																	  robot_info_it->robot_pose_topic_name);
-
-	// 		for(Eigen::Vector2f corner: robot_info_it->robot_outline)
-	// 		{
-	// 			robot_contour->addContourCornerGeometryCS(corner);
-	// 		}
-	// 		robot_contour->createContourEdges();
-	// 		formation_footprint->addRobotToFormation(robot_contour);
-    //     }
-
-	// 	return formation_footprint;
-	// }
 
 	void FPPControllerMaster::calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan)
 	{

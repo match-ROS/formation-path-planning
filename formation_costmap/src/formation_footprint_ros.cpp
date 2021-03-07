@@ -3,8 +3,8 @@
 namespace formation_costmap
 {
 	FormationFootprintRos::FormationFootprintRos()
-		: GeometryContour(Eigen::Vector2f::Zero(), 0.0)
-	{ }
+		: GeometryContour()
+	{ROS_INFO("blub");}
 
     FormationFootprintRos::FormationFootprintRos(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation)
         : GeometryContour(lead_vector_world_cs, world_to_geometry_cs_rotation)

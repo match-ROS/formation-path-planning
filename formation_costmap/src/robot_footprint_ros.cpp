@@ -46,5 +46,7 @@ namespace formation_costmap
 		this->moveContour(lead_vector_world_cs_, new_cs_rotation);
 
 		this->robot_pose_changed_handler_(this->robot_name_);
+
+		ROS_INFO_STREAM(this->robot_name_);
 	}
 }

@@ -26,7 +26,10 @@ namespace formation_costmap
 	struct FormationCostmapParams
 	{
 		//! For every robot there should be an object with the appropriate info inserted
-		std::vector<FCRobotParams> formation_robot_params;
+		std::vector<std::shared_ptr<FCRobotParams>> formation_robot_params;
+
+		std::shared_ptr<FCRobotParams> current_robot_info;
+		std::shared_ptr<FCRobotParams> master_robot_info;
 	};
 
 	class FormationCostmapParamManager
@@ -46,12 +49,16 @@ namespace formation_costmap
 
 			#pragma region Params
 			std::string formation_costmap_name_;
+
+			std::shared_ptr<FormationCostmapParams> formation_costmap_params_;
 			#pragma endregion
 
 			#pragma ParamReadingHelper
 			double getNumberFromXMLRPC(XmlRpc::XmlRpcValue value, const std::string full_param_name);
 			std::vector<Eigen::Vector2f> createRobotOutlineFromXMLRPC(XmlRpc::XmlRpcValue footprint_xmlrpc,
 																	  const std::string full_param_name);
+			std::shared_ptr<FCRobotParams> getMasterRobotInfo(
+				const std::vector<std::shared_ptr<FCRobotParams>> &robot_info_list);
 			#pragma endregion
 	};
 }
