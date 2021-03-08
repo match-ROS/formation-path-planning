@@ -28,7 +28,9 @@ namespace fpp_data_classes
 		public:
 			RASParamManager(ros::NodeHandle &nh, ros::NodeHandle &planner_nh);
 		
-			void getParams(std::string formation_planner_name);
+			void readParams(std::string formation_planner_name);
+
+			void printInfo();
 
 			#pragma region Getter/Setter
 			std::shared_ptr<fpp_data_classes::RASParams> getRASParams();

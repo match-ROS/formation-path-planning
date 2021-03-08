@@ -10,6 +10,7 @@
 #include <nav_msgs/Path.h>
 #include <fpp_msgs/GetRobotPlan.h>
 #include <fpp_msgs/DynReconfigure.h>
+#include <fpp_msgs/FormationFootprintInfo.h>
 
 #include <fpp_ros/path_planner/splined_relaxed_a_star.h>
 // #include <fpp_ros/footprint_generation/robot_footprint_ros.h>
@@ -58,7 +59,7 @@ namespace fpp
              * @brief Call the dynamic reconfigure relay node to reconfigure the costmap inflation
              * 
              */
-            void callDynamicCostmapReconfigure();
+            void callDynamicCostmapReconfigure(float min_formation_circle_radius);
 
 			
             /**
@@ -97,6 +98,8 @@ namespace fpp
             //! I had to create a relay node that would get a service (this one) and forward
             //! it to the dynamic reconfigure server
             ros::ServiceClient dyn_rec_inflation_srv_client_;
+			//!
+			ros::ServiceClient get_footprint_info_srv_client_;
 			//!
 			ros::ServiceServer get_robot_plan_srv_server_;
 			//! List that contains an action client linked to all slave robots in the formation

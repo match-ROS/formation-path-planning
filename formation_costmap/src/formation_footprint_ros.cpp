@@ -93,16 +93,11 @@ namespace formation_costmap
 
     void FormationFootprintRos::updateFormationContour()
     {
-		ROS_ERROR_STREAM("FormationFootprintRos::updateFormationContour");
         this->corner_points_geometry_cs_.clear(); // Delete all current corner points
 
         // Add all corners of current robots and then exe gift wrapping algorithm
         for(std::shared_ptr<RobotFootprintRos> &robot_contour: this->robot_contours_)
         {
-			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[0]);
-			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[1]);
-			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[2]);
-			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[3]);
 			this->addContourCornersWorldCS(robot_contour->getCornerPointsWorldCS());	
         }
         this->exeGiftWrappingAlg();
@@ -219,7 +214,6 @@ namespace formation_costmap
 	#pragma region EventCallbacks
 	void FormationFootprintRos::robotPositionChanged(std::string robot_name)
 	{
-		ROS_INFO_STREAM("Update " << robot_name);
 		this->robot_position_updates_[robot_name] = true;
 
 		// if(this->allPositionUpdatesReceived())

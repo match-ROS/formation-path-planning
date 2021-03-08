@@ -50,14 +50,11 @@ namespace fpp
 		// this->formation_centre_ = this->target_formation_contour_.calcCentroidWorldCS();
 		// this->target_formation_contour_.moveCoordinateSystem(this->formation_centre_, 0.0);
         
-        // Initialize the minimal circle enclosing the formation
-        // this->formation_enclosing_circle_ = geometry_info::MinimalEnclosingCircle();
-		// For now the minimal enclosing circle will be bigger than the smallest circle possible
-        // this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->formation_centre_,
-        //                                                              this->target_formation_contour_.getCornerPointsWorldCS());
-        // this->formation_enclosing_circle_.calcMinimalEnclosingCircle(this->target_formation_contour_.getCornerPointsWorldCS());
 
-        this->callDynamicCostmapReconfigure();
+
+		fpp_msgs::FormationFootprintInfo footprint_info_msg;
+		this->get_footprint_info_srv_client_.call(footprint_info_msg);
+        this->callDynamicCostmapReconfigure(footprint_info_msg.response.minimal_encloring_circle_radius);
 
         this->initTimers();
     }
@@ -120,21 +117,36 @@ namespace fpp
             this->planner_nh_.param<std::string>(path_planner_name_key,
                                                  this->used_formation_planner_,
                                                  "SplinedRelaxedAStar");
+												 ROS_ERROR_STREAM("3");
         }        
         else
         {
 			ROS_ERROR_STREAM("FPPControllerMaster: The planner that is used to generate the initial path "
 							 "of the formation must be defined in used_formation_planner");
 		}
-
-
-    }
+		
+		// If I want to make a generic interface this must be changed.
+		if(this->used_formation_planner_ == "SplinedRelaxedAStar")
+		{
+			this->ras_param_manager_ = std::make_shared<fpp_data_classes::RASParamManager>(
+				this->nh_, this->planner_nh_);
+			this->ras_param_manager_->readParams(this->used_formation_planner_);
+		}
+		else
+		{
+			ROS_ERROR_STREAM("FPPControllerMaster::readParams: Selected planner for creating the "
+							 "formation plan is not supported.");
+		}
+	}
 
     void FPPControllerMaster::initServices()
     {
 		FPPControllerBase::initServices();
         this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
         this->dyn_rec_inflation_srv_client_.waitForExistence();
+
+		this->get_footprint_info_srv_client_ = this->nh_.serviceClient<fpp_msgs::FormationFootprintInfo>("move_base_flex/footprint_info");
+		this->get_footprint_info_srv_client_.waitForExistence();
 
 		this->get_robot_plan_srv_server_ = this->nh_.advertiseService("get_robot_plan",
 																	  &FPPControllerMaster::getRobotPlanCb,
@@ -245,10 +257,10 @@ namespace fpp
 		// }
 	}
 
-    void FPPControllerMaster::callDynamicCostmapReconfigure()
+    void FPPControllerMaster::callDynamicCostmapReconfigure(float min_formation_circle_radius)
     {
         fpp_msgs::DynReconfigure dyn_reconfig_msg;
-        dyn_reconfig_msg.request.new_inflation_radius = this->formation_enclosing_circle_.getCircleRadius();
+        dyn_reconfig_msg.request.new_inflation_radius = min_formation_circle_radius;
         dyn_reconfig_msg.request.robot_namespace = this->fpp_params_->getCurrentRobotNamespace();
         ros::Duration(0.1).sleep();
         this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
