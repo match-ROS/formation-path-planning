@@ -26,6 +26,18 @@ namespace formation_costmap
     }
 
 	#pragma region Getter/Setter
+	std::shared_ptr<RobotFootprintRos> FormationFootprintRos::getRobotContour(std::string robot_name)
+	{
+		for(int robot_counter = 0; robot_counter < this->robot_contours_.size(); robot_counter++)
+		{
+			if(this->robot_contours_[robot_counter]->getRobotName() == robot_name)
+			{
+				return std::dynamic_pointer_cast<RobotFootprintRos>(this->robot_contours_[robot_counter]);
+			}
+		}
+		return nullptr;
+	}
+
 	geometry_msgs::PolygonStamped FormationFootprintRos::getFormationFootprint()
 	{
 		geometry_msgs::PolygonStamped formation_footprint_msg;

@@ -26,6 +26,8 @@ namespace formation_costmap
 			bool addRobotToFormation(std::shared_ptr<geometry_info::RobotContour> robot_to_add) override;
 
 			#pragma region Getter/Setter
+			std::shared_ptr<formation_costmap::RobotFootprintRos> getRobotContour(std::string robot_name);
+
 			geometry_msgs::PolygonStamped getFormationFootprint();
 			#pragma endregion
 

@@ -14,6 +14,28 @@ namespace formation_costmap
 		this->initTopics();
 	}
 
+	#pragma region Getter/Setter
+	geometry_msgs::PolygonStamped RobotFootprintRos::getRobotFootprint()
+	{
+		geometry_msgs::PolygonStamped robot_footprint_msg;
+        robot_footprint_msg.header.frame_id = "map";
+        robot_footprint_msg.header.stamp = ros::Time::now();
+
+        std::vector<Eigen::Vector2f> robot_corner_points = this->getCornerPointsWorldCS();
+
+        for(Eigen::Vector2f corner: robot_corner_points)
+        {
+            geometry_msgs::Point32 corner_point;
+            corner_point.x = corner[0];
+            corner_point.y = corner[1];
+            corner_point.z = 0.0;
+            robot_footprint_msg.polygon.points.push_back(corner_point);
+        }
+
+		return robot_footprint_msg;
+	}
+	#pragma endregion
+
 	void RobotFootprintRos::initTopics()
 	{
 		this->robot_pose_sub_ = this->nh_.subscribe(

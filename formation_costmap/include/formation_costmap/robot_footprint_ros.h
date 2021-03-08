@@ -4,6 +4,7 @@
 #include <tf/transform_datatypes.h>
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PolygonStamped.h>
 
 #include <fp_utils/geometry_info/robot_contour.h>
 
@@ -18,6 +19,10 @@ namespace formation_costmap
 							  std::string robot_name,
 							  std::string robot_namespace,
 							  std::string robot_pose_topic_name);
+
+			#pragma region Getter/Setter
+			geometry_msgs::PolygonStamped getRobotFootprint();
+			#pragma endregion
 
         private:
 			ros::NodeHandle &nh_;

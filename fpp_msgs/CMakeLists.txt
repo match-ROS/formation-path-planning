@@ -60,6 +60,7 @@ add_service_files(
   GetRobotPlan.srv
   SplinedPlan.srv
   FormationFootprintInfo.srv
+  RobotOutline.srv
 )
 
 ## Generate actions in the 'action' folder
