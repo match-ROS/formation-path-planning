@@ -3,10 +3,8 @@
 namespace geometry_info
 {
 	GeometryContour::GeometryContour()
-	{
-		this->lead_vector_world_cs_ = Eigen::Vector2f::Zero();
-		this->world_to_geometry_cs_rotation_ = 0.0;
-	}
+		: GeometryContour(Eigen::Vector2f::Zero(), 0.0)
+	{ }
 
     GeometryContour::GeometryContour(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation)
     {

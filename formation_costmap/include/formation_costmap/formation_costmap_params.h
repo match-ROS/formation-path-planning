@@ -39,6 +39,8 @@ namespace formation_costmap
 
 			void getParams(std::string formation_costmap_name);
 
+			void printInfo();
+
 			#pragma region Getter/Setter
 			std::shared_ptr<FormationCostmapParams> getFormationCostmapParams();
 			#pragma endregion

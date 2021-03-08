@@ -4,7 +4,7 @@ namespace formation_costmap
 {
 	FormationFootprintRos::FormationFootprintRos()
 		: GeometryContour()
-	{ROS_INFO("blub");}
+	{ }
 
     FormationFootprintRos::FormationFootprintRos(Eigen::Vector2f lead_vector_world_cs, float world_to_geometry_cs_rotation)
         : GeometryContour(lead_vector_world_cs, world_to_geometry_cs_rotation)
@@ -93,13 +93,17 @@ namespace formation_costmap
 
     void FormationFootprintRos::updateFormationContour()
     {
+		ROS_ERROR_STREAM("FormationFootprintRos::updateFormationContour");
         this->corner_points_geometry_cs_.clear(); // Delete all current corner points
 
         // Add all corners of current robots and then exe gift wrapping algorithm
-        
         for(std::shared_ptr<RobotFootprintRos> &robot_contour: this->robot_contours_)
         {
-            this->addContourCornersWorldCS(robot_contour->getCornerPointsWorldCS());
+			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[0]);
+			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[1]);
+			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[2]);
+			// ROS_INFO_STREAM(robot_contour->getCornerPointsWorldCS()[3]);
+			this->addContourCornersWorldCS(robot_contour->getCornerPointsWorldCS());	
         }
         this->exeGiftWrappingAlg();
     }
@@ -113,15 +117,15 @@ namespace formation_costmap
 		// Robot positions were intialized with world coords.
 		// Then coordinate system of formation was places in centre of gravity of the formation contour
 		// Robot positions will now be moved into the geometry cs of the formation
-		for(std::shared_ptr<RobotFootprintRos> &robot_contour: this->robot_contours_)
-		{
-			Eigen::Vector2f old_robot_lead_vector_world_cs = robot_contour->getLeadVectorWorldCS();
-			Eigen::Vector3f old_robot_lead_vector_world_cs_extended;
-			old_robot_lead_vector_world_cs_extended << old_robot_lead_vector_world_cs, 1;
-			Eigen::Vector3f new_robot_lead_vector_world_cs_extended = new_tf_world_to_geometry_cs * old_robot_lead_vector_world_cs_extended;
-			Eigen::Vector2f new_robot_lead_vector_world_cs = new_robot_lead_vector_world_cs_extended.head(2);
-			robot_contour->moveCoordinateSystem(new_robot_lead_vector_world_cs, robot_contour->getWorldToGeometryCSRotation());
-		}
+		// for(std::shared_ptr<RobotFootprintRos> &robot_contour: this->robot_contours_)
+		// {
+		// 	Eigen::Vector2f old_robot_lead_vector_world_cs = robot_contour->getLeadVectorWorldCS();
+		// 	Eigen::Vector3f old_robot_lead_vector_world_cs_extended;
+		// 	old_robot_lead_vector_world_cs_extended << old_robot_lead_vector_world_cs, 1;
+		// 	Eigen::Vector3f new_robot_lead_vector_world_cs_extended = new_tf_world_to_geometry_cs * old_robot_lead_vector_world_cs_extended;
+		// 	Eigen::Vector2f new_robot_lead_vector_world_cs = new_robot_lead_vector_world_cs_extended.head(2);
+		// 	robot_contour->moveCoordinateSystem(new_robot_lead_vector_world_cs, robot_contour->getWorldToGeometryCSRotation());
+		// }
 
         this->lead_vector_world_cs_ = new_lead_vector_world_cs;
         this->world_to_geometry_cs_rotation_ = new_cs_rotation;
@@ -189,7 +193,8 @@ namespace formation_costmap
         formation_footprint_msg.header.frame_id = "map";
         formation_footprint_msg.header.stamp = ros::Time::now();
 
-        std::vector<Eigen::Vector2f> formation_corner_points = this->corner_points_geometry_cs_;
+        std::vector<Eigen::Vector2f> formation_corner_points = this->getCornerPointsWorldCS();
+
         for(Eigen::Vector2f corner: formation_corner_points)
         {
             geometry_msgs::Point32 corner_point;
@@ -206,15 +211,19 @@ namespace formation_costmap
 	#pragma region EventCallbacks
 	void FormationFootprintRos::robotPositionChanged(std::string robot_name)
 	{
+		ROS_INFO_STREAM("Update " << robot_name);
 		this->robot_position_updates_[robot_name] = true;
 
-		if(this->allPositionUpdatesReceived())
-		{
-			ROS_INFO_STREAM("Update " << robot_name);
-			this->updateFormationContour();
+		// if(this->allPositionUpdatesReceived())
+		// {
+		this->updateFormationContour();
 
-			this->resetPositionUpdateTable();
-		}
+		Eigen::Vector2f new_centroid_world_cs;
+		new_centroid_world_cs = this->calcCentroidWorldCS();
+		this->moveCoordinateSystem(new_centroid_world_cs, this->world_to_geometry_cs_rotation_);
+
+		// this->resetPositionUpdateTable();
+		// }
 	}
 	#pragma endregion
 

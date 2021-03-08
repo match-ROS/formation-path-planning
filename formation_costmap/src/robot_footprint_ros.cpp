@@ -47,6 +47,11 @@ namespace formation_costmap
 
 		this->robot_pose_changed_handler_(this->robot_name_);
 
-		ROS_INFO_STREAM(this->robot_name_);
+		ROS_INFO_STREAM("RobotFootprintRos::getRobotPoseCb: " << this->robot_name_ << " | " << lead_vector_world_cs_[0] << " | " << lead_vector_world_cs_[1] << " | " << new_cs_rotation);
+		ROS_INFO_STREAM("size: " << this->getCornerPointsWorldCS().size());
+		ROS_INFO_STREAM(this->getCornerPointsWorldCS()[0]);
+		ROS_INFO_STREAM(this->getCornerPointsWorldCS()[1]);
+		ROS_INFO_STREAM(this->getCornerPointsWorldCS()[2]);
+		ROS_INFO_STREAM(this->getCornerPointsWorldCS()[3]);
 	}
 }

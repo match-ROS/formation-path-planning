@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
+        - /Formation Footprint1
       Splitter Ratio: 0.5736514329910278
     Tree Height: 1151
   - Class: rviz/Selection
@@ -1246,7 +1247,7 @@ Visualization Manager:
       Color: 32; 74; 135
       Enabled: true
       Name: Formation Footprint
-      Topic: /robot0_ns/formation_footprint
+      Topic: /robot0_ns/move_base_flex/formation_footprint
       Unreliable: false
       Value: true
     - Alpha: 1

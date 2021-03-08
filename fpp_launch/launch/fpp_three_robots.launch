@@ -105,7 +105,7 @@
         <!--Typically you copy this node to where you need a changed path planner. This one should stay default.-->
         <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/>
 
-		<include file="$(find fpp_launch)/launch/formation_costmap.launch"/>
+		<!-- <include file="$(find fpp_launch)/launch/formation_costmap.launch"/> -->
     </group>
 
     <!--Create namespace for robot2 and start everything that belongs in the namespace inside the group-->
@@ -137,7 +137,7 @@
         <!--Typically you copy this node to where you need a changed path planner. This one should stay default.-->
         <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/>
 
-		<include file="$(find fpp_launch)/launch/formation_costmap.launch"/>
+		<!-- <include file="$(find fpp_launch)/launch/formation_costmap.launch"/> -->
     </group>
 
     <!--Record the data of the formation path planner so failures can be comprehended afterwards-->

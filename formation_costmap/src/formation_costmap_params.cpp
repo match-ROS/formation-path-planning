@@ -87,6 +87,24 @@ namespace formation_costmap
 		}
 	}
 
+	void FormationCostmapParamManager::printInfo()
+	{
+		ROS_INFO_STREAM("Formation Costmap name: " << this->formation_costmap_name_);
+
+		ROS_INFO_STREAM("Current Robot Name: " << this->formation_costmap_params_->current_robot_info->robot_name);
+		ROS_INFO_STREAM("Master Robot Name: " << this->formation_costmap_params_->master_robot_info->robot_name);
+
+		ROS_INFO_STREAM("Robot Params:");
+		for(std::shared_ptr<FCRobotParams> robot_param : this->formation_costmap_params_->formation_robot_params)
+		{
+			ROS_INFO_STREAM("Robot Name: " << robot_param->robot_name);
+			ROS_INFO_STREAM("Robot Namespace: " << robot_param->robot_namespace);
+			ROS_INFO_STREAM("Robot Master: " << robot_param->master);
+			ROS_INFO_STREAM("Robot Pose Topic: " << robot_param->robot_pose_topic);
+		}
+		ROS_INFO_STREAM("_______________________________________________");
+	}
+
 	#pragma region Getter/Setter
 	std::shared_ptr<FormationCostmapParams> FormationCostmapParamManager::getFormationCostmapParams()
 	{
