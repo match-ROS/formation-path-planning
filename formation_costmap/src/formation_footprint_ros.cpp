@@ -139,6 +139,14 @@ namespace formation_costmap
 		this->createContourEdges();
 	}
 
+	float FormationFootprintRos::calcMinimalEnclosingCircleRadius()
+	{
+		geometry_info::MinimalEnclosingCircle minimal_circle = geometry_info::MinimalEnclosingCircle();
+		minimal_circle.calcMinimalEnclosingCircle(this->calcCentroidWorldCS(),
+												  this->getCornerPointsWorldCS());
+		return minimal_circle.getCircleRadius();
+	}
+
 	#pragma region Getter/Setter
 	Eigen::Vector2f FormationFootprintRos::getRobotPosGeometryCS(std::string robot_name)
 	{

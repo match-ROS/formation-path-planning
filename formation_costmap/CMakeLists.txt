@@ -11,7 +11,8 @@ find_package(
 	catkin REQUIRED COMPONENTS 
 	roscpp
 	geometry_msgs
-	fp_utils)
+	fp_utils
+	fpp_msgs)
 
 find_package(Eigen3 REQUIRED)
 
@@ -108,6 +109,7 @@ catkin_package(
 		formation_costmap
 	CATKIN_DEPENDS
 		fp_utils
+		fpp_msgs
 )
 
 ###########

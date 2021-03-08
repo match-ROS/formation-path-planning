@@ -4,6 +4,7 @@
 
 #include <fp_utils/geometry_info/edge_info.h>
 #include <fp_utils/geometry_info/geometry_contour.h>
+#include <fp_utils/geometry_info/minimal_enclosing_circle.h>
 #include <formation_costmap/robot_footprint_ros.h>
 
 #include <iostream>
@@ -71,6 +72,8 @@ namespace formation_costmap
              * @param new_cs_rotation Rotation from the world to the new coordinate system 
              */
             void moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation) override;
+
+			float calcMinimalEnclosingCircleRadius();
 
 			#pragma region Getter/Setter
 			Eigen::Vector2f getRobotPosGeometryCS(std::string robot_name);

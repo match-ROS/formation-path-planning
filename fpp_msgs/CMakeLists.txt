@@ -59,6 +59,7 @@ add_service_files(
   DynReconfigure.srv
   GetRobotPlan.srv
   SplinedPlan.srv
+  FormationFootprintInfo.srv
 )
 
 ## Generate actions in the 'action' folder

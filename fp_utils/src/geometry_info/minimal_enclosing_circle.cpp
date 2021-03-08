@@ -12,23 +12,23 @@ namespace geometry_info
         this->circle_centre_ = circle_info.centre;
 
         // DEBUGGING
-        std::cout << "Minimal Circle | x: " << this->circle_centre_[0] << " , y: " << this->circle_centre_[1] << " , radius: " << this->circle_radius_ << "\n";
-        for(Eigen::Vector2f point: this->circle_defining_points_)
-        {
-            std::cout << "Circle defining points: | x: " << point[0] << " , y: " << point[1] << "\n";
-        }
+        // std::cout << "Minimal Circle | x: " << this->circle_centre_[0] << " , y: " << this->circle_centre_[1] << " , radius: " << this->circle_radius_ << "\n";
+        // for(Eigen::Vector2f point: this->circle_defining_points_)
+        // {
+        //     std::cout << "Circle defining points: | x: " << point[0] << " , y: " << point[1] << "\n";
+        // }
     }
 
     void MinimalEnclosingCircle::calcMinimalEnclosingCircle(const Eigen::Vector2f circle_centre, const std::vector<Eigen::Vector2f> &points_to_enclose)
     {
         this->circle_centre_ = circle_centre;
         
-        float max_radius = points_to_enclose[0].norm();
+        float max_radius = (points_to_enclose[0] - circle_centre).norm();
 
         // Get point with max distance to circle centre. This point defines the radius
         for(const Eigen::Vector2f &point: points_to_enclose)
         {
-            float new_radius = point.norm();
+            float new_radius = (point - circle_centre).norm();
             if(max_radius < new_radius)
             {
                 max_radius = new_radius;
@@ -38,7 +38,7 @@ namespace geometry_info
         this->circle_radius_ = max_radius;
 
         // DEBUGGING
-        std::cout << "Minimal Circle | x: " << this->circle_centre_[0] << " , y: " << this->circle_centre_[1] << " , radius: " << this->circle_radius_ << "\n";
+        // std::cout << "Minimal Circle | x: " << this->circle_centre_[0] << " , y: " << this->circle_centre_[1] << " , radius: " << this->circle_radius_ << "\n";
     }
 
     CircleInfo MinimalEnclosingCircle::exeWetzlAlg(std::vector<Eigen::Vector2f> &points_to_enclose,
