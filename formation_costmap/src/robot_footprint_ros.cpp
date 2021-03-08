@@ -3,27 +3,16 @@
 namespace formation_costmap
 {
 	RobotFootprintRos::RobotFootprintRos(ros::NodeHandle &nh,
-									 std::string robot_name,
-									 std::string robot_namespace,
-									 std::string robot_pose_topic_name)
-		: GeometryContour(), nh_(nh)
+										 std::string robot_name,
+										 std::string robot_namespace,
+										 std::string robot_pose_topic_name)
+		: RobotContour(robot_name), nh_(nh)
 	{
-		this->robot_name_ = robot_name;
 		this->robot_namespace_ = robot_namespace;
 		this->robot_pose_topic_name_ = robot_pose_topic_name;
 
 		this->initTopics();
 	}
-
-	void RobotFootprintRos::setRobotPoseChangedEventHandler(std::function<void(std::string)> robot_pose_changed_handler)
-	{
-		this->robot_pose_changed_handler_ = robot_pose_changed_handler;
-	}
-
-    std::string RobotFootprintRos::getRobotName()
-    {
-        return this->robot_name_;
-    }
 
 	void RobotFootprintRos::initTopics()
 	{

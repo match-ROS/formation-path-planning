@@ -152,6 +152,12 @@ set(GEOMETRY_INFO_SOURCES
 	include/fp_utils/geometry_info/geometry_contour.h
 	src/geometry_info/geometry_contour.cpp
 
+	include/fp_utils/geometry_info/robot_contour.h
+	src/geometry_info/robot_contour.cpp
+
+	include/fp_utils/geometry_info/formation_contour.h
+	src/geometry_info/formation_contour.cpp
+
 	include/fp_utils/geometry_info/minimal_enclosing_circle.h
 	src/geometry_info/minimal_enclosing_circle.cpp)
 add_library(geometry_info ${GEOMETRY_INFO_SOURCES})
