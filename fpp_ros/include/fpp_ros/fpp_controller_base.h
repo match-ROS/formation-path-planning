@@ -4,10 +4,15 @@
 
 #include <costmap_2d/costmap_2d.h>
 
+#include <geometry_msgs/PolygonStamped.h>
 #include <nav_msgs/Path.h>
 
 #include <fpp_ros/data_classes/fpp_param_manager.h>
+#include <fpp_ros/data_classes/ras_param_manager.h>
 #include <fpp_ros/data_classes/fpp_controller_param.h>
+#include <fp_utils/geometry_info/robot_contour.h>
+#include <fp_utils/geometry_info/formation_contour.h>
+#include <fpp_msgs/RobotOutline.h>
 
 #include <string>
 #include <memory> // Usage of smart pointers
@@ -32,21 +37,6 @@ namespace fpp
 							  ros::NodeHandle &planner_nh);
 
 			/**
-			 * @brief Initialization method that should be overriten and called in the derived class
-			 * 
-			 * @param planner_name Name of the planner this controller is used in
-			 * @param costmap Pointer to the costmap for planning collision-free path
-			 * @param global_frame Name of the global frame the robot is in
-			 */
-            // virtual void initialize(std::string planner_name, costmap_2d::Costmap2D *costmap, std::string global_frame);
-
-            /**
-             * 
-             * @brief 
-             * This has to be implemented by the master and slave as it is pure virtual
-             */
-
-			/**
 			 * @brief This method is called when the planning should happen
 			 * 
 			 * @param start Start position of the individual robot
@@ -63,19 +53,28 @@ namespace fpp
             //! NodeHandle that is in the namespace of the planner
             ros::NodeHandle &planner_nh_;
 			
+			#pragma region Parameter
             //! This is all the information that was read from the config file about each robot
             std::shared_ptr<fpp_data_classes::FPPParamManager> fpp_params_;
+			#pragma endregion
 
-            // Information for used planner
+            #pragma region Process Info
             //! Name of the planer that is used to generate the plan for the formation
             std::string planner_name_;
             //! Direct pointer to the costmap to get updates instantly without the usage of topics
             costmap_2d::Costmap2D *costmap_;
             //! Global frame which is used to transform points into map coordinate system
             std::string global_frame_;
+			//! Through this object the target distances from the robots to the formation centre can be calculated
+			geometry_info::FormationContour target_formation_contour_;
+			#pragma endregion
 
+			#pragma region Topics/Services/Actions
 			//! Topic to publish the plan of the current robot.
             ros::Publisher robot_plan_pub_;
+
+			ros::ServiceClient get_robot_outline_src_client_;
+			#pragma endregion
 
 			/**
              * @brief Helper method for intializing all services
@@ -105,5 +104,7 @@ namespace fpp
              * @param plan Plan that contains all points the define the plan
              */
 			void publishPlan(const ros::Publisher &plan_publisher, const std::vector<geometry_msgs::PoseStamped> &plan);
+
+			std::vector<Eigen::Vector2f> convPolygonToEigenVector(geometry_msgs::Polygon polygon);
 	};
 }

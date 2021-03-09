@@ -121,6 +121,13 @@ namespace geometry_info
 		this->createContourEdges();
 	}
 
+	void FormationContour::moveCSToFormationCentre()
+	{
+		Eigen::Vector2f new_centroid_world_cs;
+		new_centroid_world_cs = this->calcCentroidWorldCS();
+		this->moveCoordinateSystem(new_centroid_world_cs, this->world_to_geometry_cs_rotation_);
+	}
+
 	float FormationContour::calcMinimalEnclosingCircleRadius()
 	{
 		geometry_info::MinimalEnclosingCircle minimal_circle = geometry_info::MinimalEnclosingCircle();
@@ -187,9 +194,7 @@ namespace geometry_info
 	{
 		this->updateFormationContour();
 
-		Eigen::Vector2f new_centroid_world_cs;
-		new_centroid_world_cs = this->calcCentroidWorldCS();
-		this->moveCoordinateSystem(new_centroid_world_cs, this->world_to_geometry_cs_rotation_);
+		this->moveCSToFormationCentre();
 	}
 	#pragma endregion
 

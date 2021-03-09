@@ -63,6 +63,8 @@ namespace geometry_info
              */
             void moveCoordinateSystem(Eigen::Vector2f new_lead_vector_world_cs, float new_cs_rotation) override;
 
+			void moveCSToFormationCentre();
+
 			float calcMinimalEnclosingCircleRadius();
 
 			#pragma region Getter/Setter

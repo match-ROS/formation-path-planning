@@ -31,87 +31,54 @@ namespace fpp
 								ros::NodeHandle &nh,
 								ros::NodeHandle &planner_nh);
 
-			// void initialize(std::string planner_name,
-            //                 costmap_2d::Costmap2D *costmap,
-            //                 std::string global_frame) override;
-
             void execute(const geometry_msgs::PoseStamped &start,
                          const geometry_msgs::PoseStamped &goal,
                          std::vector<geometry_msgs::PoseStamped> &plan) override;
 
         private:     
-            /**
-             * @brief Read params from config file
-             * 
-             */
-            void readParams(std::string name);
+            #pragma region Process Info
+            //! Centre of the formation
+            Eigen::Vector2f formation_centre_;
+            //! Replace this in the future with an interface pointer. Object that plans the initial path.
+            path_planner::SplinedRelaxedAStar initial_path_planner_;
+			#pragma endregion
 
-            void initServices() override;
+			#pragma region Parameters
+			//! This parameter contains the name of the used planner for generating the initial plan
+            std::string used_formation_planner_;
+			//! This object manages all params for the Relaxed A Star planner
+			std::shared_ptr<fpp_data_classes::RASParamManager> ras_param_manager_;
+			#pragma endregion
+
+            #pragma region Topics/Services/Actions
+            //! Because I was not able to dynamically reconfigure the costmap from this class
+            //! I had to create a relay node that would get a service (this one) and forward
+            //! it to the dynamic reconfigure server
+            ros::ServiceClient dyn_rec_inflation_srv_client_;
+			//!
+			// ros::ServiceClient get_footprint_info_srv_client_;
+			//! List that contains an action client linked to all slave robots in the formation
+			std::vector<std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>> slave_move_base_as_list_;
+
+            //! Topic to publish the plan of the formation. From this each robot has to calculate its own plan
+            ros::Publisher formation_plan_pub_;
+			#pragma endregion
+
+			void initServices() override;
             void initTopics() override;
 			void initActions() override;
             void initTimers() override;
 
-			// std::shared_ptr<footprint_generation::FormationFootprintRos> createFootprintObj(
-			// 	std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list);
-
-			void calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan);
+			/**
+             * @brief Read params from config file
+             * 
+             */
+			void readRASParams(std::string formation_planner_name);
 
             /**
              * @brief Call the dynamic reconfigure relay node to reconfigure the costmap inflation
              * 
              */
             void callDynamicCostmapReconfigure(float min_formation_circle_radius);
-
-			
-            /**
-             * @brief Callback for the timer that triggers the publishing of the formation footprint
-             * 
-             * @param e TimerEvents handed to the callback 
-             */
-            void footprintTimerCallback(const ros::TimerEvent& e);
-
-			bool getRobotPlanCb(fpp_msgs::GetRobotPlan::Request &req, fpp_msgs::GetRobotPlan::Response &res);
-
-            // Parameter information
-            //! This parameter contains the name of the used planner for generating the initial plan
-            std::string used_formation_planner_;
-			//!
-			std::shared_ptr<fpp_data_classes::RASParamManager> ras_param_manager_;
-
-            // Process information
-            
-            //! Outline of the real formation that occures through amcl poses
-            // std::shared_ptr<footprint_generation::FormationFootprintRos> real_formation_contour_;
-			//! Outline of the formation of everything is ideal
-            // footprint_generation::FormationFootprintRos target_formation_contour_;
-            //! Centre of the formation
-            Eigen::Vector2f formation_centre_;
-            //! Minimal circle around the formation to change the costmap inflation
-            geometry_info::MinimalEnclosingCircle formation_enclosing_circle_;
-            //! Replace this in the future with an interface pointer. Object that plans the initial path.
-            path_planner::SplinedRelaxedAStar initial_path_planner_;
-			//! List of the calculated plans for each robot
-			std::map<std::string, std::vector<geometry_msgs::PoseStamped>> robot_plan_list_;
-
-            // Services and Topics
-
-            //! Because I was not able to dynamically reconfigure the costmap from this class
-            //! I had to create a relay node that would get a service (this one) and forward
-            //! it to the dynamic reconfigure server
-            ros::ServiceClient dyn_rec_inflation_srv_client_;
-			//!
-			ros::ServiceClient get_footprint_info_srv_client_;
-			//!
-			ros::ServiceServer get_robot_plan_srv_server_;
-			//! List that contains an action client linked to all slave robots in the formation
-			std::vector<std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>> slave_move_base_as_list_;
-
-            //! Topic to publish the plan of the formation. From this each robot has to calculate its own plan
-            ros::Publisher formation_plan_pub_;
-
-            //Timers
-
-            //! Timer that periodically calculates and publishes the footprint of the formation
-            ros::Timer footprint_timer_;
     };
 }

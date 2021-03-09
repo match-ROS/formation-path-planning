@@ -25,7 +25,7 @@ namespace fpp
         private:
 			std::shared_ptr<nav_msgs::Path> formation_plan_;
 
-			ros::ServiceClient get_robot_plan_srv_client_;
+			// ros::ServiceClient get_robot_plan_srv_client_;
 
 			/**
              * @brief Helper method for intializing all services

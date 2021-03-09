@@ -8,83 +8,16 @@ namespace fpp
 											 ros::NodeHandle &planner_nh)
 		: FPPControllerBase(fpp_params, fpp_controller_params, nh, planner_nh)
 	{
-        this->initServices();
-        this->initTopics();
-		this->initActions();
-
-        // Initialize the target formation contour that takes amcl from master robot and then the wanted offset for the other robots
-        // this->target_formation_contour_ = footprint_generation::FormationFootprintRos(Eigen::Matrix<float, 2, 1>::Zero(), 0.0);
-        
-		// Add master robot by amcl pose
-		// Eigen::Vector2f master_robot_pose;
-		// float master_yaw;
-		// this->getAMCLPose(this->fpp_params_->getCurrentRobotNamespace(), master_robot_pose, master_yaw);
-		// footprint_generation::RobotFootprintRos master_robot_contour = footprint_generation::RobotFootprintRos(
-		// 	this->nh_, 
-		// 	this->fpp_params_->getCurrentRobotName(), 
-		// 	this->fpp_params_->getCurrentRobotNamespace(),
-		// 	this->fpp_params_->getRobotInfoByRobotName(this->fpp_params_->getCurrentRobotName())->robot_pose_topic_name);
-		// this->robot_outline_list_.insert(std::pair<std::string, footprint_generation::RobotFootprintRos>(
-		// 	this->fpp_params_->getCurrentRobotName(), master_robot_contour));
-		// this->target_formation_contour_.addRobotToFormation(master_robot_contour);
-
-		// Add slave robots by relative offset to master robot. Take same yaw angle as this should be equal
-        // for(std::shared_ptr<fpp_data_classes::RobotInfo> robot_info_it: this->fpp_params_->getRobotInfoList())
-        // {
-		// 	if(robot_info_it->robot_name != this->fpp_params_->getCurrentRobotName())
-		// 	{
-		// 		footprint_generation::RobotFootprintRos slave_robot_contour = footprint_generation::RobotFootprintRos(
-		// 			this->nh_, 
-		// 			robot_info_it->robot_name, 
-		// 			robot_info_it->robot_namespace,
-		// 			robot_info_it->robot_pose_topic_name);
-
-		// 		slave_robot_contour.addContourCornersGeometryCS(robot_info_it->robot_outline);
-		// 		slave_robot_contour.createContourEdges();
-
-		// 		this->robot_outline_list_.insert(std::pair<std::string, footprint_generation::RobotFootprintRos>(
-		// 			robot_info_it->robot_name, slave_robot_contour));
-		// 		this->target_formation_contour_.addRobotToFormation(slave_robot_contour);
-		// 	}
-        // }
-        // this->target_formation_contour_.updateFormationContour();
-		// this->formation_centre_ = this->target_formation_contour_.calcCentroidWorldCS();
-		// this->target_formation_contour_.moveCoordinateSystem(this->formation_centre_, 0.0);
-        
-		this->readParams(this->planner_name_);
-		
-		this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
+		this->readRASParams(this->planner_name_);
+        this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
 																		this->costmap_,
 																		this->global_frame_,
 																		this->ras_param_manager_->getRASParams());
-		
 
-		// HIER DIE TARGET FORMATION ERSTELLEN UND MINIMAL CIRCLE BERECHNEN
-
-		fpp_msgs::FormationFootprintInfo footprint_info_msg;
-		this->get_footprint_info_srv_client_.call(footprint_info_msg);
-        this->callDynamicCostmapReconfigure(footprint_info_msg.response.minimal_encloring_circle_radius);
-
-        this->initTimers();
+		this->callDynamicCostmapReconfigure(this->target_formation_contour_.calcMinimalEnclosingCircleRadius());
 
 		ROS_INFO_STREAM("Initialized fpp_controller for " << this->fpp_params_->getCurrentRobotName());
     }
-
-	// void FPPControllerMaster::initialize(std::string planner_name,
-    //                                      costmap_2d::Costmap2D *costmap,
-    //                                      std::string global_frame)
-    // {
-    //     FPPControllerBase::initialize(planner_name, costmap, global_frame);
-
-	// 	this->readParams(planner_name);
-		
-	// 	this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
-	// 																	this->costmap_,
-	// 																	this->global_frame_,
-	// 																	this->ras_param_manager_->getRASParams());
-		
-	// 	ROS_INFO_STREAM("robot_name: " << this->fpp_params_->getCurrentRobotName());
-    // }
 
 	void FPPControllerMaster::execute(const geometry_msgs::PoseStamped &start,
                                       const geometry_msgs::PoseStamped &goal,
@@ -100,8 +33,8 @@ namespace fpp
         ROS_INFO_STREAM("Formation Start: x: " << formation_start.pose.position.x << " y: " << formation_start.pose.position.y);
         this->initial_path_planner_.makePlan(formation_start, goal, formation_plan);
 
-		this->calcRobotPlans(formation_plan);
-		plan = this->robot_plan_list_[this->fpp_params_->getCurrentRobotName()];
+		// this->calcRobotPlans(formation_plan);
+		// plan = this->robot_plan_list_[this->fpp_params_->getCurrentRobotName()];
 		
 		// Call move_base action servers of each slave robot to initialize the global planning of their path
 		for(std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> &slave_move_base_as: this->slave_move_base_as_list_)
@@ -120,48 +53,18 @@ namespace fpp
 		this->publishPlan(this->robot_plan_pub_, plan);
     }
 
-	void FPPControllerMaster::readParams(std::string name)
-    {
-        std::string path_planner_name_key;
-        if(this->planner_nh_.searchParam("used_formation_planner", path_planner_name_key))
-        {
-            this->planner_nh_.param<std::string>(path_planner_name_key,
-                                                 this->used_formation_planner_,
-                                                 "SplinedRelaxedAStar");
-												 ROS_ERROR_STREAM("3");
-        }        
-        else
-        {
-			ROS_ERROR_STREAM("FPPControllerMaster: The planner that is used to generate the initial path "
-							 "of the formation must be defined in used_formation_planner");
-		}
-		
-		// If I want to make a generic interface this must be changed.
-		if(this->used_formation_planner_ == "SplinedRelaxedAStar")
-		{
-			this->ras_param_manager_ = std::make_shared<fpp_data_classes::RASParamManager>(
-				this->nh_, this->planner_nh_);
-			this->ras_param_manager_->readParams(this->used_formation_planner_);
-		}
-		else
-		{
-			ROS_ERROR_STREAM("FPPControllerMaster::readParams: Selected planner for creating the "
-							 "formation plan is not supported.");
-		}
-	}
-
     void FPPControllerMaster::initServices()
     {
 		FPPControllerBase::initServices();
         this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
         this->dyn_rec_inflation_srv_client_.waitForExistence();
 
-		this->get_footprint_info_srv_client_ = this->nh_.serviceClient<fpp_msgs::FormationFootprintInfo>("move_base_flex/footprint_info");
-		this->get_footprint_info_srv_client_.waitForExistence();
+		// this->get_footprint_info_srv_client_ = this->nh_.serviceClient<fpp_msgs::FormationFootprintInfo>("move_base_flex/footprint_info");
+		// this->get_footprint_info_srv_client_.waitForExistence();
 
-		this->get_robot_plan_srv_server_ = this->nh_.advertiseService("get_robot_plan",
-																	  &FPPControllerMaster::getRobotPlanCb,
-																	  this);
+		// this->get_robot_plan_srv_server_ = this->nh_.advertiseService("get_robot_plan",
+		// 															  &FPPControllerMaster::getRobotPlanCb,
+		// 															  this);
 	}
 
     void FPPControllerMaster::initTopics()
@@ -194,15 +97,12 @@ namespace fpp
     void FPPControllerMaster::initTimers()
     {
 		FPPControllerBase::initTimers();
-		// this->footprint_timer_ = this->nh_.createTimer(ros::Duration(0.1),
-		// 											   &FPPControllerMaster::footprintTimerCallback,
-		// 											   this);
 	}
 
-	void FPPControllerMaster::calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan)
-	{
+	// void FPPControllerMaster::calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan)
+	// {
 		// Clear existing plans and create new empty lists for the plans for each robot
-		this->robot_plan_list_.clear();
+		// this->robot_plan_list_.clear();
 		// footprint_generation::FormationFootprintRos path_planner_formation = this->target_formation_contour_;
 		// for(const std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info_it: this->fpp_params_->getRobotInfoList())
 		// {
@@ -266,6 +166,36 @@ namespace fpp
         //         // plan.insert(plan.begin() + plan.size(), pose);
         //     }
 		// }
+	// }
+
+	void FPPControllerMaster::readRASParams(std::string name)
+    {
+        std::string path_planner_name_key;
+        if(this->planner_nh_.searchParam("used_formation_planner", path_planner_name_key))
+        {
+            this->planner_nh_.param<std::string>(path_planner_name_key,
+                                                 this->used_formation_planner_,
+                                                 "SplinedRelaxedAStar");
+												 ROS_ERROR_STREAM("3");
+        }        
+        else
+        {
+			ROS_ERROR_STREAM("FPPControllerMaster: The planner that is used to generate the initial path "
+							 "of the formation must be defined in used_formation_planner");
+		}
+		
+		// If I want to make a generic interface this must be changed.
+		if(this->used_formation_planner_ == "SplinedRelaxedAStar")
+		{
+			this->ras_param_manager_ = std::make_shared<fpp_data_classes::RASParamManager>(
+				this->nh_, this->planner_nh_);
+			this->ras_param_manager_->readParams(this->used_formation_planner_);
+		}
+		else
+		{
+			ROS_ERROR_STREAM("FPPControllerMaster::readParams: Selected planner for creating the "
+							 "formation plan is not supported.");
+		}
 	}
 
     void FPPControllerMaster::callDynamicCostmapReconfigure(float min_formation_circle_radius)
@@ -276,18 +206,4 @@ namespace fpp
         ros::Duration(0.1).sleep();
         this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
     }
-
-    // void FPPControllerMaster::footprintTimerCallback(const ros::TimerEvent& e)
-    // {
-    //     this->formation_footprint_pub_.publish(this->real_formation_contour_->getFormationFootprint());
-    // }
-
-	bool FPPControllerMaster::getRobotPlanCb(fpp_msgs::GetRobotPlan::Request &req, fpp_msgs::GetRobotPlan::Response &res)
-	{
-		nav_msgs::Path plan;
-		plan.header.frame_id = this->robot_plan_list_[req.robot_name].front().header.frame_id;
-		plan.header.stamp = this->robot_plan_list_[req.robot_name].front().header.stamp;
-		plan.poses = this->robot_plan_list_[req.robot_name];
-		res.robot_plan = plan;
-	}
 }

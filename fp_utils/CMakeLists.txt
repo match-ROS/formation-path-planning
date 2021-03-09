@@ -198,7 +198,6 @@ target_link_libraries(visualization_helper
 target_link_libraries(geometry_info 
 	${catkin_LIBRARIES})
 
-
 target_link_libraries(test_node
 	bezier_splines
 	${catkin_LIBRARIES})

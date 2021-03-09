@@ -41,15 +41,15 @@ int main(int argc, char **argv)
             param_to_reconfig.value = request.new_inflation_radius;
             dyn_reconfigure_msg.request.config.doubles.push_back(param_to_reconfig);
             
-            // ROS_INFO("before call");
+            ROS_INFO("before call");
 
             ros::service::call(request.robot_namespace + "/move_base_flex/global_costmap/inflation/set_parameters",
                                dyn_reconfigure_msg.request,
                                dyn_reconfigure_msg.response);
-            // ROS_INFO("size: %i", dyn_reconfigure_msg.response.config.doubles.size());
-            // ROS_INFO("after call");
+            ROS_INFO("size: %i", dyn_reconfigure_msg.response.config.doubles.size());
+            ROS_INFO("after call");
 
-            // ROS_INFO("Dynamic reconfigure end");
+            ROS_INFO("Dynamic reconfigure end");
         }
         ros::spinOnce();
     }

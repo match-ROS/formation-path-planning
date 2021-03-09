@@ -44,16 +44,30 @@ namespace fpp_data_classes
                     else
                     {
                         robot_info->fpp_master = false;
+                    }
 
-                        // Only if the robot is not the master the offset param is existing
+					// Initialize offset member
+					if(robot_info->fpp_master)
+					{
+						// There is not offset for the master robot. So initialize with 0/0
+						robot_info->offset[0] = 0.0;
+						robot_info->offset[1] = 0.0;
+					}
+					else
+					{
+						// Only if the robot is not the master the offset param is existing
                         if(robot_info_xmlrpc.hasMember("offset") && robot_info_xmlrpc["offset"].getType() == XmlRpc::XmlRpcValue::TypeArray)
                         {
 							robot_info->offset[0] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][0],
-																		"formation_config/" + robot_info->robot_name + "/offset");
+																		"formation_config/" + robot_info->robot_name + "/offset");																		
 							robot_info->offset[1] = getNumberFromXMLRPC(robot_info_xmlrpc["offset"][1],
 																		"formation_config/" + robot_info->robot_name + "/offset");
 						}
-                    }
+						else
+						{
+							ROS_ERROR_STREAM("FPPParamManager::getParams: No offset found for slave! Please define offset to master robot.");
+						}
+					}
 
                     if(robot_info_xmlrpc.hasMember("namespace") && robot_info_xmlrpc["namespace"].getType() == XmlRpc::XmlRpcValue::TypeString)
                     {

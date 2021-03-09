@@ -13,7 +13,7 @@ namespace geometry_info
 	RobotContour::RobotContour(std::string robot_name,
 							   Eigen::Vector2f lead_vector_world_cs,
 							   float world_to_geometry_cs_rotation)
-		: GeometryContour(lead_vector_world_cs_, world_to_geometry_cs_rotation),
+		: GeometryContour(lead_vector_world_cs, world_to_geometry_cs_rotation),
 		  robot_name_(robot_name)
 	{ }
 
