@@ -3,21 +3,26 @@
 namespace fpp
 {
 	FPPControllerBase::FPPControllerBase(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
+										 const fpp_data_classes::FPPControllerParams &fpp_controller_params,
 										 ros::NodeHandle &nh,
 										 ros::NodeHandle &planner_nh)
 		: fpp_params_(fpp_params),
 		  nh_(nh),
 		  planner_nh_(planner_nh)
-	{ }
+	{ 
+		this->planner_name_ = fpp_controller_params.path_planner_name;
+		this->costmap_ = fpp_controller_params.costmap;
+		this->global_frame_ = fpp_controller_params.global_frame;
+	}
 
-    void FPPControllerBase::initialize(std::string planner_name,
-                                       costmap_2d::Costmap2D *costmap,
-                                       std::string global_frame)
-    {
-        this->planner_name_ = planner_name;
-        this->costmap_ = costmap;
-        this->global_frame_ = global_frame;
-    }
+    // void FPPControllerBase::initialize(std::string planner_name,
+    //                                    costmap_2d::Costmap2D *costmap,
+    //                                    std::string global_frame)
+    // {
+    //     this->planner_name_ = planner_name;
+    //     this->costmap_ = costmap;
+    //     this->global_frame_ = global_frame;
+    // }
 
 	void FPPControllerBase::initServices() { }
 

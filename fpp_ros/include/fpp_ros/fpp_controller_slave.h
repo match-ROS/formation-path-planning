@@ -6,12 +6,15 @@
 #include <nav_msgs/Path.h>
 #include <fpp_msgs/GetRobotPlan.h>
 
+#include <fpp_ros/data_classes/fpp_controller_param.h>
+
 namespace fpp
 {
     class FPPControllerSlave : public FPPControllerBase
     {
         public:
 			FPPControllerSlave(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
+							   const fpp_data_classes::FPPControllerParams &fpp_controller_params,
 							   ros::NodeHandle &nh,
 							   ros::NodeHandle &planner_nh);
 

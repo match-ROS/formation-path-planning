@@ -53,21 +53,25 @@ namespace fpp
 							<< this->fpp_params_->getCurrentRobotName().c_str());
 
 			// Initialize the controller object that defines if this is master or slave.
+			fpp_data_classes::FPPControllerParams fpp_controller_params =
+				fpp_data_classes::FPPControllerParams(name, costmap, global_frame);
 			if(this->fpp_params_->isCurrentRobotMaster())
             {
-                this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->fpp_params_,
-                                                                              this->nh_,
-                                                                              this->planner_nh_);
-            }
+				this->fpp_controller_ = std::make_shared<FPPControllerMaster>(this->fpp_params_,
+																			  fpp_controller_params,
+																			  this->nh_,
+																			  this->planner_nh_);
+			}
             else
             {
-                this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->fpp_params_,
-                                                                             this->nh_,
-                                                                             this->planner_nh_);
-            }
-            this->fpp_controller_->initialize(name, costmap, global_frame);
+				this->fpp_controller_ = std::make_shared<FPPControllerSlave>(this->fpp_params_,
+																			 fpp_controller_params,
+																			 this->nh_,
+																			 this->planner_nh_);
+			}
+			// this->fpp_controller_->initialize(name, costmap, global_frame);
 
-            initialized_ = true; // Initialized method was called so planner is now initialized
+			initialized_ = true; // Initialized method was called so planner is now initialized
 
             ROS_INFO_STREAM("Formation Path Planner finished intitialization.");
         }

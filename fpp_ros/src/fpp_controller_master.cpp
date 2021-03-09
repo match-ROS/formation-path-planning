@@ -2,11 +2,12 @@
 
 namespace fpp
 {
-    FPPControllerMaster::FPPControllerMaster(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
-                                             ros::NodeHandle &nh,
-                                             ros::NodeHandle &planner_nh)
-        : FPPControllerBase(fpp_params, nh, planner_nh)
-    {
+	FPPControllerMaster::FPPControllerMaster(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
+											 const fpp_data_classes::FPPControllerParams &fpp_controller_params,
+											 ros::NodeHandle &nh,
+											 ros::NodeHandle &planner_nh)
+		: FPPControllerBase(fpp_params, fpp_controller_params, nh, planner_nh)
+	{
         this->initServices();
         this->initTopics();
 		this->initActions();
@@ -50,30 +51,40 @@ namespace fpp
 		// this->formation_centre_ = this->target_formation_contour_.calcCentroidWorldCS();
 		// this->target_formation_contour_.moveCoordinateSystem(this->formation_centre_, 0.0);
         
-
-
-		fpp_msgs::FormationFootprintInfo footprint_info_msg;
-		this->get_footprint_info_srv_client_.call(footprint_info_msg);
-        this->callDynamicCostmapReconfigure(footprint_info_msg.response.minimal_encloring_circle_radius);
-
-        this->initTimers();
-    }
-
-	void FPPControllerMaster::initialize(std::string planner_name,
-                                         costmap_2d::Costmap2D *costmap,
-                                         std::string global_frame)
-    {
-        FPPControllerBase::initialize(planner_name, costmap, global_frame);
-
-		this->readParams(planner_name);
+		this->readParams(this->planner_name_);
 		
 		this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
 																		this->costmap_,
 																		this->global_frame_,
 																		this->ras_param_manager_->getRASParams());
 		
-		ROS_INFO_STREAM("robot_name: " << this->fpp_params_->getCurrentRobotName());
+
+		// HIER DIE TARGET FORMATION ERSTELLEN UND MINIMAL CIRCLE BERECHNEN
+
+		fpp_msgs::FormationFootprintInfo footprint_info_msg;
+		this->get_footprint_info_srv_client_.call(footprint_info_msg);
+        this->callDynamicCostmapReconfigure(footprint_info_msg.response.minimal_encloring_circle_radius);
+
+        this->initTimers();
+
+		ROS_INFO_STREAM("Initialized fpp_controller for " << this->fpp_params_->getCurrentRobotName());
     }
+
+	// void FPPControllerMaster::initialize(std::string planner_name,
+    //                                      costmap_2d::Costmap2D *costmap,
+    //                                      std::string global_frame)
+    // {
+    //     FPPControllerBase::initialize(planner_name, costmap, global_frame);
+
+	// 	this->readParams(planner_name);
+		
+	// 	this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
+	// 																	this->costmap_,
+	// 																	this->global_frame_,
+	// 																	this->ras_param_manager_->getRASParams());
+		
+	// 	ROS_INFO_STREAM("robot_name: " << this->fpp_params_->getCurrentRobotName());
+    // }
 
 	void FPPControllerMaster::execute(const geometry_msgs::PoseStamped &start,
                                       const geometry_msgs::PoseStamped &goal,

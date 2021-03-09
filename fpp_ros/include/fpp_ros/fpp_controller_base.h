@@ -7,6 +7,7 @@
 #include <nav_msgs/Path.h>
 
 #include <fpp_ros/data_classes/fpp_param_manager.h>
+#include <fpp_ros/data_classes/fpp_controller_param.h>
 
 #include <string>
 #include <memory> // Usage of smart pointers
@@ -25,9 +26,10 @@ namespace fpp
              * @param robot_info Reference to pointer that points to element in the robot_info_list that defines the information about the robot this controller is running on.
              * @param nh Nodehandle for topics/services and actions
              */
-            FPPControllerBase(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
-                              ros::NodeHandle &nh,
-                              ros::NodeHandle &planner_nh);
+			FPPControllerBase(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
+							  const fpp_data_classes::FPPControllerParams &fpp_controller_params,
+							  ros::NodeHandle &nh,
+							  ros::NodeHandle &planner_nh);
 
 			/**
 			 * @brief Initialization method that should be overriten and called in the derived class
@@ -36,7 +38,7 @@ namespace fpp
 			 * @param costmap Pointer to the costmap for planning collision-free path
 			 * @param global_frame Name of the global frame the robot is in
 			 */
-            virtual void initialize(std::string planner_name, costmap_2d::Costmap2D *costmap, std::string global_frame);
+            // virtual void initialize(std::string planner_name, costmap_2d::Costmap2D *costmap, std::string global_frame);
 
             /**
              * 

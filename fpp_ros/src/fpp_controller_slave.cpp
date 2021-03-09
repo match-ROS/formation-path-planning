@@ -2,11 +2,12 @@
 
 namespace fpp
 {
-    FPPControllerSlave::FPPControllerSlave(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
-                                           ros::NodeHandle &nh,
-                                           ros::NodeHandle &planner_nh)
-        : FPPControllerBase(fpp_params, nh, planner_nh)
-    {
+	FPPControllerSlave::FPPControllerSlave(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
+										   const fpp_data_classes::FPPControllerParams &fpp_controller_params,
+										   ros::NodeHandle &nh,
+										   ros::NodeHandle &planner_nh)
+		: FPPControllerBase(fpp_params, fpp_controller_params, nh, planner_nh)
+	{
 		this->initServices();
 		this->initTopics();
 		this->initTimers();

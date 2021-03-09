@@ -168,6 +168,8 @@ set(DATA_CLASS_SOURCES
 	include/fpp_ros/data_classes/robot_info.h
 
 	include/fpp_ros/data_classes/path_planner_types.h
+
+	include/fpp_ros/data_classes/fpp_controller_param.h
 	
 	include/fpp_ros/data_classes/fpp_param_manager.h
 	src/data_classes/fpp_param_manager.cpp

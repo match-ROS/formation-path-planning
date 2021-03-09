@@ -26,13 +26,14 @@ namespace fpp
     class FPPControllerMaster : public FPPControllerBase
     {
         public:
-            FPPControllerMaster(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
-                                ros::NodeHandle &nh,
-                                ros::NodeHandle &planner_nh);
+			FPPControllerMaster(const std::shared_ptr<fpp_data_classes::FPPParamManager> &fpp_params,
+								const fpp_data_classes::FPPControllerParams &fpp_controller_params,
+								ros::NodeHandle &nh,
+								ros::NodeHandle &planner_nh);
 
-            void initialize(std::string planner_name,
-                            costmap_2d::Costmap2D *costmap,
-                            std::string global_frame) override;
+			// void initialize(std::string planner_name,
+            //                 costmap_2d::Costmap2D *costmap,
+            //                 std::string global_frame) override;
 
             void execute(const geometry_msgs::PoseStamped &start,
                          const geometry_msgs::PoseStamped &goal,
