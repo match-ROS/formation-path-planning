@@ -14,6 +14,7 @@ namespace fpp
 																		this->global_frame_,
 																		this->ras_param_manager_->getRASParams());
 
+		ROS_ERROR_STREAM("CALL DYN RECONFIG");
 		this->callDynamicCostmapReconfigure(this->target_formation_contour_.calcMinimalEnclosingCircleRadius());
 
 		ROS_INFO_STREAM("Initialized fpp_controller for " << this->fpp_params_->getCurrentRobotName());
@@ -200,6 +201,7 @@ namespace fpp
 
     void FPPControllerMaster::callDynamicCostmapReconfigure(float min_formation_circle_radius)
     {
+		ROS_ERROR_STREAM("1");
         fpp_msgs::DynReconfigure dyn_reconfig_msg;
         dyn_reconfig_msg.request.new_inflation_radius = min_formation_circle_radius;
         dyn_reconfig_msg.request.robot_namespace = this->fpp_params_->getCurrentRobotNamespace();

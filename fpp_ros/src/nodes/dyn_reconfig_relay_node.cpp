@@ -16,6 +16,7 @@ std::vector<fpp_msgs::DynReconfigure::Request> request_list;
 
 bool dyn_reconfig_inflation_cb(fpp_msgs::DynReconfigure::Request &req, fpp_msgs::DynReconfigure::Response &res)
 {
+	ROS_ERROR_STREAM("DYN_RECONFIG: SERVICE CALL RECEIVED");
     request_list.push_back(req);
     return true;
 }
@@ -24,7 +25,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "dyn_reconfig_relay_node");
     ros::NodeHandle nh;
-    ros::ServiceServer dyn_reconfig_inflation_srv_server = nh.advertiseService("dyn_reconfig_inflation", dyn_reconfig_inflation_cb);
+    ros::ServiceServer dyn_reconfig_inflation_srv_server = nh.advertiseService("/dyn_reconfig_inflation", dyn_reconfig_inflation_cb);
 
     while(ros::ok())
     {
@@ -43,10 +44,19 @@ int main(int argc, char **argv)
             
             ROS_INFO("before call");
 
+			ROS_INFO_STREAM(request.robot_namespace << "/move_base_flex/global_costmap/inflation/set_parameters");
             ros::service::call(request.robot_namespace + "/move_base_flex/global_costmap/inflation/set_parameters",
                                dyn_reconfigure_msg.request,
                                dyn_reconfigure_msg.response);
             ROS_INFO("size: %i", dyn_reconfigure_msg.response.config.doubles.size());
+			if(dyn_reconfigure_msg.response.config.doubles.size() >= 1)
+			{
+				ROS_INFO_STREAM(dyn_reconfigure_msg.response.config.doubles[0].name << " | " << dyn_reconfigure_msg.response.config.doubles[0].value);
+			}
+			if(dyn_reconfigure_msg.response.config.doubles.size() >= 2)
+			{
+				ROS_INFO_STREAM(dyn_reconfigure_msg.response.config.doubles[1].name << " | " << dyn_reconfigure_msg.response.config.doubles[1].value);
+			}
             ROS_INFO("after call");
 
             ROS_INFO("Dynamic reconfigure end");
