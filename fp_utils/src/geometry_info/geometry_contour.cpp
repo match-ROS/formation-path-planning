@@ -188,6 +188,11 @@ namespace geometry_info
         return extended_world_cs.head<2>();
     }
 
+	std::vector<Eigen::Vector2f> GeometryContour::getCornerPointsGeometryCS()
+    {
+        return this->corner_points_geometry_cs_;
+    }
+
     std::vector<Eigen::Vector2f> GeometryContour::getCornerPointsWorldCS()
     {
         std::vector<Eigen::Vector2f> corner_points_world_cs;

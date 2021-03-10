@@ -16,13 +16,26 @@ std::shared_ptr<formation_costmap::FormationCostmapParams> fc_params;
 bool formation_footprint_info_cb(fpp_msgs::FormationFootprintInfo::Request &req,
 								 fpp_msgs::FormationFootprintInfo::Response &res)
 {
+	// Formation Centre
 	Eigen::Vector2f formation_centre_world_cs;
 	formation_centre_world_cs = formation_footprint->calcCentroidWorldCS();
 	res.formation_centre.x = formation_centre_world_cs[0];
 	res.formation_centre.y = formation_centre_world_cs[1];
 	res.formation_centre.theta = 0.0;
 
+	// Minimal enclosing circle
 	res.minimal_encloring_circle_radius = formation_footprint->calcMinimalEnclosingCircleRadius();
+
+	// Formation Footprint (but with the centre of the formation located in 0/0)
+	std::vector<Eigen::Vector2f> corner_points_geometry_cs = formation_footprint->getCornerPointsGeometryCS();
+	for(Eigen::Vector2f corner_point_geometry_cs: corner_points_geometry_cs)
+	{
+		geometry_msgs::Point32 point;
+		point.x = corner_point_geometry_cs[0];
+		point.y = corner_point_geometry_cs[1];
+		point.z = 0.0;
+		res.formation_footprint.points.push_back(point);
+	}
 
 	return true;
 }
@@ -50,7 +63,6 @@ bool robot_outline_cb(fpp_msgs::RobotOutline::Request &req,
             corner_point.z = 0.0;
             robot_footprint_msg.polygon.points.push_back(corner_point);
         }
-
 		res.outline = robot_footprint_msg;
 		return true;
 	}

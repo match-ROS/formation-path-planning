@@ -8,13 +8,17 @@ namespace fpp
 											 ros::NodeHandle &planner_nh)
 		: FPPControllerBase(fpp_params, fpp_controller_params, nh, planner_nh)
 	{
+		this->initTopics();
+		this->initServices();
+		this->initActions();
+		this->initTimers();
+
 		this->readRASParams(this->planner_name_);
         this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
 																		this->costmap_,
 																		this->global_frame_,
 																		this->ras_param_manager_->getRASParams());
 
-		ROS_ERROR_STREAM("CALL DYN RECONFIG");
 		this->callDynamicCostmapReconfigure(this->target_formation_contour_.calcMinimalEnclosingCircleRadius());
 
 		ROS_INFO_STREAM("Initialized fpp_controller for " << this->fpp_params_->getCurrentRobotName());
@@ -56,7 +60,6 @@ namespace fpp
 
     void FPPControllerMaster::initServices()
     {
-		FPPControllerBase::initServices();
         this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
         this->dyn_rec_inflation_srv_client_.waitForExistence();
 
@@ -177,7 +180,6 @@ namespace fpp
             this->planner_nh_.param<std::string>(path_planner_name_key,
                                                  this->used_formation_planner_,
                                                  "SplinedRelaxedAStar");
-												 ROS_ERROR_STREAM("3");
         }        
         else
         {
@@ -201,11 +203,10 @@ namespace fpp
 
     void FPPControllerMaster::callDynamicCostmapReconfigure(float min_formation_circle_radius)
     {
-		ROS_ERROR_STREAM("1");
         fpp_msgs::DynReconfigure dyn_reconfig_msg;
         dyn_reconfig_msg.request.new_inflation_radius = min_formation_circle_radius;
         dyn_reconfig_msg.request.robot_namespace = this->fpp_params_->getCurrentRobotNamespace();
         ros::Duration(0.1).sleep();
-        this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
+        bool result = this->dyn_rec_inflation_srv_client_.call(dyn_reconfig_msg);
     }
 }

@@ -104,6 +104,8 @@ namespace geometry_info
              */
             Eigen::Vector2f transformGeometryToWorldCS(Eigen::Vector2f geometry_cs);
 
+			std::vector<Eigen::Vector2f> getCornerPointsGeometryCS();
+
             /**
              * @brief Get a list of all corners of this contour
              * 
