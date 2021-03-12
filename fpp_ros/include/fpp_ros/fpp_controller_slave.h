@@ -27,10 +27,12 @@ namespace fpp
 
 			// ros::ServiceClient get_robot_plan_srv_client_;
 
-			/**
-             * @brief Helper method for intializing all services
-             * 
-             */
-            void initServices() override;
+			#pragma region Topics/Services/Actions
+			ros::Subscriber formation_plan_sub_;
+			#pragma endregion
+
+			void initTopics() override;
+
+			void getFormationPlanCb(nav_msgs::Path formation_plan);
     };
 }

@@ -8,6 +8,5 @@ namespace fpc
 		ros::NodeHandle &nh,
 		ros::NodeHandle &controller_nh)
 		: FPCControllerBase(robot_info_list, robot_info, nh, controller_nh)
-	{
-	}
+	{ }
 }

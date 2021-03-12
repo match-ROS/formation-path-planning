@@ -14,12 +14,13 @@ namespace fpp
 		this->initTimers();
 
 		this->readRASParams(this->planner_name_);
+		this->ras_param_manager_->printInfo();
         this->initial_path_planner_ = path_planner::SplinedRelaxedAStar(this->planner_name_,
 																		this->costmap_,
 																		this->global_frame_,
 																		this->ras_param_manager_->getRASParams());
 
-		this->callDynamicCostmapReconfigure(this->target_formation_contour_.calcMinimalEnclosingCircleRadius());
+		this->callDynamicCostmapReconfigure(this->target_formation_contour_.calcMinimalEnclosingCircleRadius() * 1.5);
 
 		ROS_INFO_STREAM("Initialized fpp_controller for " << this->fpp_params_->getCurrentRobotName());
     }
@@ -28,19 +29,28 @@ namespace fpp
                                       const geometry_msgs::PoseStamped &goal,
                                       std::vector<geometry_msgs::PoseStamped> &plan)
     {
+		// Get current information about formation status
+		fpp_msgs::FormationFootprintInfo formation_footprint_info;
+		this->get_footprint_info_srv_client_.call(formation_footprint_info);
+
         ROS_INFO_STREAM("Start: x: " << start.pose.position.x << " y: " << start.pose.position.y);
         ROS_INFO_STREAM("Goal: x: " << goal.pose.position.x << " y: " << goal.pose.position.y);
         
-        geometry_msgs::PoseStamped formation_start = start;
+        geometry_msgs::PoseStamped formation_start = start; // Init with start to copy header info
 		std::vector<geometry_msgs::PoseStamped> formation_plan;
-        formation_start.pose.position.x = this->formation_centre_[0];
-        formation_start.pose.position.y = this->formation_centre_[1];
-        ROS_INFO_STREAM("Formation Start: x: " << formation_start.pose.position.x << " y: " << formation_start.pose.position.y);
+
+		// Override the start position of the planner to not use the robot position but instead use formation centre.
+        formation_start.pose.position.x = formation_footprint_info.response.formation_centre.x;
+        formation_start.pose.position.y = formation_footprint_info.response.formation_centre.y;
+		ROS_INFO_STREAM("Formation Start: x: " << formation_start.pose.position.x << " y: " << formation_start.pose.position.y);
+
+		// Create initial plan for the formation
         this->initial_path_planner_.makePlan(formation_start, goal, formation_plan);
 
-		// this->calcRobotPlans(formation_plan);
-		// plan = this->robot_plan_list_[this->fpp_params_->getCurrentRobotName()];
-		
+		ROS_INFO_STREAM("Publish formation plan");
+        this->publishPlan(this->formation_plan_pub_, formation_plan);
+		this->publishPlanMetaData(this->formation_plan_meta_data_pub_, formation_plan);
+
 		// Call move_base action servers of each slave robot to initialize the global planning of their path
 		for(std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> &slave_move_base_as: this->slave_move_base_as_list_)
 		{
@@ -54,8 +64,12 @@ namespace fpp
 			slave_move_base_as->sendGoal(msg);
 		}
 
-        this->publishPlan(this->formation_plan_pub_, formation_plan);
+		//Create only the plan for this robot
+		// this->calcRobotPlans(formation_plan);
+		// plan = this->robot_plan_list_[this->fpp_params_->getCurrentRobotName()];
+		plan = this->transformFormationToRobotPlan(formation_plan);
 		this->publishPlan(this->robot_plan_pub_, plan);
+		this->publishPlanMetaData(this->robot_plan_meta_data_pub_, plan);
     }
 
     void FPPControllerMaster::initServices()
@@ -63,8 +77,8 @@ namespace fpp
         this->dyn_rec_inflation_srv_client_ = this->nh_.serviceClient<fpp_msgs::DynReconfigure>("/dyn_reconfig_inflation");
         this->dyn_rec_inflation_srv_client_.waitForExistence();
 
-		// this->get_footprint_info_srv_client_ = this->nh_.serviceClient<fpp_msgs::FormationFootprintInfo>("move_base_flex/footprint_info");
-		// this->get_footprint_info_srv_client_.waitForExistence();
+		this->get_footprint_info_srv_client_ = this->nh_.serviceClient<fpp_msgs::FormationFootprintInfo>("move_base_flex/footprint_info");
+		this->get_footprint_info_srv_client_.waitForExistence();
 
 		// this->get_robot_plan_srv_server_ = this->nh_.advertiseService("get_robot_plan",
 		// 															  &FPPControllerMaster::getRobotPlanCb,
@@ -73,11 +87,12 @@ namespace fpp
 
     void FPPControllerMaster::initTopics()
     {
-		FPPControllerBase::initTopics();
-        
         // Advertise new topic but dont wait for subscribers, as this topic is not init relevant
         this->formation_plan_pub_ = this->nh_.advertise<nav_msgs::Path>("formation_plan", 10);
-    }
+
+		this->formation_plan_meta_data_pub_ =
+			this->planner_nh_.advertise<fpp_msgs::GlobalPlanPoseMetaData>("formation_plan_meta_data", 10);
+	}
 
 	void FPPControllerMaster::initActions()
 	{
@@ -98,10 +113,7 @@ namespace fpp
 		}
 	}
 
-    void FPPControllerMaster::initTimers()
-    {
-		FPPControllerBase::initTimers();
-	}
+    void FPPControllerMaster::initTimers() { }
 
 	// void FPPControllerMaster::calcRobotPlans(const std::vector<geometry_msgs::PoseStamped> &formation_plan)
 	// {

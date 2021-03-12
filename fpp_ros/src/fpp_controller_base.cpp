@@ -19,6 +19,8 @@ namespace fpp
 		this->initActions();
 		this->initTimers();
 
+		// Create the target formation contour which defines the optimal distances between 
+		// a robot and the formation centre and also the robots themselfs.
 		this->target_formation_contour_ = geometry_info::FormationContour();
 		for(std::shared_ptr<fpp_data_classes::RobotInfo> &robot_info: this->fpp_params_->getRobotInfoList())
 		{
@@ -43,6 +45,14 @@ namespace fpp
 		this->target_formation_contour_.updateFormationContour();
 		// Move CS of formation to formation centre to robot positions can easily be calculated
 		this->target_formation_contour_.moveCSToFormationCentre();
+
+		// Set offset vector from formation centre to robot
+		this->formation_to_robot_offset_ = this->target_formation_contour_.getRobotPosGeometryCS(
+			this->fpp_params_->getCurrentRobotName());
+
+		// Create transformation object
+		this->formation_to_robot_trafo_ = plan_transformation::RigidPlanTransformation(this->fpp_params_->getCurrentRobotName(),
+																					   this->formation_to_robot_offset_);
 	}
 
 	void FPPControllerBase::initServices() 
@@ -56,14 +66,18 @@ namespace fpp
 	{
 		// Advertise new topic but dont wait for subscribers, as this topic is not init relevant
         this->robot_plan_pub_ = this->nh_.advertise<nav_msgs::Path>("move_base_flex/plan", 10);
+
+		this->robot_plan_meta_data_pub_ =
+			this->planner_nh_.advertise<fpp_msgs::GlobalPlanPoseMetaData>("robot_plan_meta_data", 10);
 	}
 
 	void FPPControllerBase::initActions() { }
 
 	void FPPControllerBase::initTimers() { }
 
-	void FPPControllerBase::publishPlan(const ros::Publisher &plan_publisher, const std::vector<geometry_msgs::PoseStamped> &plan)
-    {
+	void FPPControllerBase::publishPlan(const ros::Publisher &plan_publisher,
+										const std::vector<geometry_msgs::PoseStamped> &plan)
+	{
         nav_msgs::Path path_to_publish;
         path_to_publish.header.stamp = ros::Time::now();
         path_to_publish.header.frame_id = plan[0].header.frame_id;
@@ -72,7 +86,49 @@ namespace fpp
         plan_publisher.publish(path_to_publish);
     }
 
-	std::vector<Eigen::Vector2f> FPPControllerBase::convPolygonToEigenVector(geometry_msgs::Polygon polygon)
+	void FPPControllerBase::publishPlanMetaData(const ros::Publisher &plan_meta_data_publisher,
+												const std::vector<geometry_msgs::PoseStamped> &plan)
+	{
+		for(int pose_counter = 0; pose_counter < plan.size(); pose_counter++)
+		{
+			fpp_msgs::GlobalPlanPoseMetaData pose_meta_data;
+			pose_meta_data.index = pose_counter;
+
+			pose_meta_data.pose = plan[pose_counter].pose;
+
+			pose_meta_data.pose_2D.x = plan[pose_counter].pose.position.x;
+			pose_meta_data.pose_2D.y = plan[pose_counter].pose.position.y;
+			pose_meta_data.pose_2D.theta = tf::getYaw(plan[pose_counter].pose.orientation);
+
+			plan_meta_data_publisher.publish(pose_meta_data);
+		}
+	}
+
+	std::vector<geometry_msgs::PoseStamped> FPPControllerBase::transformFormationToRobotPlan(
+		std::vector<geometry_msgs::PoseStamped> &formation_plan)
+	{
+		std::vector<geometry_msgs::PoseStamped> robot_plan;
+
+		for(geometry_msgs::PoseStamped &pose: formation_plan)
+		{
+			Eigen::Vector3f eigen_pose = this->convPoseToEigen(pose.pose);
+
+			this->formation_to_robot_trafo_.updateFormationState(eigen_pose);
+
+			geometry_msgs::PoseStamped new_target_robot_pose;
+			new_target_robot_pose.header.frame_id = this->global_frame_;
+			new_target_robot_pose.header.stamp = ros::Time::now();
+			new_target_robot_pose.pose = this->convEigenToPose(this->formation_to_robot_trafo_.getTargetState());
+
+			robot_plan.push_back(new_target_robot_pose);
+		}
+
+		return robot_plan;
+	}
+
+	#pragma region Conversion Methods
+	std::vector<Eigen::Vector2f> FPPControllerBase::convPolygonToEigenVector(
+		geometry_msgs::Polygon polygon)
 	{
 		std::vector<Eigen::Vector2f> eigen_polygon;
 
@@ -86,4 +142,28 @@ namespace fpp
 
 		return eigen_polygon;
 	}
+
+	geometry_msgs::Pose FPPControllerBase::convEigenToPose(Eigen::Vector3f eigen_pose)
+	{
+		geometry_msgs::Pose pose;
+
+		pose.position.x = eigen_pose[0];
+		pose.position.y = eigen_pose[1];
+		pose.position.z = 0.0;
+		pose.orientation = tf::createQuaternionMsgFromYaw(eigen_pose[2]);
+
+		return pose;
+	}
+
+	Eigen::Vector3f FPPControllerBase::convPoseToEigen(geometry_msgs::Pose pose)
+	{
+		Eigen::Vector3f eigen_pose;
+
+		eigen_pose[0] = pose.position.x;
+		eigen_pose[1] = pose.position.y;
+		eigen_pose[2] = tf::getYaw(pose.orientation);
+
+		return eigen_pose;
+	}
+	#pragma endregion
 }

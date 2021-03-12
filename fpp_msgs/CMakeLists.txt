@@ -51,6 +51,7 @@ add_message_files(
   FILES
   BezierSpline.msg
   LocalPlannerMetaData.msg
+  GlobalPlanPoseMetaData.msg
 )
 
 ## Generate services in the 'srv' folder

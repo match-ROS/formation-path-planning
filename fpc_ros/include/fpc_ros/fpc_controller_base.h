@@ -40,11 +40,11 @@ namespace fpc
 
 			virtual bool isGoalReached(double xy_tolerance, double yaw_tolerance);
 
-			bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
-			uint32_t computeVelocityCommands(const geometry_msgs::PoseStamped &pose,
-											 const geometry_msgs::TwistStamped &velocity,
-											 geometry_msgs::TwistStamped &cmd_vel,
-											 std::string &message);
+			virtual bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
+			virtual uint32_t computeVelocityCommands(const geometry_msgs::PoseStamped &pose,
+													 const geometry_msgs::TwistStamped &velocity,
+													 geometry_msgs::TwistStamped &cmd_vel,
+													 std::string &message);
 
 			virtual void publishMetaData();
 			#pragma endregion

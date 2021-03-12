@@ -6,7 +6,8 @@
        args="record -e  (.*)/mobile_base_controller/odom
                         (.*)/mobile_base_controller/cmd_vel
 						(.*)/move_base_flex/FormationPathController/fpc_meta_data
-
+						(.*)/move_base_flex/FormationPathPlanner/robot_plan_meta_data
+						(.*)/move_base_flex/FormationPathPlanner/formation_plan_meta_data
                         
                     -o $(arg file_path)$(arg ros_bag_filename).bag"/>
 </launch>

@@ -178,6 +178,11 @@ set(DATA_CLASS_SOURCES
 	src/data_classes/ras_param_manager.cpp)
 add_library(data_classes ${DATA_CLASS_SOURCES})
 
+set(PLAN_TRANSFORMATION_SOURCES
+	include/fpp_ros/plan_transformation/rigid_plan_transformation.h
+	src/plan_transformation/rigid_plan_transformation.cpp)
+add_library(plan_transformation ${PLAN_TRANSFORMATION_SOURCES})
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -207,6 +212,7 @@ set_target_properties(data_classes PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(fpp_ros 
 	data_classes
 	path_planner
+	plan_transformation
 	${catkin_LIBRARIES})
 
 target_link_libraries(path_planner 
@@ -214,6 +220,9 @@ target_link_libraries(path_planner
 	${catkin_LIBRARIES})
 
 target_link_libraries(dyn_reconfig_relay_node 
+	${catkin_LIBRARIES})
+
+target_link_libraries(plan_transformation 
 	${catkin_LIBRARIES})
 
 #############

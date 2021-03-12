@@ -3,6 +3,7 @@
 #include "ros/ros.h"
 
 #include <costmap_2d/costmap_2d.h>
+#include <tf/transform_listener.h>
 
 #include <geometry_msgs/PolygonStamped.h>
 #include <nav_msgs/Path.h>
@@ -13,6 +14,8 @@
 #include <fp_utils/geometry_info/robot_contour.h>
 #include <fp_utils/geometry_info/formation_contour.h>
 #include <fpp_msgs/RobotOutline.h>
+#include <fpp_msgs/GlobalPlanPoseMetaData.h>
+#include <fpp_ros/plan_transformation/rigid_plan_transformation.h>
 
 #include <string>
 #include <memory> // Usage of smart pointers
@@ -67,11 +70,17 @@ namespace fpp
             std::string global_frame_;
 			//! Through this object the target distances from the robots to the formation centre can be calculated
 			geometry_info::FormationContour target_formation_contour_;
+			//! Offset to the formation centre. Viewed from the formation centre
+			Eigen::Vector2f formation_to_robot_offset_;
+
+			plan_transformation::RigidPlanTransformation formation_to_robot_trafo_;
 			#pragma endregion
 
 			#pragma region Topics/Services/Actions
 			//! Topic to publish the plan of the current robot.
             ros::Publisher robot_plan_pub_;
+			//! Topic to publish the meta data of the plan to so it can be plotted in plotjuggler
+			ros::Publisher robot_plan_meta_data_pub_;
 
 			ros::ServiceClient get_robot_outline_src_client_;
 			#pragma endregion
@@ -103,8 +112,19 @@ namespace fpp
              * @param plan_publisher Publisher that is used to publish the plan
              * @param plan Plan that contains all points the define the plan
              */
-			void publishPlan(const ros::Publisher &plan_publisher, const std::vector<geometry_msgs::PoseStamped> &plan);
+			void publishPlan(const ros::Publisher &plan_publisher,
+							 const std::vector<geometry_msgs::PoseStamped> &plan);
 
+			void publishPlanMetaData(const ros::Publisher &plan_meta_data_publisher,
+									 const std::vector<geometry_msgs::PoseStamped> &plan);
+
+			std::vector<geometry_msgs::PoseStamped> transformFormationToRobotPlan(
+				std::vector<geometry_msgs::PoseStamped> &formation_plan);
+
+			#pragma region Conversion Methods
 			std::vector<Eigen::Vector2f> convPolygonToEigenVector(geometry_msgs::Polygon polygon);
+			geometry_msgs::Pose convEigenToPose(Eigen::Vector3f eigen_pose);
+			Eigen::Vector3f convPoseToEigen(geometry_msgs::Pose pose);
+			#pragma endregion
 	};
 }

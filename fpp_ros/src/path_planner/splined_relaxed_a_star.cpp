@@ -230,15 +230,16 @@ namespace path_planner
 			tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
 			spline_list.back()->setEndTangentByQuaternion(end_quaternion);
 			
-			for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
-			{
-				spline->calcControlPoints();
-				spline->addStartEndPointToVisuHelper();
-                spline->addTangentsToVisuHelper();
-                spline->addControlPointsToVisuHelper();
-                spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
-				spline->visualizeData();
-			}
+			// // Visualization
+			// for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
+			// {
+			// 	spline->calcControlPoints();
+			// 	spline->addStartEndPointToVisuHelper();
+            //     spline->addTangentsToVisuHelper();
+            //     spline->addControlPointsToVisuHelper();
+            //     spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
+			// 	spline->visualizeData();
+			// }
 
 			// Optimize the curvature of the splines to be under a certain threshold
 			ROS_INFO_STREAM("Optimizing the curvature of the splines");
@@ -283,15 +284,15 @@ namespace path_planner
 				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
 			}
 
-			// Visualization
-			for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
-			{
-				spline->addStartEndPointToVisuHelper();
-                spline->addTangentsToVisuHelper();
-                spline->addControlPointsToVisuHelper();
-                spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
-				spline->visualizeData();
-			}
+			// // Visualization
+			// for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
+			// {
+			// 	spline->addStartEndPointToVisuHelper();
+            //     spline->addTangentsToVisuHelper();
+            //     spline->addControlPointsToVisuHelper();
+            //     spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
+			// 	spline->visualizeData();
+			// }
 
 			// Create plan by splines
             plan.clear();

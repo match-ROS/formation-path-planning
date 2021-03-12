@@ -37,8 +37,6 @@ namespace fpp
 
         private:     
             #pragma region Process Info
-            //! Centre of the formation
-            Eigen::Vector2f formation_centre_;
             //! Replace this in the future with an interface pointer. Object that plans the initial path.
             path_planner::SplinedRelaxedAStar initial_path_planner_;
 			#pragma endregion
@@ -51,12 +49,14 @@ namespace fpp
 			#pragma endregion
 
             #pragma region Topics/Services/Actions
+			//! Topic to publish the meta data of the formation plan to
+			ros::Publisher formation_plan_meta_data_pub_;
             //! Because I was not able to dynamically reconfigure the costmap from this class
             //! I had to create a relay node that would get a service (this one) and forward
             //! it to the dynamic reconfigure server
             ros::ServiceClient dyn_rec_inflation_srv_client_;
-			//!
-			// ros::ServiceClient get_footprint_info_srv_client_;
+			//! Get information about the formation. Centre, minimal radius, etc.
+			ros::ServiceClient get_footprint_info_srv_client_;
 			//! List that contains an action client linked to all slave robots in the formation
 			std::vector<std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>> slave_move_base_as_list_;
 

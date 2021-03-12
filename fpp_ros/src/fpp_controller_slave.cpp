@@ -8,7 +8,7 @@ namespace fpp
 										   ros::NodeHandle &planner_nh)
 		: FPPControllerBase(fpp_params, fpp_controller_params, nh, planner_nh)
 	{
-		
+		this->initTopics();	
     }
 
     void FPPControllerSlave::execute(const geometry_msgs::PoseStamped &start,
@@ -22,14 +22,29 @@ namespace fpp
 		// plan = robot_plan_msg.response.robot_plan.poses;
 
 		// this->publishPlan(this->robot_plan_pub_, plan);
+
+		while(this->formation_plan_ == nullptr)
+		{
+			ros::Duration(0.01).sleep();
+		}
+
+		plan = this->transformFormationToRobotPlan(this->formation_plan_->poses);
+		this->publishPlan(this->robot_plan_pub_, plan);
+		this->publishPlanMetaData(this->robot_plan_meta_data_pub_, plan);
     }
 
-	void FPPControllerSlave::initServices()
+	void FPPControllerSlave::initTopics()
 	{
-		FPPControllerBase::initServices();
+		std::string formation_plan_topic;
+		formation_plan_topic = "/" + this->fpp_params_->getMasterRobotInfo()->robot_namespace + "/formation_plan";
+		this->formation_plan_sub_ = this->nh_.subscribe(formation_plan_topic,
+														10,
+														&FPPControllerSlave::getFormationPlanCb,
+														this);
+	}
 
-		// this->get_robot_plan_srv_client_ = this->nh_.serviceClient<fpp_msgs::GetRobotPlan>(
-		// 	this->fpp_params_->getMasterRobotInfo()->robot_namespace + "/get_robot_plan");
-        // this->get_robot_plan_srv_client_.waitForExistence();
+	void FPPControllerSlave::getFormationPlanCb(nav_msgs::Path formation_plan)
+	{
+		this->formation_plan_ = std::make_shared<nav_msgs::Path>(formation_plan);
 	}
 }
