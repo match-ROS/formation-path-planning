@@ -27,47 +27,51 @@ if __name__ == '__main__':
 
 	r: float = 0.3
 	
-	for vl_c in np.arange(-5.0, 10.0, 1.5):
+	for vl_c in np.arange(-5.0, 11.0, 1.5):
 		vl: float = float(vl_c) / 10
 		print("vl_c:" + str(vl_c))
 
-		for vr_c in np.arange(-5.0, 10.0, 1.5):
+		for vr_c in np.arange(-5.0, 11.0, 1.5):
 			vr: float = float(vr_c) / 10
 
 			old_x: float = 0.0
 			old_y: float = 0.0
 
-			for time_c in range(0, 10, 1):
-				time: float = float(time_c) / 10
+			if vl_c==-5.0 or vl_c==10.0 or vr_c==-5.0 or vr_c==10.0:
 
-				
-				angle = ((vl - vr) / ( -2 * r)) * time
-				
-				x: float
-				y: float
-				
-				if angle == 0.0:
-					radius = ((vl + vr) / 2) * time
+				for time_c in range(0, 10, 1):
+					time: float = float(time_c) / 10
 
-					x = radius
-					y = 0.0
-				else:
-					radius = ((vl + vr) / (2 * angle)) * time
+					
+					angle = ((vl - vr) / ( -2 * r)) * time
+					
+					x: float
+					y: float
+					
+					if angle == 0.0:
+						radius = ((vl + vr) / 2) * time
 
-					x = radius * sin(angle)
-					y = radius * (1 - cos(angle))
+						x = radius
+						y = 0.0
+					else:
+						radius = ((vl + vr) / (2 * angle)) * time
 
-				# plot.plot(x, y, color="black", marker=".")
+						x = radius * sin(angle)
+						y = radius * (1 - cos(angle))
 
-				plot.plot([old_x, x], [old_y, y], linestyle="-", color="black")
+					# plot.plot(x, y, color="black", marker=".")
 
-				# print("____________________")
-				# print(str(x) + str(y))
-				# print(str(old_x) + str(old_y))
+					plot.plot([old_x, x], [old_y, y], linestyle="-", color="black")
 
-				old_x = x
-				old_y = y
+					# print("____________________")
+					# print(str(x) + str(y))
+					# print(str(old_x) + str(old_y))
 
+					old_x = x
+					old_y = y
+
+	axis: plot.Axes = plot.gca()  # Get current axis object and set x and y to be equal so a square is a square
+	axis.axis("equal")
 	plot.show()
 
 
