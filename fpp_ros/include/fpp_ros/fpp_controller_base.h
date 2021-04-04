@@ -13,6 +13,7 @@
 #include <fpp_ros/data_classes/fpp_controller_param.h>
 #include <fp_utils/geometry_info/robot_contour.h>
 #include <fp_utils/geometry_info/formation_contour.h>
+#include <fp_utils/bezier_splines/cubic_bezier_spline.h>
 #include <fpp_msgs/RobotOutline.h>
 #include <fpp_msgs/GlobalPlanPoseMetaData.h>
 #include <fpp_ros/plan_transformation/rigid_plan_transformation.h>
@@ -74,6 +75,9 @@ namespace fpp
 			Eigen::Vector2f formation_to_robot_offset_;
 
 			plan_transformation::RigidPlanTransformation formation_to_robot_trafo_;
+
+			std::shared_ptr<bezier_splines::CubicBezierSplines> x_reconfiguration_spline_;
+			std::shared_ptr<bezier_splines::CubicBezierSplines> y_reconfiguration_spline_;
 			#pragma endregion
 
 			#pragma region Topics/Services/Actions
@@ -105,6 +109,10 @@ namespace fpp
              * 
              */
             virtual void initTimers();
+
+			void createReconfigurationSplines();
+			Eigen::Vector2f calcReconfigurationStep(int reconfiguration_index,
+													int reconfiguration_distance);
 
 			/**
              * @brief Publish a plan using the publisher that is handed in as parameter

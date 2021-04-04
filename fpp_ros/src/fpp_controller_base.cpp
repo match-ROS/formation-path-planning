@@ -53,6 +53,18 @@ namespace fpp
 		// Create transformation object
 		this->formation_to_robot_trafo_ = plan_transformation::RigidPlanTransformation(this->fpp_params_->getCurrentRobotName(),
 																					   this->formation_to_robot_offset_);
+
+		// Create the reconfiguration splines if a reconfiguration was specified
+		if (this->fpp_params_->getRekonfigurationStartIndex() == -1 ||
+			this->fpp_params_->getRekonfigurationEndIndex() == -1)
+		{
+			this->x_reconfiguration_spline_ = nullptr;
+			this->y_reconfiguration_spline_ = nullptr;
+		}
+		else
+		{
+			this->createReconfigurationSplines();
+		}
 	}
 
 	void FPPControllerBase::initServices() 
@@ -74,6 +86,71 @@ namespace fpp
 	void FPPControllerBase::initActions() { }
 
 	void FPPControllerBase::initTimers() { }
+
+	void FPPControllerBase::createReconfigurationSplines()
+	{
+		Eigen::Vector2f reconfiguration_diff;
+		reconfiguration_diff = this->fpp_params_->getCurrentRobotInfo()->reconfig_offset -
+							   this->fpp_params_->getCurrentRobotInfo()->offset;
+
+		Eigen::Vector2f x_P0;
+		x_P0 << 0,0;
+		Eigen::Vector2f x_start_tangent;
+		x_start_tangent << 1.0, 0;
+		Eigen::Vector2f x_end_tangent;
+		x_end_tangent << 1.0, 0;
+		Eigen::Vector2f x_P3;
+		x_P3 << 1.0, reconfiguration_diff[0];
+		this->x_reconfiguration_spline_ = std::make_shared<bezier_splines::CubicBezierSplines>(x_P0, x_P3);
+		this->x_reconfiguration_spline_->setStartTangent(x_start_tangent);
+		this->x_reconfiguration_spline_->setStartTangentMagnitude(1.0);
+		this->x_reconfiguration_spline_->setEndTangent(x_end_tangent);
+		this->x_reconfiguration_spline_->setEndTangentMagnitude(1.0);
+		this->x_reconfiguration_spline_->calcControlPoints();
+		this->x_reconfiguration_spline_->printInfo();
+
+		Eigen::Vector2f y_P0;
+		y_P0 << 0,0;
+		Eigen::Vector2f y_start_tangent;
+		y_start_tangent << 1.0, 0;
+		Eigen::Vector2f y_end_tangent;
+		y_end_tangent << 1.0, 0;
+		Eigen::Vector2f y_P3;
+		y_P3 << 1.0, reconfiguration_diff[1];
+		this->y_reconfiguration_spline_ = std::make_shared<bezier_splines::CubicBezierSplines>(y_P0, y_P3);
+		this->y_reconfiguration_spline_->setStartTangent(y_start_tangent);
+		this->y_reconfiguration_spline_->setStartTangentMagnitude(1.0);
+		this->y_reconfiguration_spline_->setEndTangent(y_end_tangent);
+		this->y_reconfiguration_spline_->setEndTangentMagnitude(1.0);
+		this->y_reconfiguration_spline_->calcControlPoints();
+		this->y_reconfiguration_spline_->printInfo();
+	}
+
+	Eigen::Vector2f FPPControllerBase::calcReconfigurationStep(int reconfiguration_index,
+															   int reconfiguration_distance)
+	{
+		if(reconfiguration_index == 0)
+		{
+			Eigen::Vector2f reconfig_diff;
+			reconfig_diff << 0, 0;
+			return reconfig_diff;
+		}
+
+		float iterator = float(reconfiguration_index) / float(reconfiguration_distance);
+
+		// ROS_ERROR_STREAM(this->fpp_params_->getCurrentRobotName() << " iterator: " << iterator << " diff x: " << this->x_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1] << " diff y: " << this->y_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1]);
+
+		float x_diff = this->x_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1] -
+					   this->x_reconfiguration_spline_->calcPointOnBezierSpline(iterator - (1.0 / float(reconfiguration_distance)))[1];
+		float y_diff = this->y_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1] -
+					   this->y_reconfiguration_spline_->calcPointOnBezierSpline(iterator - (1.0 / float(reconfiguration_distance)))[1];
+
+		ROS_ERROR_STREAM(this->fpp_params_->getCurrentRobotName() << " iterator: " << iterator << " x: " << x_diff << " y: " << y_diff);
+
+		Eigen::Vector2f reconfig_diff;
+		reconfig_diff << x_diff, y_diff;
+		return reconfig_diff;
+	}
 
 	void FPPControllerBase::publishPlan(const ros::Publisher &plan_publisher,
 										const std::vector<geometry_msgs::PoseStamped> &plan)
@@ -109,11 +186,29 @@ namespace fpp
 	{
 		std::vector<geometry_msgs::PoseStamped> robot_plan;
 
-		for(geometry_msgs::PoseStamped &pose: formation_plan)
+		int pose_counter = 0;
+		int reconfiguration_counter = 0;
+		for(geometry_msgs::PoseStamped &formation_pose: formation_plan)
 		{
-			Eigen::Vector3f eigen_pose = this->convPoseToEigen(pose.pose);
+			Eigen::Vector3f eigen_formation_pose = this->convPoseToEigen(formation_pose.pose);
 
-			this->formation_to_robot_trafo_.updateFormationState(eigen_pose);
+			if (pose_counter >= this->fpp_params_->getRekonfigurationStartIndex() &&
+				pose_counter < this->fpp_params_->getRekonfigurationEndIndex() &&
+				this->x_reconfiguration_spline_ != nullptr &&
+				this->y_reconfiguration_spline_ != nullptr)
+			{
+				int reconfiguration_index_diff = this->fpp_params_->getRekonfigurationEndIndex() -
+												 this->fpp_params_->getRekonfigurationStartIndex();
+				
+				Eigen::Vector2f reconfiguration_change;
+				reconfiguration_change = this->calcReconfigurationStep(reconfiguration_counter,
+																	   reconfiguration_index_diff);
+				this->formation_to_robot_trafo_.changeRobotOffset(reconfiguration_change);
+
+				reconfiguration_counter = reconfiguration_counter + 1;
+			}
+
+			this->formation_to_robot_trafo_.updateFormationState(eigen_formation_pose);
 
 			geometry_msgs::PoseStamped new_target_robot_pose;
 			new_target_robot_pose.header.frame_id = this->global_frame_;
@@ -121,6 +216,7 @@ namespace fpp
 			new_target_robot_pose.pose = this->convEigenToPose(this->formation_to_robot_trafo_.getTargetState());
 
 			robot_plan.push_back(new_target_robot_pose);
+			pose_counter = pose_counter + 1;
 		}
 
 		return robot_plan;

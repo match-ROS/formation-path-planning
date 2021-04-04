@@ -45,9 +45,9 @@ namespace bezier_splines
 	void CubicBezierSplines::calcControlPoints()
     {
 		// This formula comes from S'(0) and S'(1). Has to be (1/5)
-		this->control_points_[1] = (1.0 / 5.0) * this->getMultipliedStartTangent() +
+		this->control_points_[1] = (1.0 / 3.0) * this->getMultipliedStartTangent() +
 								   this->control_points_.front();
-		this->control_points_[2] = -(1.0 / 5.0) * this->getMultipliedEndTangent() +
+		this->control_points_[2] = -(1.0 / 3.0) * this->getMultipliedEndTangent() +
 								   this->control_points_.back();
 	}
 
