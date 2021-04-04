@@ -21,6 +21,8 @@ namespace fpp_data_classes
         bool fpp_master;
         //! Offset from the master robot. This vector is seen from the masterrobot. -1/-1 means left and behind the master robot.
         Eigen::Vector2f offset;
+		//! Offset from the master robot after the reconfiguration
+		Eigen::Vector2f reconfig_offset;
         //! Definition for the outline of this robot
         std::vector<Eigen::Vector2f> robot_outline;
 

@@ -22,6 +22,10 @@ namespace fpp_data_classes
 
         // Get parameter of planner
         this->planner_nh_.param<float>("default_tolerance", this->default_tolerance_, 0.0);
+
+		// Get start and ending of reconfiguration
+		this->planner_nh_.param<int>("reconfiguration_start", this->reconfiguration_start_, -1);
+		this->planner_nh_.param<int>("reconfiguration_end", this->reconfiguration_end_, -1);
         
         XmlRpc::XmlRpcValue formation_config;
         this->planner_nh_.getParam("formation_config", formation_config);
@@ -74,6 +78,21 @@ namespace fpp_data_classes
                         robot_info->robot_namespace = static_cast<std::string>(robot_info_xmlrpc["namespace"]);
                     }
                     
+					// Only if the robot is not the master the offset param is existing
+					if(robot_info_xmlrpc.hasMember("reconfig_offset") && robot_info_xmlrpc["reconfig_offset"].getType() == XmlRpc::XmlRpcValue::TypeArray)
+					{
+						robot_info->reconfig_offset[0] = getNumberFromXMLRPC(robot_info_xmlrpc["reconfig_offset"][0],
+																	"formation_config/" + robot_info->robot_name + "/reconfig_offset");																		
+						robot_info->reconfig_offset[1] = getNumberFromXMLRPC(robot_info_xmlrpc["reconfig_offset"][1],
+																	"formation_config/" + robot_info->robot_name + "/reconfig_offset");
+					}
+					else
+					{
+						// No reconfiguration, so set offset after reconfiguration to offset befroe reconfiguration
+						robot_info->reconfig_offset[0] = robot_info->offset[0];
+						robot_info->reconfig_offset[1] = robot_info->offset[1];
+					}
+
                     if(robot_info_xmlrpc.hasMember("robot_outline"))
                     {
                         XmlRpc::XmlRpcValue robot_outline;
@@ -115,6 +134,16 @@ namespace fpp_data_classes
 	float FPPParamManager::getDefaultTolerance() 
 	{
 		return this->default_tolerance_;
+	}
+
+	int FPPParamManager::getRekonfigurationStartIndex()
+	{
+		return this->reconfiguration_start_;
+	}
+
+	int FPPParamManager::getRekonfigurationEndIndex()
+	{
+		return this->reconfiguration_end_;
 	}
 
 	std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> FPPParamManager::getRobotInfoList()

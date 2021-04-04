@@ -18,6 +18,7 @@ namespace plan_transformation
 			#pragma endregion
 
 			void updateFormationState(Eigen::Vector3f formation_state);
+			void changeRobotOffset(Eigen::Vector2f new_offset);
 
 		protected:
 			std::string robot_name_;

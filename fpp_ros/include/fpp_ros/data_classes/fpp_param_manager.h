@@ -8,6 +8,7 @@
 #include <XmlRpc.h>
 
 #include <fpp_ros/data_classes/robot_info.h>
+#include <fp_utils/bezier_splines/cubic_bezier_spline.h>
 
 namespace fpp_data_classes
 {
@@ -26,6 +27,8 @@ namespace fpp_data_classes
 			std::string getCurrentRobotName();
 			std::string getCurrentRobotNamespace();
 			float getDefaultTolerance();
+			int getRekonfigurationStartIndex();
+			int getRekonfigurationEndIndex();
 			std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> getRobotInfoList();
 			std::shared_ptr<fpp_data_classes::RobotInfo> getCurrentRobotInfo();
 			std::shared_ptr<fpp_data_classes::RobotInfo> getMasterRobotInfo();
@@ -43,6 +46,10 @@ namespace fpp_data_classes
 			#pragma region Params
 			//! The default tolerance that is used if the tolerance of the received goal is not valid
             float default_tolerance_;
+			//! Currently only using an index to start and end the reconfiguration
+			int reconfiguration_start_;
+			//! Currently only using an index to start and end the reconfiguration
+			int reconfiguration_end_;
 			//! Contains all positions of every robot that is part of the formation
             std::vector<std::shared_ptr<fpp_data_classes::RobotInfo>> robot_info_list_;
             //! This is a pointer to the RobotInfo object in the robot_info_list for easier access

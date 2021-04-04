@@ -40,4 +40,9 @@ namespace plan_transformation
 		// Override new data
 		this->formation_state_ = new_formation_state;
 	}
+
+	void RigidPlanTransformation::changeRobotOffset(Eigen::Vector2f relative_change)
+	{
+		this->offset_ = this->offset_ + relative_change;
+	}
 }
