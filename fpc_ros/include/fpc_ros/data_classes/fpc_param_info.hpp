@@ -34,6 +34,7 @@ namespace fpc_data_classes
 		std::string getCurrentRobotNamespace() { return this->current_robot_info->robot_namespace; }
 		std::string getCurrentRobotPoseTopic() { return this->current_robot_info->robot_pose_topic; }
 		std::string getCurrentRobotOdomTopic() { return this->current_robot_info->robot_odom_topic; }
+		std::string getCurrentRobotCmdVelTopic() { return this->current_robot_info->robot_cmd_vel_topic; }
 		LyapunovParams getLyapunovParams() { return this->current_robot_info->lyapunov_params; }
 	};
 }

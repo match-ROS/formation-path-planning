@@ -1,0 +1,6 @@
+# Slave robot will provide its current position info and scaling info
+fpp_msgs/FPCRobotScaleInfo robot_scale_info
+---
+# Master will return a list of all current position and scale info object
+# So the slave can then calculate its velocity
+fpp_msgs/FPCRobotScaleInfo[] robot_scale_info_list

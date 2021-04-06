@@ -23,6 +23,8 @@ namespace fpc_data_classes
 		std::string robot_pose_topic;
 		//! Topic name where the odometry of the robot can be received
 		std::string robot_odom_topic;
+		//! Topic name where the velocity of the robot can be published to
+		std::string robot_cmd_vel_topic;
 		//! Params for the lyapunov controller
 		fpc_data_classes::LyapunovParams lyapunov_params;
 	};

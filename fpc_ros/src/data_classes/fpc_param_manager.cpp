@@ -41,7 +41,8 @@ namespace fpc_data_classes
 										  this->fpc_param_info_->controller_params.min_vel_theta, 0.0);
 
 		// Get the topic name where the current pose of the robots will be published
-		// This param is used to set the topic name of each robot to the same name. Special "robot_pose_topic" params in the robot params override this.
+		// This param is used to set the topic name of each robot to the same name. 
+		// Special "robot_pose_topic" params in the robot params override this.
 		std::string general_robot_pose_topic = "DefaultPoseTopicName";
 		std::string general_robot_pose_topic_key;
 		if(this->nh_.searchParam("robot_pose_topic", general_robot_pose_topic_key))
@@ -50,12 +51,23 @@ namespace fpc_data_classes
 		}
 
 		// Get the topic name where the odometry of the robots will be published
-		// This param is used to set the topic name of each robot to the same name. Special "robot_pose_topic" params in the robot params override this.
+		// This param is used to set the topic name of each robot to the same name. 
+		// Special "robot_odom_topic" params in the robot params override this.
 		std::string general_robot_odom_topic = "DefaultOdomTopicName";
 		std::string general_robot_odom_topic_key;
 		if(this->nh_.searchParam("robot_odom_topic", general_robot_odom_topic_key))
 		{
 			this->nh_.getParam(general_robot_odom_topic_key, general_robot_odom_topic);
+		}
+
+		// Get the topic name where the cmd_vel of the robots can be published
+		// This param is used to set the topic name of each robot to the same name. 
+		// Special "robot_cmd_vel_topic" params in the robot params override this.
+		std::string general_robot_cmd_vel_topic = "DefaultCmdVelTopicName";
+		std::string general_robot_cmd_vel_topic_key;
+		if(this->nh_.searchParam("robot_cmd_vel_topic", general_robot_cmd_vel_topic_key))
+		{
+			this->nh_.getParam(general_robot_cmd_vel_topic_key, general_robot_cmd_vel_topic);
 		}
 
 		// Get information about the robots that are participating in the formation
@@ -118,6 +130,20 @@ namespace fpc_data_classes
 					else
 					{
 						ROS_ERROR_STREAM("robot_odom_topic was not set for " << robot_info->robot_name);
+					}
+
+					// Set cmd_vel topic name for each robot
+					if(robot_info_xmlrpc.hasMember("robot_cmd_vel_topic") && robot_info_xmlrpc["robot_cmd_vel_topic"].getType() == XmlRpc::XmlRpcValue::TypeString)
+					{
+						robot_info->robot_cmd_vel_topic = static_cast<std::string>(robot_info_xmlrpc["robot_cmd_vel_topic"]);
+					}
+					else if(general_robot_cmd_vel_topic != "DefaultCmdVelTopicName")
+					{
+						robot_info->robot_cmd_vel_topic = general_robot_cmd_vel_topic;
+					}
+					else
+					{
+						ROS_ERROR_STREAM("robot_cmd_vel_topic was not set for " << robot_info->robot_name);
 					}
 
 					// Set lyapunov params for each robot individually

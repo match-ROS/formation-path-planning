@@ -6,6 +6,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <tf2_ros/buffer.h>
 #include <tf/transform_listener.h>
@@ -101,19 +102,26 @@ namespace fpc
 			ros::Subscriber robot_ground_truth_subscriber_; // This subscriber will only work in Gazebo where ground truth is published
 			nav_msgs::OdometryConstPtr current_robot_ground_truth_;
 
+			ros::Publisher cmd_vel_publisher_;
 			ros::Publisher meta_data_publisher_;
 			fpp_msgs::LocalPlannerMetaData meta_data_msg_; // This is the msg that will be published. Every info can be stored here and will be reset when message is published. 
 
 			ros::Timer controller_timer_;
 			#pragma endregion
 
-			#pragma CallbackMethods
+			#pragma region CallbackMethods
 			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
 			void getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg);
 
 			void getRobotGroundTruthCb(const nav_msgs::OdometryConstPtr &msg);
 			
 			void onControllerTimerCB(const ros::TimerEvent& timer_event_info);
+			#pragma endregion
+
+			#pragma region Controller Methods
+			virtual void run_controller();
+
+			int locateRobotOnPath(geometry_msgs::Pose current_pose);
 			#pragma endregion
 
 			#pragma region ProtectedHelperMethods
@@ -132,8 +140,6 @@ namespace fpc
              * 
              */
             virtual void initTimers();
-
-			int locateRobotOnPath();
 
 			geometry_msgs::Pose2D convertPose(geometry_msgs::Pose pose_to_convert);
 			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose);

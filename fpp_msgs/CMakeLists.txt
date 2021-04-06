@@ -50,6 +50,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   BezierSpline.msg
+  FPCRobotScaleInfo.msg
   LocalPlannerMetaData.msg
   GlobalPlanPoseMetaData.msg
 )
@@ -58,10 +59,11 @@ add_message_files(
 add_service_files(
   FILES
   DynReconfigure.srv
-  GetRobotPlan.srv
-  SplinedPlan.srv
   FormationFootprintInfo.srv
-  RobotOutline.srv
+  FPCVelScaleInfo.srv
+  GetRobotPlan.srv
+  RobotOutline.srv 
+  SplinedPlan.srv
 )
 
 ## Generate actions in the 'action' folder
