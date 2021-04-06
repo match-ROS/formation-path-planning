@@ -93,7 +93,7 @@ namespace fpc
 
 
 
-			#pragma region Topics/Services/Actions
+			#pragma region Topics/Services/Actions/Timers
 			ros::Subscriber robot_amcl_pose_subscriber_;
 			geometry_msgs::Pose current_robot_amcl_pose_;
 			ros::Subscriber robot_odom_subscriber_;
@@ -103,6 +103,8 @@ namespace fpc
 
 			ros::Publisher meta_data_publisher_;
 			fpp_msgs::LocalPlannerMetaData meta_data_msg_; // This is the msg that will be published. Every info can be stored here and will be reset when message is published. 
+
+			ros::Timer controller_timer_;
 			#pragma endregion
 
 			#pragma CallbackMethods
@@ -111,6 +113,7 @@ namespace fpc
 
 			void getRobotGroundTruthCb(const nav_msgs::OdometryConstPtr &msg);
 			
+			void onControllerTimerCB(const ros::TimerEvent& timer_event_info);
 			#pragma endregion
 
 			#pragma region ProtectedHelperMethods
@@ -130,12 +133,12 @@ namespace fpc
              */
             virtual void initTimers();
 
-			// std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> getMasterRobotInfo(
-			// 	const std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list);
+			int locateRobotOnPath();
 
 			geometry_msgs::Pose2D convertPose(geometry_msgs::Pose pose_to_convert);
 			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose);
 			geometry_msgs::Twist calcDiff(geometry_msgs::Twist start_vel, geometry_msgs::Twist end_vel);
+			float calcEuclideanDiff(geometry_msgs::Pose point1, geometry_msgs::Pose point2);
 			#pragma endregion
 	};
 }

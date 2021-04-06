@@ -261,6 +261,11 @@ namespace fpc
 	{
 		this->current_robot_ground_truth_ = msg;
 	}
+
+	void FPCControllerBase::onControllerTimerCB(const ros::TimerEvent& timer_event_info)
+	{
+
+	}
 	#pragma endregion
 
 	#pragma region ProtectedHelperMethods
@@ -289,7 +294,36 @@ namespace fpc
 			"fpc_meta_data", 1000);
 	}
 
-	void FPCControllerBase::initTimers() { }
+	void FPCControllerBase::initTimers() 
+	{ 
+		this->controller_timer_ = this->controller_nh_.createTimer(
+			ros::Duration(1.0/this->fpc_param_info_->controller_params.controller_frequency), 
+			&FPCControllerBase::onControllerTimerCB, this);
+	}
+
+	int FPCControllerBase::locateRobotOnPath()
+	{
+		int closest_pose_index = 0;
+		float closest_distance = this->calcEuclideanDiff(this->current_robot_amcl_pose_,
+														 this->global_plan_[0].pose);
+		int second_closest_pose_index = 0;
+		float second_closest_distance = closest_distance; // Will be used later, but need to redo in/out of method					 
+		int pose_index = 0;
+		for(geometry_msgs::PoseStamped &global_plan_pose: this->global_plan_)
+		{
+			float distance_to_pose = this->calcEuclideanDiff(this->current_robot_amcl_pose_,
+															 global_plan_pose.pose);
+			if(distance_to_pose < closest_distance)
+			{
+				second_closest_pose_index = closest_pose_index;
+				second_closest_distance = closest_distance;
+				closest_pose_index = pose_index;
+				closest_distance = distance_to_pose;
+			}
+		}
+
+		return closest_pose_index;
+	}
 
 	geometry_msgs::Pose2D FPCControllerBase::convertPose(geometry_msgs::Pose pose_to_convert)
 	{
@@ -325,6 +359,12 @@ namespace fpc
 		vel_diff.angular.z = end_vel.angular.z - start_vel.angular.z;
 
 		return vel_diff;
+	}
+
+	float FPCControllerBase::calcEuclideanDiff(geometry_msgs::Pose point1, geometry_msgs::Pose point2)
+	{
+		return std::sqrt(std::pow(point1.position.x - point2.position.x, 2) +
+						 std::pow(point1.position.y - point2.position.y, 2));
 	}
 	#pragma endregion
 }
