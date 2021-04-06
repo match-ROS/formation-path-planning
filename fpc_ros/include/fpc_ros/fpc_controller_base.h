@@ -15,7 +15,7 @@
 #include <vector>
 #include <eigen3/Eigen/Dense>
 
-#include <fpc_ros/data_classes/local_planner_robot_info.hpp>
+#include <fpc_ros/data_classes/fpc_param_info.hpp>
 #include <fpp_msgs/LocalPlannerMetaData.h>
 
 namespace fpc
@@ -25,8 +25,7 @@ namespace fpc
 		public:
 			#pragma region Constructors
 			FPCControllerBase(
-				std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list,
-				std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info,
+				std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info,
 				ros::NodeHandle &nh,
 				ros::NodeHandle &controller_nh);
 			#pragma endregion
@@ -76,12 +75,13 @@ namespace fpc
 			std::string robot_ns_;
 
 			#pragma region ProcessInfo
-			//! This is all the information that was read from the config file about each robot
-            std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list_;
-			//! This points to the object that contains the information about this robot
-            std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info_;
-			//! This point to the object that represents the master in the formation path planner
-			const std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> master_robot_info_;
+			std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info_;
+			// //! This is all the information that was read from the config file about each robot
+            // std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list_;
+			// //! This points to the object that contains the information about this robot
+            // std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info_;
+			// //! This point to the object that represents the master in the formation path planner
+			// const std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> master_robot_info_;
 
 			std::vector<geometry_msgs::PoseStamped> global_plan_;
 
@@ -130,8 +130,8 @@ namespace fpc
              */
             virtual void initTimers();
 
-			std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> getMasterRobotInfo(
-				const std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list);
+			// std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> getMasterRobotInfo(
+			// 	const std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list);
 
 			geometry_msgs::Pose2D convertPose(geometry_msgs::Pose pose_to_convert);
 			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose);

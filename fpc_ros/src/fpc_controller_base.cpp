@@ -4,15 +4,12 @@ namespace fpc
 {
 	#pragma region Constructors
 	FPCControllerBase::FPCControllerBase(
-		std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list,
-		std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info,
+		std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info,
 		ros::NodeHandle &nh,
 		ros::NodeHandle &controller_nh)
-		: robot_info_list_(robot_info_list),
-		  robot_info_(robot_info),
+		: fpc_param_info_(fpc_param_info),
 		  nh_(nh),
 		  controller_nh_(controller_nh),
-		  master_robot_info_(getMasterRobotInfo(robot_info_list)),
 		  pose_index_(1),
 		  controller_finished_(false)
 	{
@@ -182,16 +179,16 @@ namespace fpc
 		double output_v;
 		double output_omega;
 
-		output_v = this->robot_info_->lyapunov_params.kx * x + v * cos(phi);
+		output_v = this->fpc_param_info_->getLyapunovParams().kx * x + v * cos(phi);
 		// ROS_INFO_STREAM("kx: " << this->robot_info_->lyapunov_params.kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
 
 		output_omega = omega +
-					   this->robot_info_->lyapunov_params.ky * v * y +
-					   this->robot_info_->lyapunov_params.kphi * sin(phi);
+					   this->fpc_param_info_->getLyapunovParams().ky * v * y +
+					   this->fpc_param_info_->getLyapunovParams().kphi * sin(phi);
 		// ROS_INFO_STREAM("omega: " << omega << " ky: " << this->robot_info_->lyapunov_params.ky << " v: " << v << " y: " << y << " kphi: " << this->robot_info_->lyapunov_params.kphi << " phi: " << phi << " sin(phi): " << sin(phi));
 		// COPY PASTED FROM MALTE END
 
-		if(this->robot_info_->robot_name == "robot0")
+		if(this->fpc_param_info_->getCurrentRobotName() == "robot0")
 			ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
 
 		cmd_vel.twist.linear.x = output_v;
@@ -272,18 +269,18 @@ namespace fpc
 	void FPCControllerBase::initTopics()
 	{
 		this->robot_amcl_pose_subscriber_ = this->nh_.subscribe(
-			this->robot_info_->robot_namespace + "/" + this->robot_info_->robot_pose_topic,
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/" + this->fpc_param_info_->getCurrentRobotPoseTopic(),
 			10,
 			&FPCControllerBase::getRobotPoseCb,
 			this);
 		this->robot_odom_subscriber_ = this->nh_.subscribe(
-			this->robot_info_->robot_namespace + "/" + this->robot_info_->robot_odom_topic,
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/" + this->fpc_param_info_->getCurrentRobotOdomTopic(),
 			10,
 			&FPCControllerBase::getRobotOdomCb,
 			this);
 		
 		this->robot_ground_truth_subscriber_ = this->nh_.subscribe(
-			this->robot_info_->robot_namespace + "/base_pose_ground_truth",
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/base_pose_ground_truth",
 			10,
 			&FPCControllerBase::getRobotGroundTruthCb,
 			this);
@@ -293,20 +290,6 @@ namespace fpc
 	}
 
 	void FPCControllerBase::initTimers() { }
-
-	std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> FPCControllerBase::getMasterRobotInfo(
-		const std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list)
-	{
-		for(int robot_info_counter = 0; robot_info_counter < robot_info_list.size(); robot_info_counter++)
-		{
-			if(robot_info_list[robot_info_counter]->fpc_master)
-			{
-				return robot_info_list[robot_info_counter];
-			}
-		}
-		ROS_ERROR_STREAM("FPCControllerBase::getMasterRobotInfo: No master robot info found. Please check if flag is set in config.");
-		return NULL;
-	}
 
 	geometry_msgs::Pose2D FPCControllerBase::convertPose(geometry_msgs::Pose pose_to_convert)
 	{

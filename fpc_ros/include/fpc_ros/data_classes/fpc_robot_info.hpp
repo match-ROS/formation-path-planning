@@ -2,6 +2,7 @@
 
 #include <string>
 #include <fpc_ros/data_classes/lyapunov_params.hpp>
+#include <fpc_ros/data_classes/controller_params.hpp>
 
 namespace fpc_data_classes
 {
@@ -10,7 +11,7 @@ namespace fpc_data_classes
      * Data is read from the local_planner_config.yaml and loaded by move_base_flex
      * 
      */
-	struct LocalPlannerRobotInfo
+	struct FPCRobotInfo
 	{
 		//! Name of the robot
 		std::string robot_name;

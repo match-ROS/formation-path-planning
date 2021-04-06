@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <fpc_ros/fpc_controller_base.h>
-#include <fpc_ros/data_classes/local_planner_robot_info.hpp>
 
 namespace fpc
 {
@@ -14,8 +13,7 @@ namespace fpc
 	{
 		public:
 			FPCControllerMaster(
-				std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list,
-				std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info,
+				std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info,
 				ros::NodeHandle &nh,
 				ros::NodeHandle &controller_nh);
 

@@ -131,8 +131,13 @@ include_directories(
 ## Declare a C++ library
 set(FPC_DATA_CLASSES_SOURCES
 
-	include/fpc_ros/data_classes/local_planner_robot_info.hpp
-	include/fpc_ros/data_classes/lyapunov_params.hpp)
+	include/fpc_ros/data_classes/fpc_param_info.hpp
+	include/fpc_ros/data_classes/fpc_robot_info.hpp
+	include/fpc_ros/data_classes/lyapunov_params.hpp
+	include/fpc_ros/data_classes/controller_params.hpp
+	
+	include/fpc_ros/data_classes/fpc_param_manager.h
+	src/data_classes/fpc_param_manager.cpp)
 add_library(fpc_data_classes ${FPC_DATA_CLASSES_SOURCES})
 
 set(FPC_ROS_SOURCES
