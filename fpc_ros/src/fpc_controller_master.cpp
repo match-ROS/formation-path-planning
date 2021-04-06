@@ -32,6 +32,7 @@ namespace fpc
 	{
 		float period_duration = 1.0 / this->fpc_param_info_->controller_params.controller_frequency;
 
+		// Calculate current position of robot on path and next target pose
 		int current_pose_index = this->locateRobotOnPath(this->current_robot_amcl_pose_);
 		int next_target_pose_index = current_pose_index + 1;
 		if(next_target_pose_index >= this->global_plan_.size())
@@ -51,14 +52,35 @@ namespace fpc
 										 std::pow(pose_diff_tf.getOrigin().getY(), 2)),
 			tf::getYaw(pose_diff_tf.getRotation());
 
+		// Calculate scale values
+		// This is the theoretical velocity that the rebot must drive to reach its goal within the period time
+		// Scaling to cap it at the max values happens after
 		Eigen::Vector2f theoretical_vel;
 		theoretical_vel << euclidean_pose_diff[0] / period_duration,
 			euclidean_pose_diff[1] / period_duration;
 
-		Eigen::Vector2f scale_vector;
-		scale_vector << 1.0, 1.0;
+		float lin_vel_scale = 1.0;
+		float rot_vel_scale = 1.0;
+		// Differ between backwards and forwards because backwards might be slower than forwards
+		if(theoretical_vel[0] > 0.0)
+		{
+			lin_vel_scale = this->fpc_param_info_->controller_params.max_vel_x / theoretical_vel[0];
+		}
+		else
+		{
+			lin_vel_scale = this->fpc_param_info_->controller_params.min_vel_x / theoretical_vel[0];
+		}
 		
+		// Use absolute of theoretical rot vel as left or right turning is equal.
+		// THIS MIGHT BE A MISTAKE! IT SHOULD BE BETTER IF THE ROBOT IS ORIENTATED CORRECTLY!
+		rot_vel_scale = this->fpc_param_info_->controller_params.max_vel_theta / std::abs(theoretical_vel[1]);
 		
+		// Compare scale values to other robots scale values
+		// 1. Ist ein Roboter hinterher? Also ist current pose von einem Roboter -1 oder mehr als der hier.
+		// Wenn ja muss ich den aktuellen Roboter verlangsamen. Einfach 50% langsamer als max vel?
+		// 2. Ist ein Roboter eine Position weiter vorne? -> max. vel.
+		// 3. Sind alle Roboter an der gleichen current pose. Dann schaue ob der größte Scale Faktor größer ist als der,
+		// den ich hier ausgerechnet habe und wende ihn auf meine theoretical velocity an
 	}
 
 	void FPCControllerMaster::initServices()
@@ -83,6 +105,54 @@ namespace fpc
 		}
 
 		return true;
+	}
+	#pragma endregion
+
+	#pragma region Helper Methods
+	int FPCControllerMaster::getHighestPoseIndex()
+	{
+		int highest_pose_index = this->robot_scale_info_list_.begin()->second.current_pose_index;
+		for (std::map<std::string, fpp_msgs::FPCRobotScaleInfo>::iterator it = this->robot_scale_info_list_.begin();
+			 it != this->robot_scale_info_list_.end(); it++)
+		{
+			if(it->second.current_pose_index > highest_pose_index)
+			{
+				highest_pose_index = it->second.current_pose_index;
+			}
+		}
+
+		return highest_pose_index;
+	}
+
+	int FPCControllerMaster::getLowestPoseIndex()
+	{
+		int lowest_pose_index = this->robot_scale_info_list_.begin()->second.current_pose_index;
+		for (std::map<std::string, fpp_msgs::FPCRobotScaleInfo>::iterator it = this->robot_scale_info_list_.begin();
+			 it != this->robot_scale_info_list_.end(); it++)
+		{
+			if(it->second.current_pose_index < lowest_pose_index)
+			{
+				lowest_pose_index = it->second.current_pose_index;
+			}
+		}
+
+		return lowest_pose_index;
+	}
+
+	fpp_msgs::FPCRobotScaleInfo FPCControllerMaster::getHighestLinScaleValue(int next_target_pose)
+	{
+		fpp_msgs::FPCRobotScaleInfo highest_robot_scale_info = this->robot_scale_info_list_.begin()->second;
+		for (std::map<std::string, fpp_msgs::FPCRobotScaleInfo>::iterator it = this->robot_scale_info_list_.begin();
+			 it != this->robot_scale_info_list_.end(); it++)
+		{
+			if (it->second.next_target_pose_index == next_target_pose &&
+				it->second.lin_vel_scale > highest_robot_scale_info.lin_vel_scale)
+			{
+				highest_robot_scale_info = it->second;
+			}
+		}
+
+		return highest_robot_scale_info;
 	}
 	#pragma endregion
 }

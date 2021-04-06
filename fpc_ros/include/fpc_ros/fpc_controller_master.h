@@ -37,5 +37,11 @@ namespace fpc
 			bool onFPCVelScaleInfo(fpp_msgs::FPCVelScaleInfo::Request &req,
 								   fpp_msgs::FPCVelScaleInfo::Response &res);
 			#pragma endregion
+
+			#pragma region Helper Methods
+			int getHighestPoseIndex();
+			int getLowestPoseIndex();
+			fpp_msgs::FPCRobotScaleInfo getHighestLinScaleValue(int next_target_pose);
+			#pragma endregion
 	};
 }
