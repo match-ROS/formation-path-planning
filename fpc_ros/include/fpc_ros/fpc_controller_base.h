@@ -84,6 +84,8 @@ namespace fpc
 			// //! This point to the object that represents the master in the formation path planner
 			// const std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> master_robot_info_;
 
+			geometry_msgs::Twist last_published_cmd_vel_;
+
 			std::vector<geometry_msgs::PoseStamped> global_plan_;
 
 			int pose_index_;

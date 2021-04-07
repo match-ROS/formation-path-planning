@@ -15,5 +15,7 @@ namespace fpc
 				ros::NodeHandle &controller_nh);
 
 		private:
+
+			void run_controller() override;
 	};
 }

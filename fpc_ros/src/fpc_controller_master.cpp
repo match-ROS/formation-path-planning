@@ -8,6 +8,7 @@ namespace fpc
 		ros::NodeHandle &controller_nh)
 		: FPCControllerBase(fpc_param_info, nh, controller_nh)
 	{
+		ROS_ERROR_STREAM("FPC Constructor of " << fpc_param_info->getCurrentRobotName());
 		// Initialize the robot_scale_info map with an entry for each robot
 		for(std::shared_ptr<fpc_data_classes::FPCRobotInfo> &robot_info : this->fpc_param_info_->robot_info_list)
 		{
@@ -24,8 +25,6 @@ namespace fpc
 
 			this->robot_scale_info_list_.insert(robot_scale_info);
 		}
-
-		this->initServices();
 	}
 
 	void FPCControllerMaster::run_controller()
@@ -34,6 +33,7 @@ namespace fpc
 
 		// Calculate current position of robot on path and next target pose
 		int current_pose_index = this->locateRobotOnPath(this->current_robot_amcl_pose_);
+		ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " index: " << current_pose_index);
 		int next_target_pose_index = current_pose_index + 1;
 		if(next_target_pose_index >= this->global_plan_.size())
 		{
@@ -47,34 +47,112 @@ namespace fpc
 		tf::Pose next_target_pose_tf;
 		tf::poseMsgToTF(next_target_pose.pose, next_target_pose_tf);
 		tf::Transform pose_diff_tf=current_pose_tf.inverseTimes(next_target_pose_tf);
-		Eigen::Vector2f euclidean_pose_diff;
-		euclidean_pose_diff << std::sqrt(std::pow(pose_diff_tf.getOrigin().getX(), 2) +
-										 std::pow(pose_diff_tf.getOrigin().getY(), 2)),
+		Eigen::Vector3f pose_diff;
+		pose_diff << pose_diff_tf.getOrigin().getX(),
+			pose_diff_tf.getOrigin().getY(),
 			tf::getYaw(pose_diff_tf.getRotation());
 
-		// Calculate scale values
+		Eigen::Vector2f euclidean_pose_diff;
+		euclidean_pose_diff << std::sqrt(std::pow(pose_diff[0], 2) + std::pow(pose_diff[1], 2)), pose_diff[2];
+
+		ROS_ERROR_STREAM("Diff x: " << pose_diff_tf.getOrigin().getX() << " y: " << pose_diff_tf.getOrigin().getY() << " rot: " << tf::getYaw(pose_diff_tf.getRotation()));
+
 		// This is the theoretical velocity that the rebot must drive to reach its goal within the period time
 		// Scaling to cap it at the max values happens after
 		Eigen::Vector2f theoretical_vel;
 		theoretical_vel << euclidean_pose_diff[0] / period_duration,
 			euclidean_pose_diff[1] / period_duration;
 
-		float lin_vel_scale = 1.0;
-		float rot_vel_scale = 1.0;
-		// Differ between backwards and forwards because backwards might be slower than forwards
-		if(theoretical_vel[0] > 0.0)
+		if(theoretical_vel[0] > 0)
 		{
-			lin_vel_scale = this->fpc_param_info_->controller_params.max_vel_x / theoretical_vel[0];
+			if(theoretical_vel[0] > this->fpc_param_info_->controller_params.max_vel_x)
+			{
+				theoretical_vel[0] = this->fpc_param_info_->controller_params.max_vel_x;
+			}
 		}
-		else
+		else // This should be irrelevant
 		{
-			lin_vel_scale = this->fpc_param_info_->controller_params.min_vel_x / theoretical_vel[0];
+			if(theoretical_vel[0] < this->fpc_param_info_->controller_params.min_vel_x)
+			{
+				theoretical_vel[0] = this->fpc_param_info_->controller_params.min_vel_x;
+			}
 		}
+
+		float traveled_lin_distance = theoretical_vel[0] * period_duration;
+		float percentage_done = traveled_lin_distance / euclidean_pose_diff[0];
+		ROS_ERROR_STREAM("lin vel: " << theoretical_vel[0] << " dist: " << traveled_lin_distance << " percentage: " << percentage_done);
+
+		theoretical_vel[1] = (euclidean_pose_diff[1] * percentage_done) / period_duration;
+		ROS_ERROR_STREAM("rot_vel: " << theoretical_vel[1]);
+
+		if(std::abs(theoretical_vel[1]) > this->fpc_param_info_->controller_params.max_vel_theta)
+		{
+			if(theoretical_vel[1] > 0)
+			{
+				theoretical_vel[1] = this->fpc_param_info_->controller_params.max_vel_theta;
+			}
+			else
+			{
+				theoretical_vel[1] = -this->fpc_param_info_->controller_params.max_vel_theta;
+			}
+		}
+		float traveled_rot_distance = theoretical_vel[1] * period_duration;
+
+		ROS_ERROR_STREAM("capped rot_vel: " << theoretical_vel[1] << " traveled rot: " << traveled_rot_distance);
+
+		float output_v = this->fpc_param_info_->getLyapunovParams().kx * traveled_lin_distance*cos(traveled_rot_distance) +
+						 theoretical_vel[0] * cos(traveled_rot_distance);
+
+		float output_omega = theoretical_vel[1] +
+							 this->fpc_param_info_->getLyapunovParams().ky * theoretical_vel[0] * traveled_lin_distance * sin(traveled_rot_distance) +
+							 this->fpc_param_info_->getLyapunovParams().kphi * sin(traveled_rot_distance);
+
+		// Calculate controller output with Maltes control law
+		// float output_v = this->fpc_param_info_->getLyapunovParams().kx * pose_diff_tf.getOrigin().getX() +
+		// 				 theoretical_vel[0] * cos(tf::getYaw(pose_diff_tf.getRotation()));
+
+		// float output_omega = theoretical_vel[1] +
+		// 			   this->fpc_param_info_->getLyapunovParams().ky * theoretical_vel[0] * pose_diff_tf.getOrigin().getY() +
+		// 			   this->fpc_param_info_->getLyapunovParams().kphi * sin(tf::getYaw(pose_diff_tf.getRotation()));
+
+		// float lin_vel_scale = 1.0;
+		// float rot_vel_scale = 1.0;
+		// // Differ between backwards and forwards because backwards might be slower than forwards
+		// if(output_v > 0.0)
+		// {
+		// 	lin_vel_scale = this->fpc_param_info_->controller_params.max_vel_x / output_v;
+		// }
+		// else
+		// {
+		// 	lin_vel_scale = this->fpc_param_info_->controller_params.min_vel_x / output_v;
+		// }
+		// if(lin_vel_scale < 1.0)
+		// {
+		// 	output_v = output_v * lin_vel_scale;
+		// }
 		
-		// Use absolute of theoretical rot vel as left or right turning is equal.
-		// THIS MIGHT BE A MISTAKE! IT SHOULD BE BETTER IF THE ROBOT IS ORIENTATED CORRECTLY!
-		rot_vel_scale = this->fpc_param_info_->controller_params.max_vel_theta / std::abs(theoretical_vel[1]);
-		
+		// // Use absolute of theoretical rot vel as left or right turning is equal.
+		// // THIS MIGHT BE A MISTAKE! IT SHOULD BE BETTER IF THE ROBOT IS ORIENTATED CORRECTLY!
+		// rot_vel_scale = this->fpc_param_info_->controller_params.max_vel_theta / std::abs(output_omega);
+		// if(rot_vel_scale < 1.0)
+		// {
+		// 	output_omega = output_omega * rot_vel_scale;
+		// }
+
+
+		geometry_msgs::Twist cmd_vel;
+		cmd_vel.linear.x = output_v;
+		cmd_vel.linear.y = 0.0;
+		cmd_vel.linear.z = 0.0;
+		cmd_vel.angular.x = 0.0;
+		cmd_vel.angular.y = 0.0;
+		cmd_vel.angular.z = output_omega;
+		this->last_published_cmd_vel_ = cmd_vel;
+
+		ROS_INFO_STREAM("x: " << cmd_vel.linear.x << " rot: " << cmd_vel.angular.z);
+
+		this->cmd_vel_publisher_.publish(cmd_vel);
+
 		// Compare scale values to other robots scale values
 		// 1. Ist ein Roboter hinterher? Also ist current pose von einem Roboter -1 oder mehr als der hier.
 		// Wenn ja muss ich den aktuellen Roboter verlangsamen. Einfach 50% langsamer als max vel?
@@ -85,6 +163,7 @@ namespace fpc
 
 	void FPCControllerMaster::initServices()
 	{
+		ROS_ERROR_STREAM("init Services " << this->fpc_param_info_->getCurrentRobotName());
 		this->fpc_vel_scale_info_srv_ = this->controller_nh_.advertiseService(
 			"fpc_vel_scale_info",
 			&FPCControllerMaster::onFPCVelScaleInfo, this);

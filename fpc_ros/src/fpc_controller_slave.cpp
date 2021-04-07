@@ -9,4 +9,9 @@ namespace fpc
 		: FPCControllerBase(fpc_param_info, nh, controller_nh)
 	{
 	}
+
+	void FPCControllerSlave::run_controller()
+	{
+
+	}
 }

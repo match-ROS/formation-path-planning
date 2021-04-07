@@ -23,16 +23,16 @@ FormationPathController:
   controller_config:
     # Because the frequency of the move base stack is unreliable the controller gets an independent timer
     # This calue defines the frequency the timer is called
-    controller_frequency: 100.0 
+    controller_frequency: 10.0 
 
     # Defines the max and min velocity where the target velocity will be caped at
     # Separate in forward and backwards movement
-    max_vel_x:  0.8
+    max_vel_x:  0.3
     min_vel_x: -0.2
 
     # Defines the max and min rotational velocity of the robot
     # As the robot can move equally to the left and right this looks at the absolut value
-    max_vel_theta: 1.0  
+    max_vel_theta: 1.0
     min_vel_theta: 0.0
 
   formation_config:

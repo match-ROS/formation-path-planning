@@ -20,12 +20,12 @@ namespace fpc
 				ros::NodeHandle &nh,
 				ros::NodeHandle &controller_nh);
 
-			void run_controller() override;
-
 		private:
 			ros::ServiceServer fpc_vel_scale_info_srv_;
 
 			std::map<std::string, fpp_msgs::FPCRobotScaleInfo> robot_scale_info_list_;
+
+			void run_controller() override;
 
 			/**
              * @brief Helper method for intializing all services

@@ -31,6 +31,14 @@ namespace fpc
 		this->tf_prefix_ = tf::getPrefixParam(this->nh_);
 		this->robot_ns_ = this->nh_.getNamespace();
 
+		// Initialize last published cmd vel object
+		this->last_published_cmd_vel_.linear.x = 0.0;
+		this->last_published_cmd_vel_.linear.y = 0.0;
+		this->last_published_cmd_vel_.linear.z = 0.0;
+		this->last_published_cmd_vel_.angular.x = 0.0;
+		this->last_published_cmd_vel_.angular.y = 0.0;
+		this->last_published_cmd_vel_.angular.z = 0.0;
+
 		this->initTopics();
 		this->initServices();
 		this->initTimers();
@@ -40,6 +48,9 @@ namespace fpc
 	{
 		this->global_plan_ = plan;
 		this->last_target_pose_ = this->global_plan_[0];
+
+		this->controller_timer_.start();
+
 		return true;
 	}
 
@@ -47,6 +58,7 @@ namespace fpc
 	{
 		if(this->controller_finished_)
 		{
+			this->controller_timer_.stop();
 			return true;
 		}
 
@@ -79,6 +91,7 @@ namespace fpc
 			return false;
 		}
 
+		this->controller_timer_.stop();
 		return true;
 	}
 
@@ -108,108 +121,112 @@ namespace fpc
 														geometry_msgs::TwistStamped &cmd_vel,
 														std::string &message)
 	{
-		// ROS_ERROR_STREAM(this->robot_info_->robot_name);
-		// ROS_INFO_STREAM("pose     : " << pose.pose.position.x << " | " << pose.pose.position.y);
-		// ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
-		// ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
+		// // ROS_ERROR_STREAM(this->robot_info_->robot_name);
+		// // ROS_INFO_STREAM("pose     : " << pose.pose.position.x << " | " << pose.pose.position.y);
+		// // ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
+		// // ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
 
-		double controller_freq = 2.0; // This must be a parameter later as the move base settings define this
-		double period_time_span = 1.0 / controller_freq;
+		// double controller_freq = 2.0; // This must be a parameter later as the move base settings define this
+		// double period_time_span = 1.0 / controller_freq;
 
-		// geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
+		// // geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
 
-		tf::Pose current_pose;
-		tf::poseMsgToTF(pose.pose, current_pose);
-
-
-		if(this->pose_index_ >= this->global_plan_.size())
-		{
-			ROS_ERROR_STREAM("FPCControllerBase: last pose_index exceeded without reaching goal.");
-			cmd_vel.header.frame_id = this->global_frame_;
-			cmd_vel.header.stamp = ros::Time::now();
-			cmd_vel.twist.linear.x = 0.0;
-			cmd_vel.twist.linear.y = 0.0;
-			cmd_vel.twist.linear.z = 0.0;
-			cmd_vel.twist.angular.x = 0.0;
-			cmd_vel.twist.angular.y = 0.0;
-			cmd_vel.twist.angular.z = 0.0;
-
-			this->controller_finished_ = true;
-
-			return 107;
-		}
-
-		tf::Pose target_pose;
-		tf::poseMsgToTF(this->global_plan_[this->pose_index_].pose, target_pose);
-		
-
-		tf::Transform control_diff=current_pose.inverseTimes(target_pose);
-		// tf::Transform control_dif = target_pose.inverseTimes(current_pose);
-
-		// ROS_INFO_STREAM("current_dir: " << tf::getYaw(pose.pose.orientation) << " target_dir: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) << " diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(pose.pose.orientation));
+		// tf::Pose current_pose;
+		// tf::poseMsgToTF(pose.pose, current_pose);
 
 
-		double x=control_diff.getOrigin().getX();
-		double y=control_diff.getOrigin().getY();   
-
-		double phi=tf::getYaw(control_diff.getRotation());
-
-		double v = std::sqrt(std::pow(x, 2) + std::pow(y, 2)) / period_time_span;
-		double omega = phi / period_time_span;
-		
-		
-		// if(this->robot_info_->robot_name == "robot0")
+		// if(this->pose_index_ >= this->global_plan_.size())
 		// {
-		// 	ROS_INFO_STREAM("Control: x: " << x << " y: " << y << " phi: " << phi);
-		// 	ROS_INFO_STREAM("v: " << v << " omega: " << omega << " time: " << period_time_span);
+		// 	ROS_ERROR_STREAM("FPCControllerBase: last pose_index exceeded without reaching goal.");
+		// 	cmd_vel.header.frame_id = this->global_frame_;
+		// 	cmd_vel.header.stamp = ros::Time::now();
+		// 	cmd_vel.twist.linear.x = 0.0;
+		// 	cmd_vel.twist.linear.y = 0.0;
+		// 	cmd_vel.twist.linear.z = 0.0;
+		// 	cmd_vel.twist.angular.x = 0.0;
+		// 	cmd_vel.twist.angular.y = 0.0;
+		// 	cmd_vel.twist.angular.z = 0.0;
+
+		// 	this->controller_finished_ = true;
+
+		// 	return 107;
 		// }
 
-		// In theory a phi that is greater or smaller than pi/2 should not occure!
-		// if(phi>=M_PI_2)
-		// {
-		// 	phi-=M_PI;
-		// 	v=-v;    
-		// }
-		// else if( phi<=-M_PI_2)
-		// {
-		// 	phi=phi+M_PI;
-		// 	v=-v;
-		// }
+		// tf::Pose target_pose;
+		// tf::poseMsgToTF(this->global_plan_[this->pose_index_].pose, target_pose);
+		
 
-		double output_v;
-		double output_omega;
+		// tf::Transform control_diff=current_pose.inverseTimes(target_pose);
+		// // tf::Transform control_dif = target_pose.inverseTimes(current_pose);
 
-		output_v = this->fpc_param_info_->getLyapunovParams().kx * x + v * cos(phi);
-		// ROS_INFO_STREAM("kx: " << this->robot_info_->lyapunov_params.kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
+		// // ROS_INFO_STREAM("current_dir: " << tf::getYaw(pose.pose.orientation) << " target_dir: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) << " diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(pose.pose.orientation));
 
-		output_omega = omega +
-					   this->fpc_param_info_->getLyapunovParams().ky * v * y +
-					   this->fpc_param_info_->getLyapunovParams().kphi * sin(phi);
-		// ROS_INFO_STREAM("omega: " << omega << " ky: " << this->robot_info_->lyapunov_params.ky << " v: " << v << " y: " << y << " kphi: " << this->robot_info_->lyapunov_params.kphi << " phi: " << phi << " sin(phi): " << sin(phi));
-		// COPY PASTED FROM MALTE END
 
-		if(this->fpc_param_info_->getCurrentRobotName() == "robot0")
-			ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
+		// double x=control_diff.getOrigin().getX();
+		// double y=control_diff.getOrigin().getY();   
 
-		cmd_vel.twist.linear.x = output_v;
-		cmd_vel.twist.linear.y = 0.0;
-		cmd_vel.twist.linear.z = 0.0;
+		// double phi=tf::getYaw(control_diff.getRotation());
 
-		cmd_vel.twist.angular.x = 0.0;
-		cmd_vel.twist.angular.y = 0.0;
-		cmd_vel.twist.angular.z = output_omega;  // rad/s
+		// double v = std::sqrt(std::pow(x, 2) + std::pow(y, 2)) / period_time_span;
+		// double omega = phi / period_time_span;
+		
+		
+		// // if(this->robot_info_->robot_name == "robot0")
+		// // {
+		// // 	ROS_INFO_STREAM("Control: x: " << x << " y: " << y << " phi: " << phi);
+		// // 	ROS_INFO_STREAM("v: " << v << " omega: " << omega << " time: " << period_time_span);
+		// // }
 
-		// Set meta data info
-		this->meta_data_msg_.target_vel = cmd_vel.twist; 
-		this->meta_data_msg_.target_pose = this->convertPose(this->global_plan_[this->pose_index_].pose);
-		this->meta_data_msg_.current_pose = this->convertPose(pose.pose);
-		this->publishMetaData();
+		// // In theory a phi that is greater or smaller than pi/2 should not occure!
+		// // if(phi>=M_PI_2)
+		// // {
+		// // 	phi-=M_PI;
+		// // 	v=-v;    
+		// // }
+		// // else if( phi<=-M_PI_2)
+		// // {
+		// // 	phi=phi+M_PI;
+		// // 	v=-v;
+		// // }
 
-		// if(this->robot_info_->robot_name == "robot0")
-		// 	ROS_INFO_STREAM("x_diff: " << this->global_plan_[this->pose_index_].pose.position.x - this->last_target_pose_.pose.position.x << " | y_diff: " << this->global_plan_[this->pose_index_].pose.position.y - this->last_target_pose_.pose.position.y << " | phi_diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(this->last_target_pose_.pose.orientation));
-		this->last_target_pose_ = this->global_plan_[this->pose_index_];
+		// double output_v;
+		// double output_omega;
 
-		this->pose_index_++;
+		// output_v = this->fpc_param_info_->getLyapunovParams().kx * x + v * cos(phi);
+		// // ROS_INFO_STREAM("kx: " << this->robot_info_->lyapunov_params.kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
+
+		// output_omega = omega +
+		// 			   this->fpc_param_info_->getLyapunovParams().ky * v * y +
+		// 			   this->fpc_param_info_->getLyapunovParams().kphi * sin(phi);
+		// // ROS_INFO_STREAM("omega: " << omega << " ky: " << this->robot_info_->lyapunov_params.ky << " v: " << v << " y: " << y << " kphi: " << this->robot_info_->lyapunov_params.kphi << " phi: " << phi << " sin(phi): " << sin(phi));
+		// // COPY PASTED FROM MALTE END
+
+		// if(this->fpc_param_info_->getCurrentRobotName() == "robot0")
+		// 	ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
+
+		// cmd_vel.twist.linear.x = output_v;
+		// cmd_vel.twist.linear.y = 0.0;
+		// cmd_vel.twist.linear.z = 0.0;
+
+		// cmd_vel.twist.angular.x = 0.0;
+		// cmd_vel.twist.angular.y = 0.0;
+		// cmd_vel.twist.angular.z = output_omega;  // rad/s
+
+		// // Set meta data info
+		// this->meta_data_msg_.target_vel = cmd_vel.twist; 
+		// this->meta_data_msg_.target_pose = this->convertPose(this->global_plan_[this->pose_index_].pose);
+		// this->meta_data_msg_.current_pose = this->convertPose(pose.pose);
+		// this->publishMetaData();
+
+		// // if(this->robot_info_->robot_name == "robot0")
+		// // 	ROS_INFO_STREAM("x_diff: " << this->global_plan_[this->pose_index_].pose.position.x - this->last_target_pose_.pose.position.x << " | y_diff: " << this->global_plan_[this->pose_index_].pose.position.y - this->last_target_pose_.pose.position.y << " | phi_diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(this->last_target_pose_.pose.orientation));
+		// this->last_target_pose_ = this->global_plan_[this->pose_index_];
+
+		// this->pose_index_++;
+
+		cmd_vel.header.frame_id = this->global_frame_;
+		cmd_vel.header.stamp = ros::Time::now();
+		cmd_vel.twist = this->last_published_cmd_vel_;
 
 		return 0;
 	}
@@ -269,7 +286,7 @@ namespace fpc
 	#pragma endregion
 
 	#pragma region Controller Methods
-	void run_controller() { }
+	void FPCControllerBase::run_controller() { }
 
 	int FPCControllerBase::locateRobotOnPath(geometry_msgs::Pose current_pose)
 	{
@@ -288,6 +305,8 @@ namespace fpc
 				closest_pose_index = pose_index;
 				closest_distance = distance_to_pose;
 			}
+
+			pose_index++;
 		}
 
 		return closest_pose_index;
@@ -328,7 +347,7 @@ namespace fpc
 	{ 
 		this->controller_timer_ = this->controller_nh_.createTimer(
 			ros::Duration(1.0/this->fpc_param_info_->controller_params.controller_frequency), 
-			&FPCControllerBase::onControllerTimerCB, this);
+			&FPCControllerBase::onControllerTimerCB, this, false, false);
 	}
 
 	geometry_msgs::Pose2D FPCControllerBase::convertPose(geometry_msgs::Pose pose_to_convert)
