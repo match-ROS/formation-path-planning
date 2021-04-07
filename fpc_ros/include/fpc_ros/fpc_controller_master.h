@@ -7,8 +7,7 @@
 #include <map>
 
 #include <fpc_ros/fpc_controller_base.h>
-#include <fpp_msgs/FPCRobotScaleInfo.h>
-#include <fpp_msgs/FPCVelScaleInfo.h>
+#include <fpp_msgs/NextTargetPoseCommand.h>
 
 namespace fpc
 {
@@ -20,12 +19,11 @@ namespace fpc
 				ros::NodeHandle &nh,
 				ros::NodeHandle &controller_nh);
 
+			bool setPlan(const std::vector<geometry_msgs::PoseStamped> &plan) override;
+
 		private:
-			ros::ServiceServer fpc_vel_scale_info_srv_;
-
-			std::map<std::string, fpp_msgs::FPCRobotScaleInfo> robot_scale_info_list_;
-
-			void run_controller() override;
+			
+			void runController() override;
 
 			/**
              * @brief Helper method for intializing all services
@@ -33,15 +31,18 @@ namespace fpc
              */
             void initServices() override;
 
+			std::map<std::string, std::shared_ptr<ros::ServiceClient>> next_target_command_clt_list_;
+			std::map<std::string, fpp_msgs::NextTargetPoseCommand::Response> saved_command_res_list_;
+
 			#pragma region Callback Methods
-			bool onFPCVelScaleInfo(fpp_msgs::FPCVelScaleInfo::Request &req,
-								   fpp_msgs::FPCVelScaleInfo::Response &res);
 			#pragma endregion
 
 			#pragma region Helper Methods
-			int getHighestPoseIndex();
-			int getLowestPoseIndex();
-			fpp_msgs::FPCRobotScaleInfo getHighestLinScaleValue(int next_target_pose);
+			bool allSlavesReady();
+			bool isSlaveReady(std::string robot_name);
+			// int getHighestPoseIndex();
+			// int getLowestPoseIndex();
+			// fpp_msgs::FPCRobotScaleInfo getHighestLinScaleValue(int next_target_pose);
 			#pragma endregion
 	};
 }

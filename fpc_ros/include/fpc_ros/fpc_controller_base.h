@@ -94,8 +94,6 @@ namespace fpc
 			geometry_msgs::PoseStamped last_target_pose_;
 			#pragma endregion
 
-
-
 			#pragma region Topics/Services/Actions/Timers
 			ros::Subscriber robot_amcl_pose_subscriber_;
 			geometry_msgs::Pose current_robot_amcl_pose_;
@@ -121,9 +119,11 @@ namespace fpc
 			#pragma endregion
 
 			#pragma region Controller Methods
-			virtual void run_controller();
+			virtual void runController();
+			float calcLinVelocity(geometry_msgs::Pose2D diff_vector, float scale_factor);
+			float calcRotVelocity(geometry_msgs::Pose2D diff_vector);
 
-			int locateRobotOnPath(geometry_msgs::Pose current_pose);
+			// int locateRobotOnPath(geometry_msgs::Pose current_pose);
 			#pragma endregion
 
 			#pragma region ProtectedHelperMethods
@@ -144,6 +144,7 @@ namespace fpc
             virtual void initTimers();
 
 			geometry_msgs::Pose2D convertPose(geometry_msgs::Pose pose_to_convert);
+			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose start_pose, geometry_msgs::Pose end_pose);
 			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose);
 			geometry_msgs::Twist calcDiff(geometry_msgs::Twist start_vel, geometry_msgs::Twist end_vel);
 			float calcEuclideanDiff(geometry_msgs::Pose point1, geometry_msgs::Pose point2);

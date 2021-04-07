@@ -62,6 +62,7 @@ add_service_files(
   FormationFootprintInfo.srv
   FPCVelScaleInfo.srv
   GetRobotPlan.srv
+  NextTargetPoseCommand.srv
   RobotOutline.srv 
   SplinedPlan.srv
 )

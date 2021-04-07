@@ -281,36 +281,51 @@ namespace fpc
 
 	void FPCControllerBase::onControllerTimerCB(const ros::TimerEvent& timer_event_info)
 	{
-		this->run_controller();
+		this->runController();
 	}
 	#pragma endregion
 
 	#pragma region Controller Methods
-	void FPCControllerBase::run_controller() { }
+	void FPCControllerBase::runController() { }
 
-	int FPCControllerBase::locateRobotOnPath(geometry_msgs::Pose current_pose)
+	float FPCControllerBase::calcLinVelocity(geometry_msgs::Pose2D diff_vector, float scale_factor)
 	{
-		int closest_pose_index = 0;
-		float closest_distance = this->calcEuclideanDiff(current_pose, this->global_plan_[0].pose);
-		int second_closest_pose_index = 0;
-		float second_closest_distance = closest_distance; // Will be used later, but need to redo in/out of method					 
-		int pose_index = 0;
-		for(geometry_msgs::PoseStamped &global_plan_pose: this->global_plan_)
-		{
-			float distance_to_pose = this->calcEuclideanDiff(current_pose, global_plan_pose.pose);
-			if(distance_to_pose < closest_distance)
-			{
-				second_closest_pose_index = closest_pose_index;
-				second_closest_distance = closest_distance;
-				closest_pose_index = pose_index;
-				closest_distance = distance_to_pose;
-			}
-
-			pose_index++;
-		}
-
-		return closest_pose_index;
+		float output_v = this->fpc_param_info_->getLyapunovParams().kx * diff_vector.x +
+						 this->fpc_param_info_->controller_params.max_vel_x * scale_factor * cos(diff_vector.theta);
+		return output_v;
 	}
+
+	float FPCControllerBase::calcRotVelocity(geometry_msgs::Pose2D diff_vector)
+	{
+		float output_omega = this->fpc_param_info_->controller_params.max_vel_theta +
+							 this->fpc_param_info_->getLyapunovParams().ky * this->fpc_param_info_->controller_params.max_vel_x * diff_vector.y +
+							 this->fpc_param_info_->getLyapunovParams().kphi * sin(diff_vector.theta);
+		return output_omega;
+	}
+
+	// int FPCControllerBase::locateRobotOnPath(geometry_msgs::Pose current_pose)
+	// {
+	// 	int closest_pose_index = 0;
+	// 	float closest_distance = this->calcEuclideanDiff(current_pose, this->global_plan_[0].pose);
+	// 	int second_closest_pose_index = 0;
+	// 	float second_closest_distance = closest_distance; // Will be used later, but need to redo in/out of method					 
+	// 	int pose_index = 0;
+	// 	for(geometry_msgs::PoseStamped &global_plan_pose: this->global_plan_)
+	// 	{
+	// 		float distance_to_pose = this->calcEuclideanDiff(current_pose, global_plan_pose.pose);
+	// 		if(distance_to_pose < closest_distance)
+	// 		{
+	// 			second_closest_pose_index = closest_pose_index;
+	// 			second_closest_distance = closest_distance;
+	// 			closest_pose_index = pose_index;
+	// 			closest_distance = distance_to_pose;
+	// 		}
+
+	// 		pose_index++;
+	// 	}
+
+	// 	return closest_pose_index;
+	// }
 	#pragma endregion
 
 	#pragma region ProtectedHelperMethods
@@ -359,6 +374,22 @@ namespace fpc
 		converted_pose.theta = tf::getYaw(pose_to_convert.orientation);
 
 		return converted_pose;
+	}
+
+	geometry_msgs::Pose2D FPCControllerBase::calcDiff(geometry_msgs::Pose start_pose, geometry_msgs::Pose end_pose)
+	{
+		geometry_msgs::Pose2D diff_between_poses;
+		diff_between_poses.x = end_pose.position.x - start_pose.position.x;
+		diff_between_poses.y = end_pose.position.y - start_pose.position.y;
+
+		tf::Quaternion quat_0;
+		tf::quaternionMsgToTF(start_pose.orientation, quat_0);
+		tf::Quaternion quat_1;
+		tf::quaternionMsgToTF(end_pose.orientation, quat_1);
+		tf::Quaternion quat_diff = quat_1 * quat_0.inverse();
+		diff_between_poses.theta = tf::getYaw(quat_diff);
+
+		return diff_between_poses;
 	}
 
 	geometry_msgs::Pose2D FPCControllerBase::calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose)
