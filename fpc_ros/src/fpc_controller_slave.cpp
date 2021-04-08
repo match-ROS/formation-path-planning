@@ -31,7 +31,6 @@ namespace fpc
 
 		geometry_msgs::Pose2D diff_vector = this->calcDiff(this->current_robot_amcl_pose_,
 														   this->global_plan_[this->saved_target_cmd_req_.next_target_pose_index].pose);
-		ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " " << diff_vector.x << " " << diff_vector.y << " " << diff_vector.theta);
 		float output_v = this->calcLinVelocity(diff_vector, this->saved_target_cmd_req_.velocity_factor);
 		float output_omega = this->calcRotVelocity(diff_vector);
 
@@ -48,6 +47,7 @@ namespace fpc
 
 		this->cmd_vel_publisher_.publish(cmd_vel);
 
+		this->meta_data_msg_.velocity_factor = this->saved_target_cmd_req_.velocity_factor;
 		this->publishMetaData(this->convertPose(this->global_plan_[this->saved_target_cmd_req_.next_target_pose_index].pose));
 	}
 

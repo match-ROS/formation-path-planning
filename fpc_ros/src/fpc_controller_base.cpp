@@ -289,53 +289,52 @@ namespace fpc
 	{
 		float output_v = this->fpc_param_info_->getLyapunovParams().kx * diff_vector.x +
 						 this->fpc_param_info_->controller_params.max_vel_x * scale_factor * cos(diff_vector.theta);
-		ROS_INFO_STREAM("kx: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kx << " x: " << diff_vector.x << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " scale_factor: " << scale_factor << " phi: " << diff_vector.theta << " cos(phi): " << cos(diff_vector.theta) << " v res: " << output_v);
+		// ROS_INFO_STREAM("kx: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kx << " x: " << diff_vector.x << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " scale_factor: " << scale_factor << " phi: " << diff_vector.theta << " cos(phi): " << cos(diff_vector.theta) << " v res: " << output_v);
 		return output_v;
 	}
 
 	float FPCControllerBase::calcRotVelocity(geometry_msgs::Pose2D diff_vector)
 	{
-		ROS_ERROR_STREAM("diff_vector.y: " << diff_vector.y);
 		float target_omega;
 		if(diff_vector.theta < 0)
 		{
-			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta;
+			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
 		}
 		else
 		{
-			target_omega = this->fpc_param_info_->controller_params.max_vel_theta;
+			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
 		}
 
 		float output_omega = target_omega +
 							 this->fpc_param_info_->getLyapunovParams().ky * this->fpc_param_info_->controller_params.max_vel_x * diff_vector.y +
 							 this->fpc_param_info_->getLyapunovParams().kphi * sin(diff_vector.theta);
-		ROS_INFO_STREAM("omega: " << this->fpc_param_info_->controller_params.max_vel_theta << " ky: " << this->fpc_param_info_->current_robot_info->lyapunov_params.ky << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " y: " << diff_vector.y << " kphi: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kphi << " phi: " << diff_vector.theta << " sin(phi): " << sin(diff_vector.theta) << " omega res: " << output_omega); 
+		// ROS_INFO_STREAM("omega: " << this->fpc_param_info_->controller_params.max_vel_theta << " ky: " << this->fpc_param_info_->current_robot_info->lyapunov_params.ky << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " y: " << diff_vector.y << " kphi: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kphi << " phi: " << diff_vector.theta << " sin(phi): " << sin(diff_vector.theta) << " omega res: " << output_omega); 
 		return output_omega;
 	}
 
-	// int FPCControllerBase::locateRobotOnPath(geometry_msgs::Pose current_pose)
-	// {
-	// 	int closest_pose_index = 0;
-	// 	float closest_distance = this->calcEuclideanDiff(current_pose, this->global_plan_[0].pose);
-	// 	int second_closest_pose_index = 0;
-	// 	float second_closest_distance = closest_distance; // Will be used later, but need to redo in/out of method					 
-	// 	int pose_index = 0;
-	// 	for(geometry_msgs::PoseStamped &global_plan_pose: this->global_plan_)
-	// 	{
-	// 		float distance_to_pose = this->calcEuclideanDiff(current_pose, global_plan_pose.pose);
-	// 		if(distance_to_pose < closest_distance)
-	// 		{
-	// 			second_closest_pose_index = closest_pose_index;
-	// 			second_closest_distance = closest_distance;
-	// 			closest_pose_index = pose_index;
-	// 			closest_distance = distance_to_pose;
-	// 		}
+	int FPCControllerBase::locateRobotOnPath(geometry_msgs::Pose current_pose)
+	{
+		int closest_pose_index = 0;
+		float closest_distance = this->calcEuclideanDiff(current_pose, this->global_plan_[0].pose);
+		int second_closest_pose_index = 0;
+		float second_closest_distance = closest_distance; // Will be used later, but need to redo in/out of method					 
+		int pose_index = 0;
+		for(geometry_msgs::PoseStamped &global_plan_pose: this->global_plan_)
+		{
+			float distance_to_pose = this->calcEuclideanDiff(current_pose, global_plan_pose.pose);
+			if(distance_to_pose < closest_distance)
+			{
+				second_closest_pose_index = closest_pose_index;
+				second_closest_distance = closest_distance;
+				closest_pose_index = pose_index;
+				closest_distance = distance_to_pose;
+			}
 
-	// 		pose_index++;
-	// 	}
+			pose_index++;
+		}
 
-	// 	return closest_pose_index;
-	// }
+		return closest_pose_index;
+	}
 	#pragma endregion
 
 	#pragma region ProtectedHelperMethods

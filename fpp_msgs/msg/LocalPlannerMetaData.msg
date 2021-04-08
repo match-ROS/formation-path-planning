@@ -19,3 +19,5 @@ geometry_msgs/Pose2D odom_pose
 
 # Interesting info
 geometry_msgs/Pose2D current_to_ground_truth_pose_diff
+
+float32 velocity_factor

@@ -52,11 +52,13 @@ namespace fpc
 
 	void FPCControllerMaster::runController()
 	{
-		if(this->next_target_pose_ < ros::Time::now())
+		// if(this->next_target_pose_ < ros::Time::now())
+		if(this->pose_index_ < (this->locateRobotOnPath(this->current_robot_amcl_pose_)+1))
 		{
-			this->pose_index_++;
+			// this->pose_index_++;
+			this->pose_index_ = this->locateRobotOnPath(this->current_robot_amcl_pose_)+1;
+
 			float largest_pose_diff = this->getLargestDiff();
-			ROS_ERROR_STREAM("largest diff: " << largest_pose_diff);
 
 			for(auto &client: this->next_target_command_clt_list_)
 			{
@@ -72,14 +74,12 @@ namespace fpc
 
 			float necesary_seconds = largest_pose_diff / this->fpc_param_info_->controller_params.max_vel_x;
 			this->next_target_pose_ = ros::Time::now() + ros::Duration(necesary_seconds);
-			ROS_ERROR_STREAM("duration: " << necesary_seconds);
 
 			this->velocity_factor_ =
 				std::sqrt(std::pow(this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose.x, 2) +
 						  std::pow(this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose.y, 2)) /
 				largest_pose_diff;
 
-			ROS_ERROR_STREAM("size: " <<this->global_plan_.size() << " pose index: " << this->pose_index_);	
 			geometry_msgs::Pose2D test = this->calcDiff(this->global_plan_[this->pose_index_].pose, this->global_plan_[this->pose_index_ + 1].pose);
 			this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose = test;
 				
@@ -87,7 +87,7 @@ namespace fpc
 
 		geometry_msgs::Pose2D diff_vector = this->calcDiff(this->current_robot_amcl_pose_,
 														   this->global_plan_[this->pose_index_].pose);
-		ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " " << diff_vector.x << " " << diff_vector.y << " " << diff_vector.theta);
+		// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " " << diff_vector.x << " " << diff_vector.y << " " << diff_vector.theta);
 		float output_v = this->calcLinVelocity(diff_vector, this->velocity_factor_);
 		float output_omega = this->calcRotVelocity(diff_vector);
 
@@ -105,6 +105,7 @@ namespace fpc
 		this->cmd_vel_publisher_.publish(cmd_vel);
 		this->last_published_cmd_vel_ = cmd_vel;
 
+		this->meta_data_msg_.velocity_factor = this->velocity_factor_;
 		this->publishMetaData(this->convertPose(this->global_plan_[this->pose_index_].pose));
 
 		#pragma region Old code

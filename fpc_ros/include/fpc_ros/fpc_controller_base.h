@@ -123,7 +123,7 @@ namespace fpc
 			float calcLinVelocity(geometry_msgs::Pose2D diff_vector, float scale_factor);
 			float calcRotVelocity(geometry_msgs::Pose2D diff_vector);
 
-			// int locateRobotOnPath(geometry_msgs::Pose current_pose);
+			int locateRobotOnPath(geometry_msgs::Pose current_pose);
 			#pragma endregion
 
 			#pragma region ProtectedHelperMethods
