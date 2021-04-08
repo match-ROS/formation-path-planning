@@ -46,7 +46,7 @@ namespace fpc
 													 geometry_msgs::TwistStamped &cmd_vel,
 													 std::string &message);
 
-			virtual void publishMetaData();
+			virtual void publishMetaData(geometry_msgs::Pose2D target_pose);
 			#pragma endregion
 			
 			#pragma region Getter/Setter

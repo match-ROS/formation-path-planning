@@ -8,22 +8,26 @@ namespace fpc
 		ros::NodeHandle &controller_nh)
 		: FPCControllerBase(fpc_param_info, nh, controller_nh)
 	{ 
+		this->pose_index_ = 0;
+
 		for(std::shared_ptr<fpc_data_classes::FPCRobotInfo> &fpc_robot_info: this->fpc_param_info_->robot_info_list)
 		{
-			if(fpc_robot_info->robot_name != this->fpc_param_info_->getCurrentRobotName())
-			{
-				std::pair<std::string, fpp_msgs::NextTargetPoseCommand::Response> dummy;
-				dummy.first = fpc_robot_info->robot_name;
-				dummy.second.diff_after_next_pose.x = 0.0;
-				dummy.second.diff_after_next_pose.y = 0.0;
-				dummy.second.diff_after_next_pose.theta = 0.0;
-				this->saved_command_res_list_.insert(dummy);
-			}
+			std::pair<std::string, fpp_msgs::NextTargetPoseCommand::Response> dummy;
+			dummy.first = fpc_robot_info->robot_name;
+			dummy.second.diff_after_next_pose.x = 0.0;
+			dummy.second.diff_after_next_pose.y = 0.0;
+			dummy.second.diff_after_next_pose.theta = 0.0;
+			this->saved_command_res_list_.insert(dummy);
 		}
 	}
 
 	bool FPCControllerMaster::setPlan(const std::vector<geometry_msgs::PoseStamped> &plan)
 	{
+		// Insert value for master robot
+		this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose =
+			this->calcDiff(plan[0].pose, plan[1].pose);
+
+		// Get values for slave robot
 		while(!this->allSlavesReady())
 		{
 			for(auto &target_command_client: this->next_target_command_clt_list_)
@@ -41,15 +45,67 @@ namespace fpc
 			}
 			ros::Duration(0.1).sleep();
 		}
-		ROS_ERROR_STREAM("ALL SLAVES ARE READY. START CONTROLLER.");
+
+		this->next_target_pose_ = ros::Time::now();
 		return FPCControllerBase::setPlan(plan);
 	}
 
 	void FPCControllerMaster::runController()
 	{
-		ROS_ERROR_STREAM("run controller");
+		if(this->next_target_pose_ < ros::Time::now())
+		{
+			this->pose_index_++;
+			float largest_pose_diff = this->getLargestDiff();
+			ROS_ERROR_STREAM("largest diff: " << largest_pose_diff);
 
-		HIER ALS NÄCHSTES DIE BERECHNUNG START UND DANN DIE SERVICE CALLS
+			for(auto &client: this->next_target_command_clt_list_)
+			{
+				fpp_msgs::NextTargetPoseCommand cmd_msg;
+				cmd_msg.request.start_controller = true;
+				cmd_msg.request.next_target_pose_index = this->pose_index_;
+				float eucl_dist = std::sqrt(std::pow(this->saved_command_res_list_[client.first].diff_after_next_pose.x, 2) +
+											std::pow(this->saved_command_res_list_[client.first].diff_after_next_pose.y, 2));
+				cmd_msg.request.velocity_factor = eucl_dist / largest_pose_diff;
+				client.second->call(cmd_msg);
+				this->saved_command_res_list_[client.first] = cmd_msg.response;
+			}
+
+			float necesary_seconds = largest_pose_diff / this->fpc_param_info_->controller_params.max_vel_x;
+			this->next_target_pose_ = ros::Time::now() + ros::Duration(necesary_seconds);
+			ROS_ERROR_STREAM("duration: " << necesary_seconds);
+
+			this->velocity_factor_ =
+				std::sqrt(std::pow(this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose.x, 2) +
+						  std::pow(this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose.y, 2)) /
+				largest_pose_diff;
+
+			ROS_ERROR_STREAM("size: " <<this->global_plan_.size() << " pose index: " << this->pose_index_);	
+			geometry_msgs::Pose2D test = this->calcDiff(this->global_plan_[this->pose_index_].pose, this->global_plan_[this->pose_index_ + 1].pose);
+			this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose = test;
+				
+		}
+
+		geometry_msgs::Pose2D diff_vector = this->calcDiff(this->current_robot_amcl_pose_,
+														   this->global_plan_[this->pose_index_].pose);
+		ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " " << diff_vector.x << " " << diff_vector.y << " " << diff_vector.theta);
+		float output_v = this->calcLinVelocity(diff_vector, this->velocity_factor_);
+		float output_omega = this->calcRotVelocity(diff_vector);
+
+		geometry_msgs::Twist cmd_vel;
+		cmd_vel.linear.x = output_v;
+		cmd_vel.linear.y = 0.0;
+		cmd_vel.linear.z = 0.0;
+		cmd_vel.angular.x = 0.0;
+		cmd_vel.angular.y = 0.0;
+		cmd_vel.angular.z = output_omega;
+		// ROS_INFO_STREAM("x: " << cmd_vel.linear.x << " rot: " << cmd_vel.angular.z);
+
+		this->meta_data_msg_.target_vel = cmd_vel;
+
+		this->cmd_vel_publisher_.publish(cmd_vel);
+		this->last_published_cmd_vel_ = cmd_vel;
+
+		this->publishMetaData(this->convertPose(this->global_plan_[this->pose_index_].pose));
 
 		#pragma region Old code
 		// float period_duration = 1.0 / this->fpc_param_info_->controller_params.controller_frequency;
@@ -230,6 +286,23 @@ namespace fpc
 		}
 		return true;
 	}
+
+	float FPCControllerMaster::getLargestDiff()
+	{
+		float greatest_distance = 0.0;
+		for(auto &cmd_res: this->saved_command_res_list_)
+		{
+			float euclidean_dist = std::sqrt(std::pow(cmd_res.second.diff_after_next_pose.x, 2) +
+											 std::pow(cmd_res.second.diff_after_next_pose.y, 2));
+			if(euclidean_dist > greatest_distance)
+			{
+				greatest_distance = euclidean_dist;
+			}
+		}
+
+		return greatest_distance;
+	}
+
 	// int FPCControllerMaster::getHighestPoseIndex()
 	// {
 	// 	int highest_pose_index = this->robot_scale_info_list_.begin()->second.current_pose_index;

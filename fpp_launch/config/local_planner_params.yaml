@@ -23,7 +23,7 @@ FormationPathController:
   controller_config:
     # Because the frequency of the move base stack is unreliable the controller gets an independent timer
     # This calue defines the frequency the timer is called
-    controller_frequency: 10.0 
+    controller_frequency: 100.0 
 
     # Defines the max and min velocity where the target velocity will be caped at
     # Separate in forward and backwards movement

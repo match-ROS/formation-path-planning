@@ -231,12 +231,14 @@ namespace fpc
 		return 0;
 	}
 
-	void FPCControllerBase::publishMetaData()
+	void FPCControllerBase::publishMetaData(geometry_msgs::Pose2D target_pose)
 	{
 		this->meta_data_msg_.stamp = ros::Time::now();
 
-		// Current pose should be set by calculateVelocityCommand method
+		this->meta_data_msg_.current_pose = this->convertPose(this->current_robot_amcl_pose_);
 		this->meta_data_msg_.current_vel = this->current_robot_odom_->twist.twist;
+
+		this->meta_data_msg_.target_pose = target_pose;
 
 		// Calculate diff current to target
 		this->meta_data_msg_.current_to_target_pose_diff = this->calcDiff(
@@ -247,15 +249,10 @@ namespace fpc
 		// Insert additional pose info
 		this->meta_data_msg_.ground_truth_pose = this->convertPose(this->current_robot_ground_truth_->pose.pose);
 		this->meta_data_msg_.odom_pose = this->convertPose(this->current_robot_odom_->pose.pose);
-		this->meta_data_msg_.amcl_pose = this->convertPose(this->current_robot_amcl_pose_);
 
 		// Insert additional interesting infos
-		this->meta_data_msg_.current_to_amcl_pose_diff = this->calcDiff(
-			this->meta_data_msg_.current_pose, this->meta_data_msg_.amcl_pose);
 		this->meta_data_msg_.current_to_ground_truth_pose_diff = this->calcDiff(
 			this->meta_data_msg_.current_pose, this->meta_data_msg_.ground_truth_pose);
-		this->meta_data_msg_.amcl_to_ground_truth_diff = this->calcDiff(
-			this->meta_data_msg_.amcl_pose, this->meta_data_msg_.ground_truth_pose);
 
 		// Publish data so it can be visualized in plotjuggler from rosbag
 		this->meta_data_publisher_.publish(this->meta_data_msg_);
@@ -292,14 +289,27 @@ namespace fpc
 	{
 		float output_v = this->fpc_param_info_->getLyapunovParams().kx * diff_vector.x +
 						 this->fpc_param_info_->controller_params.max_vel_x * scale_factor * cos(diff_vector.theta);
+		ROS_INFO_STREAM("kx: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kx << " x: " << diff_vector.x << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " scale_factor: " << scale_factor << " phi: " << diff_vector.theta << " cos(phi): " << cos(diff_vector.theta) << " v res: " << output_v);
 		return output_v;
 	}
 
 	float FPCControllerBase::calcRotVelocity(geometry_msgs::Pose2D diff_vector)
 	{
-		float output_omega = this->fpc_param_info_->controller_params.max_vel_theta +
+		ROS_ERROR_STREAM("diff_vector.y: " << diff_vector.y);
+		float target_omega;
+		if(diff_vector.theta < 0)
+		{
+			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta;
+		}
+		else
+		{
+			target_omega = this->fpc_param_info_->controller_params.max_vel_theta;
+		}
+
+		float output_omega = target_omega +
 							 this->fpc_param_info_->getLyapunovParams().ky * this->fpc_param_info_->controller_params.max_vel_x * diff_vector.y +
 							 this->fpc_param_info_->getLyapunovParams().kphi * sin(diff_vector.theta);
+		ROS_INFO_STREAM("omega: " << this->fpc_param_info_->controller_params.max_vel_theta << " ky: " << this->fpc_param_info_->current_robot_info->lyapunov_params.ky << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " y: " << diff_vector.y << " kphi: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kphi << " phi: " << diff_vector.theta << " sin(phi): " << sin(diff_vector.theta) << " omega res: " << output_omega); 
 		return output_omega;
 	}
 
@@ -381,12 +391,14 @@ namespace fpc
 		geometry_msgs::Pose2D diff_between_poses;
 		diff_between_poses.x = end_pose.position.x - start_pose.position.x;
 		diff_between_poses.y = end_pose.position.y - start_pose.position.y;
-
 		tf::Quaternion quat_0;
 		tf::quaternionMsgToTF(start_pose.orientation, quat_0);
+		quat_0.normalize();
 		tf::Quaternion quat_1;
+		quat_1.normalize();
 		tf::quaternionMsgToTF(end_pose.orientation, quat_1);
 		tf::Quaternion quat_diff = quat_1 * quat_0.inverse();
+		quat_diff.normalize();
 		diff_between_poses.theta = tf::getYaw(quat_diff);
 
 		return diff_between_poses;
