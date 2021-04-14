@@ -28,7 +28,7 @@ def gen_point_list(vl_min: float, vl_max: float, vr_min: float, vr_max: float) -
 
 			if vl_c==-5.0 or vl_c==10.0 or vr_c==-5.0 or vr_c==10.0:
 				one_line: List[np.array] = list()
-				for time_c in range(0, 10, 1):
+				for time_c in range(0, 11, 1):
 					time: float = float(time_c) / 10
 
 					
@@ -54,8 +54,9 @@ def gen_point_list(vl_min: float, vl_max: float, vr_min: float, vr_max: float) -
 
 					one_line.append(np.array([[x],[y]]))
 
-					# print("____________________")
-					# print(str(x) + str(y))
+					# if vl_c==10.0 and vr_c== 10.0:
+					# 	print("____________________")
+					# 	print(str(x) + str(y))
 					# print(str(old_x) + str(old_y))
 
 					old_x = x
