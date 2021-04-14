@@ -298,11 +298,11 @@ namespace fpc
 		float target_omega;
 		if(diff_vector.theta < 0)
 		{
-			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
+			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
 		}
 		else
 		{
-			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
+			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
 		}
 
 		float output_omega = target_omega +
