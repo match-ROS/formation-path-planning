@@ -63,7 +63,8 @@ namespace fpc
 			return false;
 		}
 
-		res.diff_after_next_pose = this->calcDiff(this->global_plan_[0].pose, this->global_plan_[1].pose);
+		res.diff_after_next_pose = this->calcDiff(this->current_robot_amcl_pose_, this->global_plan_[req.next_target_pose_index].pose);
+		ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " slave: " << res.diff_after_next_pose.x << "|" << res.diff_after_next_pose.y);
 
 		if(!req.start_controller)
 		{

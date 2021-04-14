@@ -68,7 +68,9 @@ namespace fpc
 				float eucl_dist = std::sqrt(std::pow(this->saved_command_res_list_[client.first].diff_after_next_pose.x, 2) +
 											std::pow(this->saved_command_res_list_[client.first].diff_after_next_pose.y, 2));
 				cmd_msg.request.velocity_factor = eucl_dist / largest_pose_diff;
+				ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " req: " << cmd_msg.request.next_target_pose_index);
 				client.second->call(cmd_msg);
+				ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " master: " << cmd_msg.response.diff_after_next_pose.x << "|" << cmd_msg.response.diff_after_next_pose.y);
 				this->saved_command_res_list_[client.first] = cmd_msg.response;
 			}
 
@@ -295,12 +297,13 @@ namespace fpc
 		{
 			float euclidean_dist = std::sqrt(std::pow(cmd_res.second.diff_after_next_pose.x, 2) +
 											 std::pow(cmd_res.second.diff_after_next_pose.y, 2));
+			// ROS_ERROR_STREAM(cmd_res.first << ": " << euclidean_dist << " , x:" << cmd_res.second.diff_after_next_pose.x << " , y:" << cmd_res.second.diff_after_next_pose.y);									 
 			if(euclidean_dist > greatest_distance)
 			{
 				greatest_distance = euclidean_dist;
 			}
 		}
-
+		// ROS_ERROR_STREAM("--------------------------------------------");
 		return greatest_distance;
 	}
 
