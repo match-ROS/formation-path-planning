@@ -19,6 +19,8 @@ namespace fpc
 			ros::ServiceServer next_target_command_srv_;
 			fpp_msgs::NextTargetPoseCommand::Request saved_target_cmd_req_;
 
+			geometry_msgs::Pose2D diff_vector_;
+
 			/**
              * @brief Helper method for intializing all services
              * 

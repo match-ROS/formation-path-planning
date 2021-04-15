@@ -88,7 +88,7 @@ namespace fpc
 
 			std::vector<geometry_msgs::PoseStamped> global_plan_;
 
-			int pose_index_;
+			float velocity_factor_;
 			bool controller_finished_;
 
 			geometry_msgs::PoseStamped last_target_pose_;
@@ -144,10 +144,26 @@ namespace fpc
             virtual void initTimers();
 
 			geometry_msgs::Pose2D convertPose(geometry_msgs::Pose pose_to_convert);
+			Eigen::Vector3f convertPose(geometry_msgs::Pose2D pose_to_convert);
 			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose start_pose, geometry_msgs::Pose end_pose);
 			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose);
 			geometry_msgs::Twist calcDiff(geometry_msgs::Twist start_vel, geometry_msgs::Twist end_vel);
 			float calcEuclideanDiff(geometry_msgs::Pose point1, geometry_msgs::Pose point2);
-			#pragma endregion
+			float calcEuclideanDistance(geometry_msgs::Pose2D vector);
+
+			float calcVelocityFactor(geometry_msgs::Pose2D pose_diff, float largest_euclidean_diff);
+
+			/**
+             * @brief Create a transformation matrix to transform points from and to the geometry cs of this object
+             * 
+             * @param lead_vector_world_cs translation from the world to this cs
+             * @param rotation Rotation form the world to this cs. Rotation only uses yaw rotation.
+             * @return Eigen::Matrix<float, 4, 4> Transformation matrix in the x/y area and yaw rotation.
+             */
+            Eigen::Matrix<float, 4, 4> createTransformationMatrix(Eigen::Vector2f lead_vector_world_cs, float rotation);
+			Eigen::Vector2f transformVector(Eigen::Vector2f vector_to_transform,
+											Eigen::Vector2f lead_vector,
+											float rotation);
+#pragma endregion
 	};
 }

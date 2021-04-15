@@ -10,7 +10,6 @@ namespace fpc
 		: fpc_param_info_(fpc_param_info),
 		  nh_(nh),
 		  controller_nh_(controller_nh),
-		  pose_index_(1),
 		  controller_finished_(false)
 	{
 	}
@@ -241,8 +240,8 @@ namespace fpc
 		this->meta_data_msg_.target_pose = target_pose;
 
 		// Calculate diff current to target
-		this->meta_data_msg_.current_to_target_pose_diff = this->calcDiff(
-			this->meta_data_msg_.current_pose, this->meta_data_msg_.target_pose);
+		// this->meta_data_msg_.current_to_target_pose_diff = this->calcDiff(
+		// 	this->meta_data_msg_.current_pose, this->meta_data_msg_.target_pose);
 		this->meta_data_msg_.current_to_target_vel_diff = this->calcDiff(
 			this->meta_data_msg_.target_vel, this->meta_data_msg_.current_vel);
 
@@ -298,11 +297,11 @@ namespace fpc
 		float target_omega;
 		if(diff_vector.theta < 0)
 		{
-			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
+			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
 		}
 		else
 		{
-			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
+			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
 		}
 
 		float output_omega = target_omega +
@@ -385,19 +384,39 @@ namespace fpc
 		return converted_pose;
 	}
 
+	Eigen::Vector3f FPCControllerBase::convertPose(geometry_msgs::Pose2D pose_to_convert)
+	{
+		Eigen::Vector3f converted_vector;
+		converted_vector << pose_to_convert.x, pose_to_convert.y, pose_to_convert.theta;
+		return converted_vector;
+	}
+
 	geometry_msgs::Pose2D FPCControllerBase::calcDiff(geometry_msgs::Pose start_pose, geometry_msgs::Pose end_pose)
 	{
 		geometry_msgs::Pose2D diff_between_poses;
-		diff_between_poses.x = end_pose.position.x - start_pose.position.x;
-		diff_between_poses.y = end_pose.position.y - start_pose.position.y;
+		
+		geometry_msgs::Pose2D current_robot_pose_2D = this->convertPose(start_pose);
+		Eigen::Vector2f current_robot_pose_eigen;
+		current_robot_pose_eigen << current_robot_pose_2D.x, current_robot_pose_2D.y;
+		geometry_msgs::Pose2D target_pose_2D = this->convertPose(end_pose);
+		Eigen::Vector2f target_pose_eigen;
+		target_pose_eigen << target_pose_2D.x, target_pose_2D.y;
+
+		Eigen::Vector2f diff_to_target_robot_cs = this->transformVector(target_pose_eigen,
+																		current_robot_pose_eigen,
+																		current_robot_pose_2D.theta);
+		
 		tf::Quaternion quat_0;
 		tf::quaternionMsgToTF(start_pose.orientation, quat_0);
 		quat_0.normalize();
 		tf::Quaternion quat_1;
-		quat_1.normalize();
 		tf::quaternionMsgToTF(end_pose.orientation, quat_1);
+		quat_1.normalize();
 		tf::Quaternion quat_diff = quat_1 * quat_0.inverse();
 		quat_diff.normalize();
+
+		diff_between_poses.x = diff_to_target_robot_cs[0];
+		diff_between_poses.y = diff_to_target_robot_cs[1];
 		diff_between_poses.theta = tf::getYaw(quat_diff);
 
 		return diff_between_poses;
@@ -432,6 +451,44 @@ namespace fpc
 	{
 		return std::sqrt(std::pow(point1.position.x - point2.position.x, 2) +
 						 std::pow(point1.position.y - point2.position.y, 2));
+	}
+
+	float FPCControllerBase::calcEuclideanDistance(geometry_msgs::Pose2D vector)
+	{
+		return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2));
+	}
+
+	float FPCControllerBase::calcVelocityFactor(geometry_msgs::Pose2D pose_diff, float largest_euclidean_diff)
+	{
+		float pose_diff_length = this->calcEuclideanDistance(pose_diff);
+		if(pose_diff.x < 0.0)
+		{
+			return 0.25;
+		}
+
+		return pose_diff_length / largest_euclidean_diff;
+	}
+
+	Eigen::Matrix<float, 4, 4> FPCControllerBase::createTransformationMatrix(Eigen::Vector2f lead_vector_world_cs, float rotation)
+    {
+        Eigen::Matrix<float, 4, 4> transformation_matrix;
+		transformation_matrix << cos(rotation), -sin(rotation), 0, lead_vector_world_cs[0],
+			sin(rotation), cos(rotation), 0, lead_vector_world_cs[1],
+			0, 0, 1, 0,
+			0, 0, 0, 1;
+		return transformation_matrix;
+    }
+
+	Eigen::Vector2f FPCControllerBase::transformVector(Eigen::Vector2f vector_to_transform,
+													   Eigen::Vector2f lead_vector,
+													   float rotation)
+	{
+		Eigen::Vector4f extended_vector_to_tf;
+		extended_vector_to_tf << vector_to_transform[0], vector_to_transform[1], 0, 1;
+		Eigen::Matrix<float, 4, 4> robot_to_world_tf = this->createTransformationMatrix(lead_vector, rotation);
+		Eigen::Matrix<float, 4, 4> world_to_robot_tf = robot_to_world_tf.inverse();
+		Eigen::Vector4f extended_transformed_vector = world_to_robot_tf * extended_vector_to_tf;
+		return extended_transformed_vector.head<2>();
 	}
 	#pragma endregion
 }

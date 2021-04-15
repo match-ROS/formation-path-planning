@@ -65,7 +65,12 @@
         <!--Typically you copy this node to where you need a changed path planner. This one should stay default.-->
         <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/>
 
-		<include file="$(find fpp_launch)/launch/formation_costmap.launch"/>
+		<group ns="move_base_flex">
+			<node pkg="formation_costmap" type="formation_footprint_node" name="formation_footprint_node" output="screen">
+				<!--Load params for the formation costmap layer-->
+				<rosparam file="$(find fpp_launch)/config/costmap_two_parallel_robot_params.yaml" command="load"/>
+			</node>
+		</group>
     </group>
 
     <!--Create namespace for robot1 and start everything that belongs in the namespace inside the group-->

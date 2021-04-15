@@ -1,6 +1,9 @@
 # Very important to log the data with the right timestamp!
 time stamp
 
+# Info about the current pose index
+int32 pose_index
+
 # Current values
 geometry_msgs/Pose2D current_pose
 geometry_msgs/Twist current_vel

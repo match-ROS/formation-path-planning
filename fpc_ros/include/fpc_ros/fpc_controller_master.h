@@ -23,8 +23,6 @@ namespace fpc
 
 		private:
 			int pose_index_;
-			float velocity_factor_;
-			ros::Time next_target_pose_;			
 			
 			std::map<std::string, std::shared_ptr<ros::ServiceClient>> next_target_command_clt_list_;
 			std::map<std::string, fpp_msgs::NextTargetPoseCommand::Response> saved_command_res_list_;
