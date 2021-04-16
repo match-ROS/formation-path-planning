@@ -297,11 +297,11 @@ namespace fpc
 		float target_omega;
 		if(diff_vector.theta < 0)
 		{
-			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
+			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
 		}
 		else
 		{
-			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.1;
+			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
 		}
 
 		float output_omega = target_omega +
@@ -466,7 +466,7 @@ namespace fpc
 			return 0.25;
 		}
 
-		return pose_diff_length / largest_euclidean_diff;
+		return 1.0;//pose_diff_length / largest_euclidean_diff;
 	}
 
 	Eigen::Matrix<float, 4, 4> FPCControllerBase::createTransformationMatrix(Eigen::Vector2f lead_vector_world_cs, float rotation)

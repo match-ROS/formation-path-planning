@@ -1,64 +1,66 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root version="2.3.8">
  <tabbed_widget name="Main Window" parent="main_window">
-  <Tab containers="1" tab_name="tab1">
+  <Tab tab_name="tab1" containers="1">
    <Container>
-    <DockSplitter orientation="-" count="1" sizes="1">
-     <DockSplitter orientation="|" count="2" sizes="0.407786;0.592214">
-      <DockSplitter orientation="-" count="2" sizes="0.5;0.5">
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockSplitter orientation="|" sizes="0.407837;0.592163" count="2">
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
        <DockArea name="...">
         <plot style="Lines" mode="XYPlot">
-         <range left="-13.864828" bottom="-1.296041" right="4.835550" top="10.327653"/>
+         <range top="10.308617" left="-14.565900" right="9.096628" bottom="-1.423039"/>
          <limitY/>
-         <curve curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]" color="#ff0200"/>
-         <curve curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]" color="#1fff00"/>
-         <curve curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]" color="#1100ff"/>
-         <curve curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]" color="#850405"/>
+         <curve curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#ff0200" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#1fff00" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#1100ff" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#850405" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
+         <curve curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#1e257a" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
+         <curve curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#1b761a" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="0.215432" right="71.772000" top="1.019136"/>
+         <range top="1.018750" left="0.000000" right="38.121000" bottom="0.231250"/>
          <limitY/>
-         <curve name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor" color="#ff0006"/>
-         <curve name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor" color="#11ff00"/>
-         <curve name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor" color="#0500ff"/>
+         <curve color="#ff0006" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor"/>
+         <curve color="#11ff00" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor"/>
+         <curve color="#0500ff" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" count="2" sizes="0.5;0.5">
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="-0.003041" right="71.772000" top="0.151117"/>
+         <range top="0.211773" left="0.000000" right="38.121000" bottom="-0.001324"/>
          <limitY/>
-         <curve name="Robot0 eukl dist" color="#9467bd"/>
-         <curve name="Robot1 eukl dist" color="#17becf"/>
-         <curve name="Robot2 eukl dist" color="#bcbd22"/>
+         <curve color="#9467bd" name="Robot0 eukl dist"/>
+         <curve color="#17becf" name="Robot1 eukl dist"/>
+         <curve color="#bcbd22" name="Robot2 eukl dist"/>
         </plot>
        </DockArea>
-       <DockSplitter orientation="|" count="3" sizes="0.311015;0.301296;0.387689">
+       <DockSplitter orientation="|" sizes="0.311043;0.301227;0.38773" count="3">
         <DockArea name="...">
          <plot style="Lines" mode="TimeSeries">
-          <range left="0.000000" bottom="-0.064612" right="71.772000" top="0.088519"/>
+          <range top="0.082101" left="0.000000" right="38.121000" bottom="-0.059083"/>
           <limitY/>
-          <curve name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x" color="#f14cc1"/>
-          <curve name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y" color="#ff7f0e"/>
+          <curve color="#f14cc1" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x"/>
+          <curve color="#ff7f0e" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y"/>
          </plot>
         </DockArea>
         <DockArea name="...">
          <plot style="Lines" mode="TimeSeries">
-          <range left="0.000000" bottom="-0.154317" right="71.772000" top="0.139894"/>
+          <range top="0.148250" left="0.008000" right="38.119000" bottom="-0.078672"/>
           <limitY/>
-          <curve name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x" color="#ff7f0e"/>
-          <curve name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y" color="#1ac938"/>
+          <curve color="#ff7f0e" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x"/>
+          <curve color="#1ac938" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y"/>
          </plot>
         </DockArea>
         <DockArea name="...">
          <plot style="Lines" mode="TimeSeries">
-          <range left="0.000000" bottom="-0.070130" right="71.772000" top="0.140829"/>
+          <range top="0.169641" left="0.007000" right="38.117000" bottom="-0.065681"/>
           <limitY/>
-          <curve name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x" color="#1f77b4"/>
-          <curve name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y" color="#d62728"/>
+          <curve color="#1f77b4" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x"/>
+          <curve color="#d62728" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y"/>
          </plot>
         </DockArea>
        </DockSplitter>
@@ -67,41 +69,41 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="tab2">
+  <Tab tab_name="tab2" containers="1">
    <Container>
-    <DockSplitter orientation="-" count="1" sizes="1">
-     <DockSplitter orientation="|" count="2" sizes="0.500319;0.499681">
-      <DockSplitter orientation="-" count="2" sizes="0.5;0.5">
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockSplitter orientation="|" sizes="0.500363;0.499637" count="2">
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
        <DockArea name="...">
         <plot style="Lines" mode="XYPlot">
-         <range left="-16.210690" bottom="-1.296041" right="7.132762" top="10.327653"/>
+         <range top="10.308617" left="-17.415218" right="11.891786" bottom="-1.423039"/>
          <limitY/>
-         <curve curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]" color="#17becf"/>
-         <curve curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]" color="#bcbd22"/>
-         <curve curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]" color="#1f77b4"/>
+         <curve curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#17becf" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#bcbd22" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#1f77b4" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="-0.027903" right="71.772000" top="0.087624"/>
+         <range top="0.080543" left="0.000000" right="38.121000" bottom="0.004768"/>
          <limitY/>
-         <curve name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x" color="#f14cc1"/>
+         <curve color="#f14cc1" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" count="2" sizes="0.5;0.5">
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="-0.072965" right="71.772000" top="0.782037"/>
+         <range top="0.881343" left="0.000000" right="38.121000" bottom="-0.111076"/>
          <limitY/>
-         <curve name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x" color="#1f77b4"/>
-         <curve name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x" color="#d62728"/>
-         <curve name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x" color="#1ac938"/>
+         <curve color="#1f77b4" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x"/>
+         <curve color="#d62728" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x"/>
+         <curve color="#1ac938" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="-0.003041" right="71.772000" top="0.151117"/>
+         <range top="1.000000" left="0.000000" right="1.000000" bottom="0.000000"/>
          <limitY/>
         </plot>
        </DockArea>
@@ -110,41 +112,87 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="tab2">
+  <Tab tab_name="tab2" containers="1">
    <Container>
-    <DockSplitter orientation="-" count="1" sizes="1">
-     <DockSplitter orientation="|" count="2" sizes="0.500319;0.499681">
-      <DockSplitter orientation="-" count="2" sizes="0.5;0.5">
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockSplitter orientation="|" sizes="0.500363;0.499637" count="2">
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
        <DockArea name="...">
-        <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="-0.072965" right="71.772000" top="0.782037"/>
+        <plot style="Lines" mode="XYPlot">
+         <range top="10.308617" left="-17.388138" right="11.918866" bottom="-1.423039"/>
          <limitY/>
-         <curve name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x" color="#1f77b4"/>
-         <curve name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x" color="#d62728"/>
-         <curve name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_vel/linear/x" color="#1ac938"/>
+         <curve curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#ff0200" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#1fff00" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#1100ff" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#850405" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
+         <curve curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#1e257a" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
+         <curve curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#1b761a" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="0.215432" right="71.772000" top="1.019136"/>
+         <range top="1.018750" left="0.000000" right="38.121000" bottom="0.231250"/>
          <limitY/>
-         <curve name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor" color="#ff7f0e"/>
-         <curve name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor" color="#f14cc1"/>
-         <curve name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor" color="#9467bd"/>
+         <curve color="#ff7f0e" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor"/>
+         <curve color="#f14cc1" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor"/>
+         <curve color="#9467bd" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/velocity_factor"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" count="2" sizes="0.5;0.5">
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="1.341044" right="71.772000" top="1.452706"/>
+         <range top="1.549731" left="0.000000" right="38.121000" bottom="1.336765"/>
          <limitY/>
-         <curve name="Robot0 to Robo1 Distance" color="#f14cc1"/>
+         <curve color="#f14cc1" name="Robot0 to Robo1 Distance"/>
+         <curve color="#9467bd" name="Robot0 to Robot2 Distance"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range left="0.000000" bottom="0.000000" right="1.000000" top="1.000000"/>
+         <range top="1.000000" left="0.000000" right="1.000000" bottom="0.000000"/>
+         <limitY/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="tab2" containers="1">
+   <Container>
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockSplitter orientation="|" sizes="0.5;0.5" count="2">
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
+       <DockArea name="...">
+        <plot style="Lines" mode="XYPlot">
+         <range top="10.308617" left="-17.377070" right="11.907798" bottom="-1.423039"/>
+         <limitY/>
+         <curve curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#ff0200" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#1fff00" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x" curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y" color="#1100ff" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/[x;y]"/>
+         <curve curve_x="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#850405" name="/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
+         <curve curve_x="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#1e257a" name="/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
+         <curve curve_x="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/x" curve_y="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/y" color="#1b761a" name="/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/target_pose/[x;y]"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range top="1.000000" left="0.000000" right="1.000000" bottom="0.000000"/>
+         <limitY/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter orientation="-" sizes="0.500398;0.499602" count="2">
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range top="1.000000" left="0.000000" right="1.000000" bottom="0.000000"/>
+         <limitY/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range top="1.000000" left="0.000000" right="1.000000" bottom="0.000000"/>
          <limitY/>
         </plot>
        </DockArea>
@@ -185,39 +233,116 @@
  </Plugins>
  <!-- - - - - - - - - - - - - - - -->
  <previouslyLoaded_Datafiles>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-14-15-05-15.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-23-21-17.bag" prefix="">
+   <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
+  </fileInfo>
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-14-15-05-15.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-14-23-03-20.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-14-23-03-20.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-14-23-17-40.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-14-23-17-40.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-15-12-13-04.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-12-13-04.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-15-12-22-27.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-12-22-27.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-15-13-30-41.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-13-30-41.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-15-15-28-32.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-15-28-32.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-15-15-58-31.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-15-58-31.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-15-16-10-50.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-16-10-50.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
-  <fileInfo prefix="" filename="/home/hlurz/rosbags/fpp_data_2021-04-15-16-21-25.bag">
+  <fileInfo filename="/home/hlurz/rosbags/fpp_data_2021-04-15-16-21-25.bag" prefix="">
    <selected_datasources value="/robot0_ns/mobile_base_controller/cmd_vel;/robot0_ns/mobile_base_controller/odom;/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/formation_plan_meta_data;/robot0_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot1_ns/mobile_base_controller/cmd_vel;/robot1_ns/mobile_base_controller/odom;/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot1_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data;/robot2_ns/mobile_base_controller/cmd_vel;/robot2_ns/mobile_base_controller/odom;/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data;/robot2_ns/move_base_flex/FormationPathPlanner/robot_plan_meta_data"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="100"/>
+   </plugin>
   </fileInfo>
  </previouslyLoaded_Datafiles>
  <!-- - - - - - - - - - - - - - - -->
  <customMathEquations>
+  <snippet name="Robot1 eukl dist">
+   <global></global>
+   <function>return ((value)^2 + (v1)^2)^0.5</function>
+   <linkedSource>/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x</linkedSource>
+   <additionalSources>
+    <v1>/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y</v1>
+   </additionalSources>
+  </snippet>
   <snippet name="Robot0 to Robo1 Distance">
    <global></global>
    <function>return ((v1-value)^2 + (v3-v2)^2)^0.5</function>
@@ -228,20 +353,20 @@
     <v3>/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y</v3>
    </additionalSources>
   </snippet>
-  <snippet name="Robot1 eukl dist">
-   <global></global>
-   <function>return ((value)^2 + (v1)^2)^0.5</function>
-   <linkedSource>/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x</linkedSource>
-   <additionalSources>
-    <v1>/robot1_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y</v1>
-   </additionalSources>
-  </snippet>
   <snippet name="Robot0 eukl dist">
    <global></global>
    <function>return ((value)^2 + (v1)^2)^0.5</function>
    <linkedSource>/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x</linkedSource>
    <additionalSources>
     <v1>/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y</v1>
+   </additionalSources>
+  </snippet>
+  <snippet name="Robot2 eukl dist">
+   <global></global>
+   <function>return ((value)^2 + (v1)^2)^0.5</function>
+   <linkedSource>/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x</linkedSource>
+   <additionalSources>
+    <v1>/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y</v1>
    </additionalSources>
   </snippet>
   <snippet name="Robot0 to Robot2 Distance">
@@ -252,14 +377,6 @@
     <v1>/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/x</v1>
     <v2>/robot0_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y</v2>
     <v3>/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_pose/y</v3>
-   </additionalSources>
-  </snippet>
-  <snippet name="Robot2 eukl dist">
-   <global></global>
-   <function>return ((value)^2 + (v1)^2)^0.5</function>
-   <linkedSource>/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/x</linkedSource>
-   <additionalSources>
-    <v1>/robot2_ns/move_base_flex/FormationPathController/fpc_meta_data/current_to_target_pose_diff/y</v1>
    </additionalSources>
   </snippet>
  </customMathEquations>

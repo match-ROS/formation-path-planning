@@ -83,10 +83,13 @@ namespace fpc
 			this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose = diff_to_target;
 		}
 
+		geometry_msgs::Pose2D diff_to_target = this->calcDiff(this->current_robot_amcl_pose_,
+															  this->global_plan_[this->pose_index_].pose);
+
 		// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " " << diff_vector.x << " " << diff_vector.y << " " << diff_vector.theta);
-		float output_v = this->calcLinVelocity(this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose,
+		float output_v = this->calcLinVelocity(diff_to_target,
 											   this->velocity_factor_);
-		float output_omega = this->calcRotVelocity(this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose);
+		float output_omega = this->calcRotVelocity(diff_to_target);
 
 		geometry_msgs::Twist cmd_vel;
 		cmd_vel.linear.x = output_v;
@@ -104,7 +107,7 @@ namespace fpc
 
 		this->meta_data_msg_.pose_index = this->pose_index_;
 		this->meta_data_msg_.velocity_factor = this->velocity_factor_;
-		this->meta_data_msg_.current_to_target_pose_diff = this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose;
+		this->meta_data_msg_.current_to_target_pose_diff = diff_to_target;
 		if(!this->controller_finished_)
 		{
 			this->publishMetaData(this->convertPose(this->global_plan_[this->pose_index_].pose));

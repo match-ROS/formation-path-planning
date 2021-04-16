@@ -29,8 +29,8 @@ namespace fpc
 			return;
 		}
 
-		// geometry_msgs::Pose2D diff_vector = this->calcDiff(this->current_robot_amcl_pose_,
-		// 												   this->global_plan_[this->saved_target_cmd_req_.next_target_pose_index].pose);
+		this->diff_vector_ = this->calcDiff(this->current_robot_amcl_pose_,
+											this->global_plan_[this->saved_target_cmd_req_.next_target_pose_index].pose);
 
 		// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << ": " << this->diff_vector_.x << " | " << this->diff_vector_.y << " | " << this->velocity_factor_);
 		float output_v = this->calcLinVelocity(this->diff_vector_, this->velocity_factor_);
@@ -44,11 +44,6 @@ namespace fpc
 		cmd_vel.angular.x = 0.0;
 		cmd_vel.angular.y = 0.0;
 		cmd_vel.angular.z = output_omega;
-
-		if(this->fpc_param_info_->getCurrentRobotName() == "robot1")
-		{
-			ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << ": " << cmd_vel.linear.x << " | " << cmd_vel.angular.z);
-		}
 
 		this->meta_data_msg_.target_vel = cmd_vel;
 		this->last_published_cmd_vel_ = cmd_vel;
