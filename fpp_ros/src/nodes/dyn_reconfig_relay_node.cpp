@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "dyn_reconfig_relay_node");
     ros::NodeHandle nh;
     ros::ServiceServer dyn_reconfig_inflation_srv_server = nh.advertiseService("/dyn_reconfig_inflation", dyn_reconfig_inflation_cb);
-	ros::ServiceClient formation_info_client = nh.serviceClient<fpp_msgs::FormationFootprintInfo>("/robot0_ns/move_base_flex/footprint_info");
+	ros::ServiceClient formation_info_client = nh.serviceClient<fpp_msgs::FormationFootprintInfo>("/robot0/move_base_flex/footprint_info");
 	formation_info_client.waitForExistence();
 
     while(ros::ok())

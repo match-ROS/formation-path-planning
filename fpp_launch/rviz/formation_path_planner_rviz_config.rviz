@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
+        - /Global Map - Robot11/Costmap1
       Splitter Ratio: 0.5736514329910278
     Tree Height: 820
   - Class: rviz/Selection
@@ -252,7 +253,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.05000000074505806
       Style: Squares
-      Topic: /robot0_ns/scan
+      Topic: /robot0/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -265,7 +266,7 @@ Visualization Manager:
           Draw Behind: true
           Enabled: true
           Name: Costmap
-          Topic: /robot0_ns/move_base_flex/global_costmap/costmap
+          Topic: /robot0/move_base_flex/global_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -329,7 +330,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot0_ns/move_base_node/DWAPlannerROS/global_plan
+          Topic: /robot0/move_base_node/DWAPlannerROS/global_plan
           Unreliable: false
           Value: true
         - Alpha: 1
@@ -352,7 +353,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot0_ns/move_base_flex/GlobalPlanner/plan
+          Topic: /robot0/move_base_flex/GlobalPlanner/plan
           Unreliable: false
           Value: true
         - Alpha: 1
@@ -360,7 +361,7 @@ Visualization Manager:
           Color: 255; 0; 0
           Enabled: true
           Name: Footprint
-          Topic: /robot0_ns/move_base_node/global_costmap/footprint
+          Topic: /robot0/move_base_node/global_costmap/footprint
           Unreliable: false
           Value: true
       Enabled: true
@@ -373,7 +374,7 @@ Visualization Manager:
           Draw Behind: false
           Enabled: true
           Name: Costmap
-          Topic: /robot0_ns/move_base_flex/local_costmap/costmap
+          Topic: /robot0/move_base_flex/local_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -461,7 +462,7 @@ Visualization Manager:
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
-      Topic: /robot0_ns/particlecloud
+      Topic: /robot0/particlecloud
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -655,7 +656,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.05000000074505806
       Style: Squares
-      Topic: /robot1_ns/scan
+      Topic: /robot1/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -668,7 +669,7 @@ Visualization Manager:
           Draw Behind: true
           Enabled: true
           Name: Costmap
-          Topic: /robot1_ns/move_base_flex/global_costmap/costmap
+          Topic: /robot1/move_base_flex/global_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -732,7 +733,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot0_ns/move_base_node/DWAPlannerROS/global_plan
+          Topic: /robot0/move_base_node/DWAPlannerROS/global_plan
           Unreliable: false
           Value: false
         - Alpha: 1
@@ -755,7 +756,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot1_ns/move_base_flex/GlobalPlanner/plan
+          Topic: /robot1/move_base_flex/GlobalPlanner/plan
           Unreliable: false
           Value: true
         - Alpha: 1
@@ -763,7 +764,7 @@ Visualization Manager:
           Color: 255; 0; 0
           Enabled: true
           Name: Footprint
-          Topic: /robot1_ns/move_base_node/global_costmap/footprint
+          Topic: /robot1/move_base_node/global_costmap/footprint
           Unreliable: false
           Value: true
       Enabled: true
@@ -776,7 +777,7 @@ Visualization Manager:
           Draw Behind: false
           Enabled: true
           Name: Costmap
-          Topic: /robot1_ns/move_base_flex/local_costmap/costmap
+          Topic: /robot1/move_base_flex/local_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -864,7 +865,7 @@ Visualization Manager:
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
-      Topic: /robot1_ns/particlecloud
+      Topic: /robot1/particlecloud
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -1058,7 +1059,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.05000000074505806
       Style: Squares
-      Topic: /robot2_ns/scan
+      Topic: /robot2/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -1071,7 +1072,7 @@ Visualization Manager:
           Draw Behind: true
           Enabled: true
           Name: Costmap
-          Topic: /robot2_ns/move_base_flex/global_costmap/costmap
+          Topic: /robot2/move_base_flex/global_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -1135,7 +1136,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot0_ns/move_base_node/DWAPlannerROS/global_plan
+          Topic: /robot0/move_base_node/DWAPlannerROS/global_plan
           Unreliable: false
           Value: false
         - Alpha: 1
@@ -1158,7 +1159,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot2_ns/move_base_flex/GlobalPlanner/plan
+          Topic: /robot2/move_base_flex/GlobalPlanner/plan
           Unreliable: false
           Value: true
         - Alpha: 1
@@ -1166,7 +1167,7 @@ Visualization Manager:
           Color: 255; 0; 0
           Enabled: true
           Name: Footprint
-          Topic: /robot2_ns/move_base_node/global_costmap/footprint
+          Topic: /robot2/move_base_node/global_costmap/footprint
           Unreliable: false
           Value: true
       Enabled: true
@@ -1179,7 +1180,7 @@ Visualization Manager:
           Draw Behind: false
           Enabled: true
           Name: Costmap
-          Topic: /robot2_ns/move_base_flex/local_costmap/costmap
+          Topic: /robot2/move_base_flex/local_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -1267,7 +1268,7 @@ Visualization Manager:
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
-      Topic: /robot2_ns/particlecloud
+      Topic: /robot2/particlecloud
       Unreliable: false
       Value: true
     - Class: rviz/Axes
@@ -1282,7 +1283,7 @@ Visualization Manager:
       Color: 32; 74; 135
       Enabled: true
       Name: Formation Footprint
-      Topic: /robot0_ns/move_base_flex/formation_footprint
+      Topic: /robot0/move_base_flex/formation_footprint
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -1305,12 +1306,12 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /robot0_ns/formation_plan
+      Topic: /robot0/formation_plan
       Unreliable: false
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /robot0_ns/move_base_flex/FormationPathPlanner/marker_array
+      Marker Topic: /robot0/move_base_flex/FormationPathPlanner/marker_array
       Name: MarkerArray
       Namespaces:
         {}
@@ -1318,7 +1319,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /robot0_ns/move_base_flex/FormationPathPlanner/marker
+      Marker Topic: /robot0/move_base_flex/FormationPathPlanner/marker
       Name: Marker
       Namespaces:
         {}
@@ -1344,7 +1345,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /robot0_ns/move_base_flex/plan
+      Topic: /robot0/move_base_flex/plan
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -1367,7 +1368,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /robot1_ns/move_base_flex/plan
+      Topic: /robot1/move_base_flex/plan
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -1390,7 +1391,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /robot2_ns/move_base_flex/plan
+      Topic: /robot2/move_base_flex/plan
       Unreliable: false
       Value: true
   Enabled: true

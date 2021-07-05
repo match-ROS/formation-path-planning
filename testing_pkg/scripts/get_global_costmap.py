@@ -18,7 +18,7 @@ if __name__ == '__main__':
     try:
         rospy.init_node('Dynamic_Footprint_Change', anonymous=True)
 
-        sub = rospy.Subscriber("/robot1_ns/move_base_flex/global_costmap/costmap", OccupancyGrid, callback=callback)
+        sub = rospy.Subscriber("/robot1/move_base_flex/global_costmap/costmap", OccupancyGrid, callback=callback)
 
         # The loop is just to get the callback method outputs
         # r = rospy.Rate(0.1)

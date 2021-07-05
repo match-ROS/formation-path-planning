@@ -2,8 +2,6 @@
 <launch>
     <!--Parameter for the robot0 that can be adjusted from outside of the launch file-->
     <arg name="robot0_name" default="robot0"/>
-    <arg name="robot0_tf_prefix" default="$(arg robot0_name)_tf/"/> <!--Notice the "/", it is important to only add it to the tf_prefix-->
-    <arg name="robot0_namespace" default="$(arg robot0_name)_ns"/>
 
     <!--Start Gazebo with GUI-->
     <arg name="gazebo_gui" default="true"/>
