@@ -21,7 +21,7 @@ FormationPathPlanner:
 
   formation_config:
     robot0:
-      namespace: /robot0_ns
+      namespace: /robot0
       master: true
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
 
@@ -30,7 +30,7 @@ FormationPathPlanner:
       # Later this functionality will be exported into a costmap layer
       robot_pose_topic: amcl_pose 
     robot1:
-      namespace: /robot1_ns
+      namespace: /robot1
       offset: [-1.0, 1.0] # Defines distance from master robot
       # reconfig_offset: [-1.0, 0.7] # Defines the distance from the master after reconfiguration
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
@@ -40,7 +40,7 @@ FormationPathPlanner:
       # Later this functionality will be exported into a costmap layer
       robot_pose_topic: amcl_pose
     robot2:
-      namespace: /robot2_ns
+      namespace: /robot2
       offset: [-1.0, -1.0] # Defines distance from master robot
       # reconfig_offset: [-1.0, -0.7] # Defines the distance from the master after reconfiguration
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]

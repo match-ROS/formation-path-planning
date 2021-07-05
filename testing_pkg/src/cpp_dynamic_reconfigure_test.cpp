@@ -26,7 +26,7 @@ bool empty(std_srvs::Empty::Request& request, std_srvs::Empty::Response& respons
     ROS_INFO("6");
     //bool b = temp_.call(rec);
     // ROS_INFO("%i", b);
-    ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", rec.request, rec.response);
+    ros::service::call("/robot1/move_base_flex/global_costmap/inflation/set_parameters", rec.request, rec.response);
     ROS_INFO("7");
     ROS_INFO("size: %i", rec.response.config.doubles.size());
     ROS_INFO("LIST:");
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "test_dyn_rec");
     ros::NodeHandle nh;
     ros::ServiceServer server = nh.advertiseService("test_service", empty);
-    ros::ServiceClient temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters");
+    ros::ServiceClient temp_ = nh.serviceClient<dynamic_reconfigure::Reconfigure>("/robot1/move_base_flex/global_costmap/inflation/set_parameters");
     temp_.waitForExistence();
 
     // ROS_INFO("SERVICE CALL");
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     // ROS_INFO("6");
     // bool b = temp_.call(rec);
     // ROS_INFO("%i", b);
-    // //ros::service::call("/robot1_ns/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
+    // //ros::service::call("/robot1/move_base_flex/global_costmap/inflation/set_parameters", reconf_req, reconf_res);
     // ROS_INFO("7");
     // ROS_INFO("size: %i", rec.response.config.doubles.size());
     // ROS_INFO("LIST:");

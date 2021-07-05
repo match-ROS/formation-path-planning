@@ -19,7 +19,7 @@ if __name__ == '__main__':
     
         # Dynamic client not working?
         rospy.loginfo("before client")
-        client = Client("/robot1_ns/move_base_flex/global_costmap/inflation", timeout=30, config_callback=callback)
+        client = Client("/robot1/move_base_flex/global_costmap/inflation", timeout=30, config_callback=callback)
         rospy.loginfo("updating")
         # returnvalue = client.update_configuration({"footprint":"[[0.506,-0.42],[0.506,0.42],[-0.454,0.42],[-0.454,-0.42]]"})
         returnvalue = client.update_configuration({"inflation_radius":"1.0"})

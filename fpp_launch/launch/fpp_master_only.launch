@@ -4,8 +4,6 @@
 
     <!--Variables for the robot0-->
     <arg name="robot0_name" value="robot0"/>
-    <arg name="robot0_namespace" value="$(arg robot0_name)_ns"/>
-    <arg name="robot0_tf_prefix" value="$(arg robot0_name)_tf/"/>
     <arg name="robot0_x_pos" default="-5.0"/>
     <arg name="robot0_y_pos" default="0.0"/>
     <arg name="robot0_yaw_rot" default="0.0"/>

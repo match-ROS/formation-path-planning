@@ -209,7 +209,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
       Name: RobotModel
-      Robot Description: robot1_ns/robot_description
+      Robot Description: robot1/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -253,7 +253,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.05000000074505806
       Style: Squares
-      Topic: /robot1_ns/scan
+      Topic: /robot1/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -276,7 +276,7 @@ Visualization Manager:
           Draw Behind: true
           Enabled: true
           Name: Costmap
-          Topic: /robot1_ns/move_base_flex/global_costmap/costmap
+          Topic: /robot1/move_base_flex/global_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -363,7 +363,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /robot1_ns/move_base_flex/AdvancedAStar/plan
+          Topic: /robot1/move_base_flex/AdvancedAStar/plan
           Unreliable: false
           Value: true
         - Alpha: 1
@@ -384,7 +384,7 @@ Visualization Manager:
           Draw Behind: false
           Enabled: true
           Name: Costmap
-          Topic: /robot1_ns/move_base_flex/local_costmap/costmap
+          Topic: /robot1/move_base_flex/local_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -472,7 +472,7 @@ Visualization Manager:
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
-      Topic: /robot1_ns/move_base_flex/AdvancedAStar/planning_points_orientation
+      Topic: /robot1/move_base_flex/AdvancedAStar/planning_points_orientation
       Unreliable: false
       Value: true
     - Class: rviz/Axes
@@ -484,7 +484,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /robot1_ns/move_base_flex/AdvancedAStar/marker_array
+      Marker Topic: /robot1/move_base_flex/AdvancedAStar/marker_array
       Name: MarkerArray
       Namespaces:
         {}
@@ -508,7 +508,7 @@ Visualization Manager:
       X std deviation: 0.5
       Y std deviation: 0.5
     - Class: rviz/SetGoal
-      Topic: /robot1_ns/move_base_simple/goal
+      Topic: /robot1/move_base_simple/goal
     - Class: rviz/Measure
     - Class: rviz/PublishPoint
       Single click: true
