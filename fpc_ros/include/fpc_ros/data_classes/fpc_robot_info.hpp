@@ -21,6 +21,8 @@ namespace fpc_data_classes
 		bool fpc_master;
 		//! Topic name where the pose of the robot can be received
 		std::string robot_pose_topic;
+		//! Topic name where the ground truth pose of the robot will be published from Gazebo
+		std::string robot_ground_truth_topic;
 		//! Topic name where the odometry of the robot can be received
 		std::string robot_odom_topic;
 		//! Topic name where the velocity of the robot can be published to

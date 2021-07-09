@@ -59,7 +59,7 @@ namespace fpc
 	bool FPCControllerSlave::onNextTargetCommand(fpp_msgs::NextTargetPoseCommand::Request &req,
 												 fpp_msgs::NextTargetPoseCommand::Response &res)
 	{
-		ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << "onNextTargetCommand");
+		// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << "onNextTargetCommand");
 		if(global_plan_.size() == 0)
 		{
 			res.diff_after_next_pose.x = 0.0;

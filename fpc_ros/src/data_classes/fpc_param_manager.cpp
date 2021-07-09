@@ -50,6 +50,16 @@ namespace fpc_data_classes
 			this->nh_.getParam(general_robot_pose_topic_key, general_robot_pose_topic);
 		}
 
+		// Get the topic name where the ground truth pose of the robots will be published by the Gazebo Simulation
+		// This param is used to set the topic name of each robot to the same name. 
+		// Special "robot_ground_truth_topic" params in the robot params override this.
+		std::string general_robot_ground_truth_topic = "DefaultGroundTruthTopicName";
+		std::string general_robot_ground_truth_topic_key;
+		if(this->nh_.searchParam("robot_ground_truth_topic", general_robot_ground_truth_topic_key))
+		{
+			this->nh_.getParam(general_robot_ground_truth_topic_key, general_robot_ground_truth_topic);
+		}
+
 		// Get the topic name where the odometry of the robots will be published
 		// This param is used to set the topic name of each robot to the same name. 
 		// Special "robot_odom_topic" params in the robot params override this.
@@ -116,6 +126,20 @@ namespace fpc_data_classes
 					else
 					{
 						ROS_ERROR_STREAM("robot_pose_topic was not set for " << robot_info->robot_name);
+					}
+
+					// Set robot ground truth topic name for each robot
+					if(robot_info_xmlrpc.hasMember("robot_ground_truth_topic") && robot_info_xmlrpc["robot_ground_truth_topic"].getType() == XmlRpc::XmlRpcValue::TypeString)
+					{
+						robot_info->robot_ground_truth_topic = static_cast<std::string>(robot_info_xmlrpc["robot_ground_truth_topic"]);
+					}
+					else if(general_robot_ground_truth_topic != "DefaultGroundTruthTopicName")
+					{
+						robot_info->robot_ground_truth_topic = general_robot_ground_truth_topic;
+					}
+					else
+					{
+						ROS_ERROR_STREAM("robot_ground_truth_topic was not set for " << robot_info->robot_name);
 					}
 
 					// Set robot_odom topic name for each robot

@@ -353,7 +353,7 @@ namespace fpc
 			this);
 		
 		this->robot_ground_truth_subscriber_ = this->nh_.subscribe(
-			this->fpc_param_info_->getCurrentRobotNamespace() + "/base_pose_ground_truth",
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/" + this->fpc_param_info_->getCurrentRobotGroundTruthTopic(),
 			10,
 			&FPCControllerBase::getRobotGroundTruthCb,
 			this);

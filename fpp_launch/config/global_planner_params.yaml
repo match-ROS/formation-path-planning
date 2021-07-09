@@ -69,10 +69,10 @@ FormationPathPlanner:
       free_cell_threshold: 0
       # Distance that is added from the start point of the Relaxed A Star in the direction of the start orientation.
       # This should help no creating splines that instantly make a curve
-      start_straight_distance: 1.0
+      start_straight_distance: 0.7
       # Distance that is subtracted from the end point of the Relaxed A Star in the direction of the end orientation.
       # This should help no creating splines that instantly make a curve before the end
-      end_straight_distance: 1.0
+      end_straight_distance: 0.7
       # Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
       # Every nth cell will act as a control point
       control_point_distance: 80
