@@ -4,16 +4,12 @@ namespace fpc
 {
 	#pragma region Constructors
 	FPCControllerBase::FPCControllerBase(
-		std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list,
-		std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info,
+		std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info,
 		ros::NodeHandle &nh,
 		ros::NodeHandle &controller_nh)
-		: robot_info_list_(robot_info_list),
-		  robot_info_(robot_info),
+		: fpc_param_info_(fpc_param_info),
 		  nh_(nh),
 		  controller_nh_(controller_nh),
-		  master_robot_info_(getMasterRobotInfo(robot_info_list)),
-		  pose_index_(1),
 		  controller_finished_(false)
 	{
 	}
@@ -34,6 +30,14 @@ namespace fpc
 		this->tf_prefix_ = tf::getPrefixParam(this->nh_);
 		this->robot_ns_ = this->nh_.getNamespace();
 
+		// Initialize last published cmd vel object
+		this->last_published_cmd_vel_.linear.x = 0.0;
+		this->last_published_cmd_vel_.linear.y = 0.0;
+		this->last_published_cmd_vel_.linear.z = 0.0;
+		this->last_published_cmd_vel_.angular.x = 0.0;
+		this->last_published_cmd_vel_.angular.y = 0.0;
+		this->last_published_cmd_vel_.angular.z = 0.0;
+
 		this->initTopics();
 		this->initServices();
 		this->initTimers();
@@ -43,6 +47,9 @@ namespace fpc
 	{
 		this->global_plan_ = plan;
 		this->last_target_pose_ = this->global_plan_[0];
+
+		this->controller_timer_.start();
+
 		return true;
 	}
 
@@ -50,6 +57,7 @@ namespace fpc
 	{
 		if(this->controller_finished_)
 		{
+			this->controller_timer_.stop();
 			return true;
 		}
 
@@ -82,6 +90,7 @@ namespace fpc
 			return false;
 		}
 
+		this->controller_timer_.stop();
 		return true;
 	}
 
@@ -111,137 +120,138 @@ namespace fpc
 														geometry_msgs::TwistStamped &cmd_vel,
 														std::string &message)
 	{
-		// ROS_ERROR_STREAM(this->robot_info_->robot_name);
-		// ROS_INFO_STREAM("pose     : " << pose.pose.position.x << " | " << pose.pose.position.y);
-		// ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
-		// ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
+		// // ROS_ERROR_STREAM(this->robot_info_->robot_name);
+		// // ROS_INFO_STREAM("pose     : " << pose.pose.position.x << " | " << pose.pose.position.y);
+		// // ROS_INFO_STREAM("amcl_pose: " << this->current_robot_pose_.position.x << " | " << this->current_robot_pose_.position.y);
+		// // ROS_INFO_STREAM("ground_truth: " << this->current_robot_ground_truth_->pose.pose.position.x << " | " << this->current_robot_ground_truth_->pose.pose.position.y);
 
-		double controller_freq = 2.0; // This must be a parameter later as the move base settings define this
-		double period_time_span = 1.0 / controller_freq;
+		// double controller_freq = 2.0; // This must be a parameter later as the move base settings define this
+		// double period_time_span = 1.0 / controller_freq;
 
-		// geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
+		// // geometry_msgs::PoseStamped target_pose = this->global_plan_[this->pose_index_];
 
-		tf::Pose current_pose;
-		tf::poseMsgToTF(pose.pose, current_pose);
-
-
-		if(this->pose_index_ >= this->global_plan_.size())
-		{
-			ROS_ERROR_STREAM("FPCControllerBase: last pose_index exceeded without reaching goal.");
-			cmd_vel.header.frame_id = this->global_frame_;
-			cmd_vel.header.stamp = ros::Time::now();
-			cmd_vel.twist.linear.x = 0.0;
-			cmd_vel.twist.linear.y = 0.0;
-			cmd_vel.twist.linear.z = 0.0;
-			cmd_vel.twist.angular.x = 0.0;
-			cmd_vel.twist.angular.y = 0.0;
-			cmd_vel.twist.angular.z = 0.0;
-
-			this->controller_finished_ = true;
-
-			return 107;
-		}
-
-		tf::Pose target_pose;
-		tf::poseMsgToTF(this->global_plan_[this->pose_index_].pose, target_pose);
-		
-
-		tf::Transform control_diff=current_pose.inverseTimes(target_pose);
-		// tf::Transform control_dif = target_pose.inverseTimes(current_pose);
-
-		// ROS_INFO_STREAM("current_dir: " << tf::getYaw(pose.pose.orientation) << " target_dir: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) << " diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(pose.pose.orientation));
+		// tf::Pose current_pose;
+		// tf::poseMsgToTF(pose.pose, current_pose);
 
 
-		double x=control_diff.getOrigin().getX();
-		double y=control_diff.getOrigin().getY();   
-
-		double phi=tf::getYaw(control_diff.getRotation());
-
-		double v = std::sqrt(std::pow(x, 2) + std::pow(y, 2)) / period_time_span;
-		double omega = phi / period_time_span;
-		
-		
-		// if(this->robot_info_->robot_name == "robot0")
+		// if(this->pose_index_ >= this->global_plan_.size())
 		// {
-		// 	ROS_INFO_STREAM("Control: x: " << x << " y: " << y << " phi: " << phi);
-		// 	ROS_INFO_STREAM("v: " << v << " omega: " << omega << " time: " << period_time_span);
+		// 	ROS_ERROR_STREAM("FPCControllerBase: last pose_index exceeded without reaching goal.");
+		// 	cmd_vel.header.frame_id = this->global_frame_;
+		// 	cmd_vel.header.stamp = ros::Time::now();
+		// 	cmd_vel.twist.linear.x = 0.0;
+		// 	cmd_vel.twist.linear.y = 0.0;
+		// 	cmd_vel.twist.linear.z = 0.0;
+		// 	cmd_vel.twist.angular.x = 0.0;
+		// 	cmd_vel.twist.angular.y = 0.0;
+		// 	cmd_vel.twist.angular.z = 0.0;
+
+		// 	this->controller_finished_ = true;
+
+		// 	return 107;
 		// }
 
-		// In theory a phi that is greater or smaller than pi/2 should not occure!
-		// if(phi>=M_PI_2)
-		// {
-		// 	phi-=M_PI;
-		// 	v=-v;    
-		// }
-		// else if( phi<=-M_PI_2)
-		// {
-		// 	phi=phi+M_PI;
-		// 	v=-v;
-		// }
+		// tf::Pose target_pose;
+		// tf::poseMsgToTF(this->global_plan_[this->pose_index_].pose, target_pose);
+		
 
-		double output_v;
-		double output_omega;
+		// tf::Transform control_diff=current_pose.inverseTimes(target_pose);
+		// // tf::Transform control_dif = target_pose.inverseTimes(current_pose);
 
-		output_v = this->robot_info_->lyapunov_params.kx * x + v * cos(phi);
-		// ROS_INFO_STREAM("kx: " << this->robot_info_->lyapunov_params.kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
+		// // ROS_INFO_STREAM("current_dir: " << tf::getYaw(pose.pose.orientation) << " target_dir: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) << " diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(pose.pose.orientation));
 
-		output_omega = omega +
-					   this->robot_info_->lyapunov_params.ky * v * y +
-					   this->robot_info_->lyapunov_params.kphi * sin(phi);
-		// ROS_INFO_STREAM("omega: " << omega << " ky: " << this->robot_info_->lyapunov_params.ky << " v: " << v << " y: " << y << " kphi: " << this->robot_info_->lyapunov_params.kphi << " phi: " << phi << " sin(phi): " << sin(phi));
-		// COPY PASTED FROM MALTE END
 
-		if(this->robot_info_->robot_name == "robot0")
-			ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
+		// double x=control_diff.getOrigin().getX();
+		// double y=control_diff.getOrigin().getY();   
 
-		cmd_vel.twist.linear.x = output_v;
-		cmd_vel.twist.linear.y = 0.0;
-		cmd_vel.twist.linear.z = 0.0;
+		// double phi=tf::getYaw(control_diff.getRotation());
 
-		cmd_vel.twist.angular.x = 0.0;
-		cmd_vel.twist.angular.y = 0.0;
-		cmd_vel.twist.angular.z = output_omega;  // rad/s
+		// double v = std::sqrt(std::pow(x, 2) + std::pow(y, 2)) / period_time_span;
+		// double omega = phi / period_time_span;
+		
+		
+		// // if(this->robot_info_->robot_name == "robot0")
+		// // {
+		// // 	ROS_INFO_STREAM("Control: x: " << x << " y: " << y << " phi: " << phi);
+		// // 	ROS_INFO_STREAM("v: " << v << " omega: " << omega << " time: " << period_time_span);
+		// // }
 
-		// Set meta data info
-		this->meta_data_msg_.target_vel = cmd_vel.twist; 
-		this->meta_data_msg_.target_pose = this->convertPose(this->global_plan_[this->pose_index_].pose);
-		this->meta_data_msg_.current_pose = this->convertPose(pose.pose);
-		this->publishMetaData();
+		// // In theory a phi that is greater or smaller than pi/2 should not occure!
+		// // if(phi>=M_PI_2)
+		// // {
+		// // 	phi-=M_PI;
+		// // 	v=-v;    
+		// // }
+		// // else if( phi<=-M_PI_2)
+		// // {
+		// // 	phi=phi+M_PI;
+		// // 	v=-v;
+		// // }
 
-		// if(this->robot_info_->robot_name == "robot0")
-		// 	ROS_INFO_STREAM("x_diff: " << this->global_plan_[this->pose_index_].pose.position.x - this->last_target_pose_.pose.position.x << " | y_diff: " << this->global_plan_[this->pose_index_].pose.position.y - this->last_target_pose_.pose.position.y << " | phi_diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(this->last_target_pose_.pose.orientation));
-		this->last_target_pose_ = this->global_plan_[this->pose_index_];
+		// double output_v;
+		// double output_omega;
 
-		this->pose_index_++;
+		// output_v = this->fpc_param_info_->getLyapunovParams().kx * x + v * cos(phi);
+		// // ROS_INFO_STREAM("kx: " << this->robot_info_->lyapunov_params.kx << " x: " << x << " v: " << v << " phi: " << phi << " cos(phi): " << cos(phi));
+
+		// output_omega = omega +
+		// 			   this->fpc_param_info_->getLyapunovParams().ky * v * y +
+		// 			   this->fpc_param_info_->getLyapunovParams().kphi * sin(phi);
+		// // ROS_INFO_STREAM("omega: " << omega << " ky: " << this->robot_info_->lyapunov_params.ky << " v: " << v << " y: " << y << " kphi: " << this->robot_info_->lyapunov_params.kphi << " phi: " << phi << " sin(phi): " << sin(phi));
+		// // COPY PASTED FROM MALTE END
+
+		// if(this->fpc_param_info_->getCurrentRobotName() == "robot0")
+		// 	ROS_INFO_STREAM("output_v: " << output_v << " output_omega: " << output_omega);
+
+		// cmd_vel.twist.linear.x = output_v;
+		// cmd_vel.twist.linear.y = 0.0;
+		// cmd_vel.twist.linear.z = 0.0;
+
+		// cmd_vel.twist.angular.x = 0.0;
+		// cmd_vel.twist.angular.y = 0.0;
+		// cmd_vel.twist.angular.z = output_omega;  // rad/s
+
+		// // Set meta data info
+		// this->meta_data_msg_.target_vel = cmd_vel.twist; 
+		// this->meta_data_msg_.target_pose = this->convertPose(this->global_plan_[this->pose_index_].pose);
+		// this->meta_data_msg_.current_pose = this->convertPose(pose.pose);
+		// this->publishMetaData();
+
+		// // if(this->robot_info_->robot_name == "robot0")
+		// // 	ROS_INFO_STREAM("x_diff: " << this->global_plan_[this->pose_index_].pose.position.x - this->last_target_pose_.pose.position.x << " | y_diff: " << this->global_plan_[this->pose_index_].pose.position.y - this->last_target_pose_.pose.position.y << " | phi_diff: " << tf::getYaw(this->global_plan_[this->pose_index_].pose.orientation) - tf::getYaw(this->last_target_pose_.pose.orientation));
+		// this->last_target_pose_ = this->global_plan_[this->pose_index_];
+
+		// this->pose_index_++;
+
+		cmd_vel.header.frame_id = this->global_frame_;
+		cmd_vel.header.stamp = ros::Time::now();
+		cmd_vel.twist = this->last_published_cmd_vel_;
 
 		return 0;
 	}
 
-	void FPCControllerBase::publishMetaData()
+	void FPCControllerBase::publishMetaData(geometry_msgs::Pose2D target_pose)
 	{
 		this->meta_data_msg_.stamp = ros::Time::now();
 
-		// Current pose should be set by calculateVelocityCommand method
+		this->meta_data_msg_.current_pose = this->convertPose(this->current_robot_amcl_pose_);
 		this->meta_data_msg_.current_vel = this->current_robot_odom_->twist.twist;
 
+		this->meta_data_msg_.target_pose = target_pose;
+
 		// Calculate diff current to target
-		this->meta_data_msg_.current_to_target_pose_diff = this->calcDiff(
-			this->meta_data_msg_.current_pose, this->meta_data_msg_.target_pose);
+		// this->meta_data_msg_.current_to_target_pose_diff = this->calcDiff(
+		// 	this->meta_data_msg_.current_pose, this->meta_data_msg_.target_pose);
 		this->meta_data_msg_.current_to_target_vel_diff = this->calcDiff(
 			this->meta_data_msg_.target_vel, this->meta_data_msg_.current_vel);
 
 		// Insert additional pose info
 		this->meta_data_msg_.ground_truth_pose = this->convertPose(this->current_robot_ground_truth_->pose.pose);
 		this->meta_data_msg_.odom_pose = this->convertPose(this->current_robot_odom_->pose.pose);
-		this->meta_data_msg_.amcl_pose = this->convertPose(this->current_robot_amcl_pose_);
 
 		// Insert additional interesting infos
-		this->meta_data_msg_.current_to_amcl_pose_diff = this->calcDiff(
-			this->meta_data_msg_.current_pose, this->meta_data_msg_.amcl_pose);
 		this->meta_data_msg_.current_to_ground_truth_pose_diff = this->calcDiff(
 			this->meta_data_msg_.current_pose, this->meta_data_msg_.ground_truth_pose);
-		this->meta_data_msg_.amcl_to_ground_truth_diff = this->calcDiff(
-			this->meta_data_msg_.amcl_pose, this->meta_data_msg_.ground_truth_pose);
 
 		// Publish data so it can be visualized in plotjuggler from rosbag
 		this->meta_data_publisher_.publish(this->meta_data_msg_);
@@ -264,6 +274,66 @@ namespace fpc
 	{
 		this->current_robot_ground_truth_ = msg;
 	}
+
+	void FPCControllerBase::onControllerTimerCB(const ros::TimerEvent& timer_event_info)
+	{
+		this->runController();
+	}
+	#pragma endregion
+
+	#pragma region Controller Methods
+	void FPCControllerBase::runController() { }
+
+	float FPCControllerBase::calcLinVelocity(geometry_msgs::Pose2D diff_vector, float scale_factor)
+	{
+		float output_v = this->fpc_param_info_->getLyapunovParams().kx * diff_vector.x +
+						 this->fpc_param_info_->controller_params.max_vel_x * scale_factor * cos(diff_vector.theta);
+		// ROS_INFO_STREAM("kx: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kx << " x: " << diff_vector.x << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " scale_factor: " << scale_factor << " phi: " << diff_vector.theta << " cos(phi): " << cos(diff_vector.theta) << " v res: " << output_v);
+		return output_v;
+	}
+
+	float FPCControllerBase::calcRotVelocity(geometry_msgs::Pose2D diff_vector)
+	{
+		float target_omega;
+		if(diff_vector.theta < 0)
+		{
+			target_omega = -this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
+		}
+		else
+		{
+			target_omega = this->fpc_param_info_->controller_params.max_vel_theta * 0.0;
+		}
+
+		float output_omega = target_omega +
+							 this->fpc_param_info_->getLyapunovParams().ky * this->fpc_param_info_->controller_params.max_vel_x * diff_vector.y +
+							 this->fpc_param_info_->getLyapunovParams().kphi * sin(diff_vector.theta);
+		// ROS_INFO_STREAM("omega: " << this->fpc_param_info_->controller_params.max_vel_theta << " ky: " << this->fpc_param_info_->current_robot_info->lyapunov_params.ky << " v: " << this->fpc_param_info_->controller_params.max_vel_x << " y: " << diff_vector.y << " kphi: " << this->fpc_param_info_->current_robot_info->lyapunov_params.kphi << " phi: " << diff_vector.theta << " sin(phi): " << sin(diff_vector.theta) << " omega res: " << output_omega); 
+		return output_omega;
+	}
+
+	int FPCControllerBase::locateRobotOnPath(geometry_msgs::Pose current_pose)
+	{
+		int closest_pose_index = 0;
+		float closest_distance = this->calcEuclideanDiff(current_pose, this->global_plan_[0].pose);
+		int second_closest_pose_index = 0;
+		float second_closest_distance = closest_distance; // Will be used later, but need to redo in/out of method					 
+		int pose_index = 0;
+		for(geometry_msgs::PoseStamped &global_plan_pose: this->global_plan_)
+		{
+			float distance_to_pose = this->calcEuclideanDiff(current_pose, global_plan_pose.pose);
+			if(distance_to_pose < closest_distance)
+			{
+				second_closest_pose_index = closest_pose_index;
+				second_closest_distance = closest_distance;
+				closest_pose_index = pose_index;
+				closest_distance = distance_to_pose;
+			}
+
+			pose_index++;
+		}
+
+		return closest_pose_index;
+	}
 	#pragma endregion
 
 	#pragma region ProtectedHelperMethods
@@ -272,40 +342,35 @@ namespace fpc
 	void FPCControllerBase::initTopics()
 	{
 		this->robot_amcl_pose_subscriber_ = this->nh_.subscribe(
-			this->robot_info_->robot_namespace + "/" + this->robot_info_->robot_pose_topic,
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/" + this->fpc_param_info_->getCurrentRobotPoseTopic(),
 			10,
 			&FPCControllerBase::getRobotPoseCb,
 			this);
 		this->robot_odom_subscriber_ = this->nh_.subscribe(
-			this->robot_info_->robot_namespace + "/" + this->robot_info_->robot_odom_topic,
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/" + this->fpc_param_info_->getCurrentRobotOdomTopic(),
 			10,
 			&FPCControllerBase::getRobotOdomCb,
 			this);
 		
 		this->robot_ground_truth_subscriber_ = this->nh_.subscribe(
-			this->robot_info_->robot_namespace + "/base_pose_ground_truth",
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/" + this->fpc_param_info_->getCurrentRobotGroundTruthTopic(),
 			10,
 			&FPCControllerBase::getRobotGroundTruthCb,
 			this);
+
+		this->cmd_vel_publisher_ = this->nh_.advertise<geometry_msgs::Twist>(
+			this->fpc_param_info_->getCurrentRobotNamespace() + "/" + this->fpc_param_info_->getCurrentRobotCmdVelTopic(),
+			1000);
 
 		this->meta_data_publisher_ = this->controller_nh_.advertise<fpp_msgs::LocalPlannerMetaData>(
 			"fpc_meta_data", 1000);
 	}
 
-	void FPCControllerBase::initTimers() { }
-
-	std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> FPCControllerBase::getMasterRobotInfo(
-		const std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list)
-	{
-		for(int robot_info_counter = 0; robot_info_counter < robot_info_list.size(); robot_info_counter++)
-		{
-			if(robot_info_list[robot_info_counter]->fpc_master)
-			{
-				return robot_info_list[robot_info_counter];
-			}
-		}
-		ROS_ERROR_STREAM("FPCControllerBase::getMasterRobotInfo: No master robot info found. Please check if flag is set in config.");
-		return NULL;
+	void FPCControllerBase::initTimers() 
+	{ 
+		this->controller_timer_ = this->controller_nh_.createTimer(
+			ros::Duration(1.0/this->fpc_param_info_->controller_params.controller_frequency), 
+			&FPCControllerBase::onControllerTimerCB, this, false, false);
 	}
 
 	geometry_msgs::Pose2D FPCControllerBase::convertPose(geometry_msgs::Pose pose_to_convert)
@@ -317,6 +382,44 @@ namespace fpc
 		converted_pose.theta = tf::getYaw(pose_to_convert.orientation);
 
 		return converted_pose;
+	}
+
+	Eigen::Vector3f FPCControllerBase::convertPose(geometry_msgs::Pose2D pose_to_convert)
+	{
+		Eigen::Vector3f converted_vector;
+		converted_vector << pose_to_convert.x, pose_to_convert.y, pose_to_convert.theta;
+		return converted_vector;
+	}
+
+	geometry_msgs::Pose2D FPCControllerBase::calcDiff(geometry_msgs::Pose start_pose, geometry_msgs::Pose end_pose)
+	{
+		geometry_msgs::Pose2D diff_between_poses;
+		
+		geometry_msgs::Pose2D current_robot_pose_2D = this->convertPose(start_pose);
+		Eigen::Vector2f current_robot_pose_eigen;
+		current_robot_pose_eigen << current_robot_pose_2D.x, current_robot_pose_2D.y;
+		geometry_msgs::Pose2D target_pose_2D = this->convertPose(end_pose);
+		Eigen::Vector2f target_pose_eigen;
+		target_pose_eigen << target_pose_2D.x, target_pose_2D.y;
+
+		Eigen::Vector2f diff_to_target_robot_cs = this->transformVector(target_pose_eigen,
+																		current_robot_pose_eigen,
+																		current_robot_pose_2D.theta);
+		
+		tf::Quaternion quat_0;
+		tf::quaternionMsgToTF(start_pose.orientation, quat_0);
+		quat_0.normalize();
+		tf::Quaternion quat_1;
+		tf::quaternionMsgToTF(end_pose.orientation, quat_1);
+		quat_1.normalize();
+		tf::Quaternion quat_diff = quat_1 * quat_0.inverse();
+		quat_diff.normalize();
+
+		diff_between_poses.x = diff_to_target_robot_cs[0];
+		diff_between_poses.y = diff_to_target_robot_cs[1];
+		diff_between_poses.theta = tf::getYaw(quat_diff);
+
+		return diff_between_poses;
 	}
 
 	geometry_msgs::Pose2D FPCControllerBase::calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose)
@@ -342,6 +445,50 @@ namespace fpc
 		vel_diff.angular.z = end_vel.angular.z - start_vel.angular.z;
 
 		return vel_diff;
+	}
+
+	float FPCControllerBase::calcEuclideanDiff(geometry_msgs::Pose point1, geometry_msgs::Pose point2)
+	{
+		return std::sqrt(std::pow(point1.position.x - point2.position.x, 2) +
+						 std::pow(point1.position.y - point2.position.y, 2));
+	}
+
+	float FPCControllerBase::calcEuclideanDistance(geometry_msgs::Pose2D vector)
+	{
+		return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2));
+	}
+
+	float FPCControllerBase::calcVelocityFactor(geometry_msgs::Pose2D pose_diff, float largest_euclidean_diff)
+	{
+		float pose_diff_length = this->calcEuclideanDistance(pose_diff);
+		if(pose_diff.x < 0.0)
+		{
+			return 0.25;
+		}
+
+		return 1.0;//pose_diff_length / largest_euclidean_diff;
+	}
+
+	Eigen::Matrix<float, 4, 4> FPCControllerBase::createTransformationMatrix(Eigen::Vector2f lead_vector_world_cs, float rotation)
+    {
+        Eigen::Matrix<float, 4, 4> transformation_matrix;
+		transformation_matrix << cos(rotation), -sin(rotation), 0, lead_vector_world_cs[0],
+			sin(rotation), cos(rotation), 0, lead_vector_world_cs[1],
+			0, 0, 1, 0,
+			0, 0, 0, 1;
+		return transformation_matrix;
+    }
+
+	Eigen::Vector2f FPCControllerBase::transformVector(Eigen::Vector2f vector_to_transform,
+													   Eigen::Vector2f lead_vector,
+													   float rotation)
+	{
+		Eigen::Vector4f extended_vector_to_tf;
+		extended_vector_to_tf << vector_to_transform[0], vector_to_transform[1], 0, 1;
+		Eigen::Matrix<float, 4, 4> robot_to_world_tf = this->createTransformationMatrix(lead_vector, rotation);
+		Eigen::Matrix<float, 4, 4> world_to_robot_tf = robot_to_world_tf.inverse();
+		Eigen::Vector4f extended_transformed_vector = world_to_robot_tf * extended_vector_to_tf;
+		return extended_transformed_vector.head<2>();
 	}
 	#pragma endregion
 }

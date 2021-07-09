@@ -27,7 +27,7 @@ FormationPathController:
 
     # Defines the max and min velocity where the target velocity will be caped at
     # Separate in forward and backwards movement
-    max_vel_x:  0.3
+    max_vel_x:  0.1
     min_vel_x: -0.2
 
     # Defines the max and min rotational velocity of the robot
@@ -37,24 +37,15 @@ FormationPathController:
 
   formation_config:
     robot0:
-      namespace: /robot0
+      namespace: /robot0_ns
       master: true
       robot_pose_topic: amcl_pose
-      robot_ground_truth_topic: ground_truth
       robot_odom_topic: mobile_base_controller/odom
       robot_cmd_vel_topic: mobile_base_controller/cmd_vel
-      lyapunov_params: [3.4, 10.0, 2.5]
+      lyapunov_params: [3.4, 30.0, 2.5]
     robot1:
-      namespace: /robot1
+      namespace: /robot1_ns
       robot_pose_topic: amcl_pose
-      robot_ground_truth_topic: ground_truth
       robot_odom_topic: mobile_base_controller/odom
       robot_cmd_vel_topic: mobile_base_controller/cmd_vel
-      lyapunov_params: [3.4, 10.0, 2.5]
-    robot2:
-      namespace: /robot2
-      robot_pose_topic: amcl_pose
-      robot_ground_truth_topic: ground_truth
-      robot_odom_topic: mobile_base_controller/odom
-      robot_cmd_vel_topic: mobile_base_controller/cmd_vel
-      lyapunov_params: [3.4, 10.0, 2.5]
+      lyapunov_params: [3.4, 30.0, 2.5]

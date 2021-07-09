@@ -2,6 +2,7 @@
 
 #include <string>
 #include <fpc_ros/data_classes/lyapunov_params.hpp>
+#include <fpc_ros/data_classes/controller_params.hpp>
 
 namespace fpc_data_classes
 {
@@ -10,7 +11,7 @@ namespace fpc_data_classes
      * Data is read from the local_planner_config.yaml and loaded by move_base_flex
      * 
      */
-	struct LocalPlannerRobotInfo
+	struct FPCRobotInfo
 	{
 		//! Name of the robot
 		std::string robot_name;
@@ -20,8 +21,12 @@ namespace fpc_data_classes
 		bool fpc_master;
 		//! Topic name where the pose of the robot can be received
 		std::string robot_pose_topic;
+		//! Topic name where the ground truth pose of the robot will be published from Gazebo
+		std::string robot_ground_truth_topic;
 		//! Topic name where the odometry of the robot can be received
 		std::string robot_odom_topic;
+		//! Topic name where the velocity of the robot can be published to
+		std::string robot_cmd_vel_topic;
 		//! Params for the lyapunov controller
 		fpc_data_classes::LyapunovParams lyapunov_params;
 	};

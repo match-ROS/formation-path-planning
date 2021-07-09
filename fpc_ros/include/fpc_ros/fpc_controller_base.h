@@ -6,6 +6,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <tf2_ros/buffer.h>
 #include <tf/transform_listener.h>
@@ -15,7 +16,7 @@
 #include <vector>
 #include <eigen3/Eigen/Dense>
 
-#include <fpc_ros/data_classes/local_planner_robot_info.hpp>
+#include <fpc_ros/data_classes/fpc_param_info.hpp>
 #include <fpp_msgs/LocalPlannerMetaData.h>
 
 namespace fpc
@@ -25,8 +26,7 @@ namespace fpc
 		public:
 			#pragma region Constructors
 			FPCControllerBase(
-				std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list,
-				std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info,
+				std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info,
 				ros::NodeHandle &nh,
 				ros::NodeHandle &controller_nh);
 			#pragma endregion
@@ -46,7 +46,7 @@ namespace fpc
 													 geometry_msgs::TwistStamped &cmd_vel,
 													 std::string &message);
 
-			virtual void publishMetaData();
+			virtual void publishMetaData(geometry_msgs::Pose2D target_pose);
 			#pragma endregion
 			
 			#pragma region Getter/Setter
@@ -76,24 +76,25 @@ namespace fpc
 			std::string robot_ns_;
 
 			#pragma region ProcessInfo
-			//! This is all the information that was read from the config file about each robot
-            std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list_;
-			//! This points to the object that contains the information about this robot
-            std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info_;
-			//! This point to the object that represents the master in the formation path planner
-			const std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> master_robot_info_;
+			std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info_;
+			// //! This is all the information that was read from the config file about each robot
+            // std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list_;
+			// //! This points to the object that contains the information about this robot
+            // std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info_;
+			// //! This point to the object that represents the master in the formation path planner
+			// const std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> master_robot_info_;
+
+			geometry_msgs::Twist last_published_cmd_vel_;
 
 			std::vector<geometry_msgs::PoseStamped> global_plan_;
 
-			int pose_index_;
+			float velocity_factor_;
 			bool controller_finished_;
 
 			geometry_msgs::PoseStamped last_target_pose_;
 			#pragma endregion
 
-
-
-			#pragma region Topics/Services/Actions
+			#pragma region Topics/Services/Actions/Timers
 			ros::Subscriber robot_amcl_pose_subscriber_;
 			geometry_msgs::Pose current_robot_amcl_pose_;
 			ros::Subscriber robot_odom_subscriber_;
@@ -101,16 +102,28 @@ namespace fpc
 			ros::Subscriber robot_ground_truth_subscriber_; // This subscriber will only work in Gazebo where ground truth is published
 			nav_msgs::OdometryConstPtr current_robot_ground_truth_;
 
+			ros::Publisher cmd_vel_publisher_;
 			ros::Publisher meta_data_publisher_;
 			fpp_msgs::LocalPlannerMetaData meta_data_msg_; // This is the msg that will be published. Every info can be stored here and will be reset when message is published. 
+
+			ros::Timer controller_timer_;
 			#pragma endregion
 
-			#pragma CallbackMethods
+			#pragma region CallbackMethods
 			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
 			void getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg);
 
 			void getRobotGroundTruthCb(const nav_msgs::OdometryConstPtr &msg);
 			
+			void onControllerTimerCB(const ros::TimerEvent& timer_event_info);
+			#pragma endregion
+
+			#pragma region Controller Methods
+			virtual void runController();
+			float calcLinVelocity(geometry_msgs::Pose2D diff_vector, float scale_factor);
+			float calcRotVelocity(geometry_msgs::Pose2D diff_vector);
+
+			int locateRobotOnPath(geometry_msgs::Pose current_pose);
 			#pragma endregion
 
 			#pragma region ProtectedHelperMethods
@@ -130,12 +143,27 @@ namespace fpc
              */
             virtual void initTimers();
 
-			std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> getMasterRobotInfo(
-				const std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list);
-
 			geometry_msgs::Pose2D convertPose(geometry_msgs::Pose pose_to_convert);
+			Eigen::Vector3f convertPose(geometry_msgs::Pose2D pose_to_convert);
+			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose start_pose, geometry_msgs::Pose end_pose);
 			geometry_msgs::Pose2D calcDiff(geometry_msgs::Pose2D start_pose, geometry_msgs::Pose2D end_pose);
 			geometry_msgs::Twist calcDiff(geometry_msgs::Twist start_vel, geometry_msgs::Twist end_vel);
-			#pragma endregion
+			float calcEuclideanDiff(geometry_msgs::Pose point1, geometry_msgs::Pose point2);
+			float calcEuclideanDistance(geometry_msgs::Pose2D vector);
+
+			float calcVelocityFactor(geometry_msgs::Pose2D pose_diff, float largest_euclidean_diff);
+
+			/**
+             * @brief Create a transformation matrix to transform points from and to the geometry cs of this object
+             * 
+             * @param lead_vector_world_cs translation from the world to this cs
+             * @param rotation Rotation form the world to this cs. Rotation only uses yaw rotation.
+             * @return Eigen::Matrix<float, 4, 4> Transformation matrix in the x/y area and yaw rotation.
+             */
+            Eigen::Matrix<float, 4, 4> createTransformationMatrix(Eigen::Vector2f lead_vector_world_cs, float rotation);
+			Eigen::Vector2f transformVector(Eigen::Vector2f vector_to_transform,
+											Eigen::Vector2f lead_vector,
+											float rotation);
+#pragma endregion
 	};
 }

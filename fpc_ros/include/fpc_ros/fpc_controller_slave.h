@@ -3,6 +3,7 @@
 #include "ros/ros.h"
 
 #include <fpc_ros/fpc_controller_base.h>
+#include <fpp_msgs/NextTargetPoseCommand.h>
 
 namespace fpc
 {
@@ -10,11 +11,28 @@ namespace fpc
 	{
 		public:
 			FPCControllerSlave(
-				std::vector<std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo>> &robot_info_list,
-				std::shared_ptr<fpc_data_classes::LocalPlannerRobotInfo> &robot_info,
+				std::shared_ptr<fpc_data_classes::FPCParamInfo> fpc_param_info,
 				ros::NodeHandle &nh,
 				ros::NodeHandle &controller_nh);
 
 		private:
+			ros::ServiceServer next_target_command_srv_;
+			fpp_msgs::NextTargetPoseCommand::Request saved_target_cmd_req_;
+
+			geometry_msgs::Pose2D diff_vector_;
+
+			/**
+             * @brief Helper method for intializing all services
+             * 
+             */
+            void initServices() override;
+
+			void runController() override;
+
+			#pragma region Callback Methods
+			bool onNextTargetCommand(fpp_msgs::NextTargetPoseCommand::Request &req,
+									 fpp_msgs::NextTargetPoseCommand::Response &res);
+
+			#pragma endregion
 	};
 }

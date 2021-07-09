@@ -81,10 +81,12 @@ if __name__ == '__main__':
 			
 
 
-	plot.plot(0, 0, marker=".", color="green", markersize=20)
+	plot.plot(0, 0, marker=".", color="green", markersize=40)
 
 	axis: plot.Axes = plot.gca()  # Get current axis object and set x and y to be equal so a square is a square
 	axis.axis("equal")
+	plot.xlabel("x-Dimension der Welt in [m]")
+	plot.ylabel("y-Dimension der Welt in [m]")
 	plot.show()
 
 

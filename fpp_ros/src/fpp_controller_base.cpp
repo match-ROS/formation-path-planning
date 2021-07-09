@@ -107,7 +107,6 @@ namespace fpp
 		this->x_reconfiguration_spline_->setEndTangent(x_end_tangent);
 		this->x_reconfiguration_spline_->setEndTangentMagnitude(1.0);
 		this->x_reconfiguration_spline_->calcControlPoints();
-		this->x_reconfiguration_spline_->printInfo();
 
 		Eigen::Vector2f y_P0;
 		y_P0 << 0,0;
@@ -123,7 +122,6 @@ namespace fpp
 		this->y_reconfiguration_spline_->setEndTangent(y_end_tangent);
 		this->y_reconfiguration_spline_->setEndTangentMagnitude(1.0);
 		this->y_reconfiguration_spline_->calcControlPoints();
-		this->y_reconfiguration_spline_->printInfo();
 	}
 
 	Eigen::Vector2f FPPControllerBase::calcReconfigurationStep(int reconfiguration_index,
@@ -138,14 +136,10 @@ namespace fpp
 
 		float iterator = float(reconfiguration_index) / float(reconfiguration_distance);
 
-		// ROS_ERROR_STREAM(this->fpp_params_->getCurrentRobotName() << " iterator: " << iterator << " diff x: " << this->x_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1] << " diff y: " << this->y_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1]);
-
 		float x_diff = this->x_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1] -
 					   this->x_reconfiguration_spline_->calcPointOnBezierSpline(iterator - (1.0 / float(reconfiguration_distance)))[1];
 		float y_diff = this->y_reconfiguration_spline_->calcPointOnBezierSpline(iterator)[1] -
 					   this->y_reconfiguration_spline_->calcPointOnBezierSpline(iterator - (1.0 / float(reconfiguration_distance)))[1];
-
-		ROS_ERROR_STREAM(this->fpp_params_->getCurrentRobotName() << " iterator: " << iterator << " x: " << x_diff << " y: " << y_diff);
 
 		Eigen::Vector2f reconfig_diff;
 		reconfig_diff << x_diff, y_diff;
