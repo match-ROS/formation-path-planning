@@ -96,6 +96,13 @@ namespace bezier_splines
 													float max_step_size,
 													float &spline_length_remainder);
 
+			virtual bool calcIteratorBySplineLength(float &iterator,
+													float target_spline_length,
+													float max_diff_from_target,
+													float first_step_size,
+													float max_step_size,
+													float &spline_length_remainder);
+
 			float calcCurvation(float iterator);
 			float calcCurveRadius(float iterator);
 

@@ -246,8 +246,26 @@ namespace bezier_splines
 													  float max_step_size,
 													  float &spline_length_remainder)
 	{
+		return this->calcIteratorBySplineLength(iterator, target_spline_length, max_diff_from_target, 0.0, max_step_size, spline_length_remainder);
+	}
+
+	bool BaseBezierSpline::calcIteratorBySplineLength(float &iterator,
+													  float target_spline_length,
+													  float max_diff_from_target,
+													  float first_step_size,
+													  float max_step_size,
+													  float &spline_length_remainder)
+	{
 		float start_iterator = iterator;
-		iterator = iterator + max_step_size;
+
+		if(first_step_size == 0.0)
+		{
+			iterator = iterator + max_step_size;	
+		}
+		else
+		{
+			iterator = iterator + first_step_size;
+		}		
 
 		float approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
 		float max_step_size_factor = 0.5;
@@ -262,7 +280,7 @@ namespace bezier_splines
 			}
 			else if(approx_spline_length > target_spline_length)
 			{
-				iterator = iterator + max_step_size_factor * max_step_size;
+				iterator = iterator - max_step_size_factor * max_step_size;
 				// Lower max_step_size_factor for next iteration to get even closer to the target_spline_length
 				max_step_size_factor = max_step_size_factor * 0.5;
 			}

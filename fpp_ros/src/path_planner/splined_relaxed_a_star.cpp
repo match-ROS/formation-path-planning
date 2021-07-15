@@ -327,15 +327,17 @@ namespace path_planner
             float target_length = 0.05;
 
             float iterator = 0.0;
+            float last_iterator = 0.0;
 
             float remainder = 0.0;
             bool result = true;
             do
             {
                 float lower_bound = iterator;
-                result = spline_list[0]->calcIteratorBySplineLength(iterator, target_length, max_diff, max_step_size, remainder);
+                result = spline_list[0]->calcIteratorBySplineLength(iterator, target_length, max_diff, (lower_bound - last_iterator), max_step_size, remainder);
                 float approx_length = spline_list[0]->calcSplineLength(lower_bound, iterator, max_step_size);
-                ROS_INFO_STREAM("Result: " << result << " | iterator: " << iterator << " | remainder: " << remainder << " | approx_length: " << approx_length);
+                // ROS_INFO_STREAM("Result: " << result << " | iterator: " << iterator << " | remainder: " << remainder << " | approx_length: " << approx_length);
+                last_iterator = lower_bound;
             } while(result);
             ROS_INFO_STREAM("Test ended");
 
