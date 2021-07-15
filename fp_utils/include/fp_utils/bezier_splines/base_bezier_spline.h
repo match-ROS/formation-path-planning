@@ -76,6 +76,26 @@ namespace bezier_splines
 
 			virtual Eigen::Vector2f calcFirstDerivativeValue(float iterator) = 0;
 			virtual Eigen::Vector2f calcSecondDerivativeValue(float iterator) = 0;
+
+			virtual float calcSplineLength(float lower_bound, float upper_bound, float max_step_size);
+			/**
+			 * @brief Method that computes the next point on the spline that is a specified distance away from the previous one
+			 * This should spread the points more evenly on the spline
+			 * 
+			 * @param iterator Input: Starting point from where to measure the spline length. Output: Where the target_spline_length is reached
+			 * @param target_spline_length method should return iterator that is target_spline_length away from the point where the iterator starts
+			 * @param max_diff_from_target max difference between the calculated spline length and the target spline length
+			 * @param max_step_size max step size the algorithm can go on the spline
+			 * @param spline_length_remainder as the iterator can only go to max. 1.0 it is not always the case that 
+			 * the target_spline_length is excactly between iterator and the 1.0 end.  
+			 * @return true target_spline_length was reached before iterator = 1.0  
+			 */
+			virtual bool calcIteratorBySplineLength(float &iterator,
+													float target_spline_length,
+													float max_diff_from_target,
+													float max_step_size,
+													float &spline_length_remainder);
+
 			float calcCurvation(float iterator);
 			float calcCurveRadius(float iterator);
 

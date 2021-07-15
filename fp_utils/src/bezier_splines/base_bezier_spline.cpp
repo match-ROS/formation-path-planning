@@ -218,6 +218,69 @@ namespace bezier_splines
         return bezier_spline;
     }
 
+	float BaseBezierSpline::calcSplineLength(float lower_bound, float upper_bound, float max_step_size)
+	{
+		int number_of_steps = (upper_bound - lower_bound) / max_step_size;
+		float real_step_size = (upper_bound - lower_bound) / float(number_of_steps);
+
+		float approx_spline_length = 0.0;
+
+		for(float step_counter = 0; step_counter < number_of_steps; step_counter++)
+		{
+			// Eigen::Vector2f lower_point = this->calcPointOnBezierSpline(lower_bound + float(step_counter) * real_step_size);
+			// Eigen::Vector2f upper_point = this->calcPointOnBezierSpline(lower_bound + float(step_counter + 1) * real_step_size);
+
+			// Eigen::Vector2f diff = upper_point - lower_point;
+			// approx_spline_length = approx_spline_length + diff.norm();
+
+			Eigen::Vector2f gradient_value = this->calcFirstDerivativeValue(lower_bound + float(step_counter) * real_step_size);
+			approx_spline_length = approx_spline_length + (gradient_value * real_step_size).norm();
+		}
+
+		return approx_spline_length;
+	}
+
+	bool BaseBezierSpline::calcIteratorBySplineLength(float &iterator,
+													  float target_spline_length,
+													  float max_diff_from_target,
+													  float max_step_size,
+													  float &spline_length_remainder)
+	{
+		float start_iterator = iterator;
+		iterator = iterator + max_step_size;
+
+		float approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
+		float max_step_size_factor = 0.5;
+
+		while(std::abs(approx_spline_length - target_spline_length) > max_diff_from_target)
+		{
+			if(approx_spline_length < target_spline_length)
+			{
+				iterator = iterator + max_step_size;
+				// Reset the factor for the next iteration where approx_spline_length is bigger than target_spline_length
+				max_step_size_factor = 0.5; 
+			}
+			else if(approx_spline_length > target_spline_length)
+			{
+				iterator = iterator + max_step_size_factor * max_step_size;
+				// Lower max_step_size_factor for next iteration to get even closer to the target_spline_length
+				max_step_size_factor = max_step_size_factor * 0.5;
+			}
+
+			if(iterator > 1.0)
+			{
+				spline_length_remainder = target_spline_length - approx_spline_length;
+				return false;
+			}
+
+			approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
+			// ROS_INFO_STREAM("approx_spline_length: " << approx_spline_length << " | start_iterator: " << start_iterator << " | iterator: " << iterator);
+		}
+
+		spline_length_remainder = 0.0;
+		return true;
+	}
+
 	float BaseBezierSpline::calcCurvation(float iterator)
 	{
 		Eigen::Vector2f first_derivative_value = this->calcFirstDerivativeValue(iterator);

@@ -294,6 +294,52 @@ namespace path_planner
 			// 	spline->visualizeData();
 			// }
 
+            // Testing
+            // std::vector<Eigen::Matrix<float, 2, 1>> testing_points;
+            // testing_points = spline_list[0]->calcBezierSpline(this->ras_params_->planning_points_per_spline);
+            // ROS_INFO_STREAM("_______________________________________");
+            // float sum = 0.0;
+            // for(int test_counter = 0; test_counter < testing_points.size()-1; test_counter++)
+            // {
+            //     Eigen::Vector2f diff = testing_points[test_counter + 1] - testing_points[test_counter];
+            //     sum = sum + diff.norm();
+            //     ROS_INFO_STREAM("Dist between points: " << diff.norm());
+            // }
+            // ROS_INFO_STREAM("_______________________________________");
+            // testing_points = spline_list[1]->calcBezierSpline(this->ras_params_->planning_points_per_spline);
+            // for(int test_counter = 0; test_counter < testing_points.size()-1; test_counter++)
+            // {
+            //     Eigen::Vector2f diff = testing_points[test_counter + 1] - testing_points[test_counter];
+            //     ROS_INFO_STREAM("Dist between points: " << diff.norm());
+            // }
+            // ROS_INFO_STREAM("_______________________________________");
+            // testing_points = spline_list[2]->calcBezierSpline(this->ras_params_->planning_points_per_spline);
+            // for(int test_counter = 0; test_counter < testing_points.size()-1; test_counter++)
+            // {
+            //     Eigen::Vector2f diff = testing_points[test_counter + 1] - testing_points[test_counter];
+            //     ROS_INFO_STREAM("Dist between points: " << diff.norm());
+            // }
+
+            ROS_INFO_STREAM("Test started");
+
+            float max_step_size = 0.001;
+            float max_diff = 0.001;
+            float target_length = 0.05;
+
+            float iterator = 0.0;
+
+            float remainder = 0.0;
+            bool result = true;
+            do
+            {
+                float lower_bound = iterator;
+                result = spline_list[0]->calcIteratorBySplineLength(iterator, target_length, max_diff, max_step_size, remainder);
+                float approx_length = spline_list[0]->calcSplineLength(lower_bound, iterator, max_step_size);
+                ROS_INFO_STREAM("Result: " << result << " | iterator: " << iterator << " | remainder: " << remainder << " | approx_length: " << approx_length);
+            } while(result);
+            ROS_INFO_STREAM("Test ended");
+
+
 			// Create plan by splines
             plan.clear();
             std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
