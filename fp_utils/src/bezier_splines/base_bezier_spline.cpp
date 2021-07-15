@@ -256,6 +256,7 @@ namespace bezier_splines
 													  float max_step_size,
 													  float &spline_length_remainder)
 	{
+		ROS_INFO_STREAM("iterator: " << iterator << " | first_step: " << first_step_size << " | target_spline_length: " << target_spline_length);
 		float start_iterator = iterator;
 
 		if(first_step_size == 0.0)
@@ -270,8 +271,9 @@ namespace bezier_splines
 		float approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
 		float max_step_size_factor = 0.5;
 
-		while(std::abs(approx_spline_length - target_spline_length) > max_diff_from_target)
+		do
 		{
+		// 	ROS_INFO_STREAM("1 | iterator: " << iterator << " | approx: " << approx_spline_length << " | target: " << target_spline_length);
 			if(approx_spline_length < target_spline_length)
 			{
 				iterator = iterator + max_step_size;
@@ -284,16 +286,23 @@ namespace bezier_splines
 				// Lower max_step_size_factor for next iteration to get even closer to the target_spline_length
 				max_step_size_factor = max_step_size_factor * 0.5;
 			}
+			
+			approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
 
 			if(iterator > 1.0)
 			{
-				spline_length_remainder = target_spline_length - approx_spline_length;
-				return false;
+				if((target_spline_length - approx_spline_length) < 0.0)
+				{
+					// iterator is too high and current spline can not offer the target_spline_length.
+					// Calculate until max value of 1.0 and return missing spline length
+					approx_spline_length = this->calcSplineLength(start_iterator, 1.0, max_step_size);
+					spline_length_remainder = target_spline_length - approx_spline_length;
+					return false;	
+				}				
 			}
-
-			approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
+			
 			// ROS_INFO_STREAM("approx_spline_length: " << approx_spline_length << " | start_iterator: " << start_iterator << " | iterator: " << iterator);
-		}
+		} while(std::abs(approx_spline_length - target_spline_length) > max_diff_from_target || iterator > 1.0);
 
 		spline_length_remainder = 0.0;
 		return true;
