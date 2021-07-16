@@ -13,25 +13,64 @@ namespace fpp_data_classes
 		std::string path_planner_key;
         if (this->planner_nh_.searchParam("formation_path_planner/" + formation_planner_name,
                                           path_planner_key))
-        {
-			this->planner_nh_.getParam(path_planner_key + "/default_tolerance",
-									   this->ras_params_->default_tolerance);
+		{
+			if(!this->planner_nh_.getParam(path_planner_key + "/default_tolerance",
+										   this->ras_params_->default_tolerance))
+			{
+				this->reportParamError("default_tolerance");
+			}
 			int neighbor_type;
-			this->planner_nh_.getParam(path_planner_key + "/neighbor_type",
-									   neighbor_type);
+			if(!this->planner_nh_.getParam(path_planner_key + "/neighbor_type",
+										   neighbor_type))
+			{
+				this->reportParamError("neighbor_type");
+			}
 			this->ras_params_->neighbor_type = (fpp_data_classes::NeighborType)neighbor_type;
-			this->planner_nh_.getParam(path_planner_key + "/free_cell_threshold",
-									   this->ras_params_->free_cell_threshold);
-			this->planner_nh_.getParam(path_planner_key + "/start_straight_distance",
-									   this->ras_params_->start_straight_distance);
-			this->planner_nh_.getParam(path_planner_key + "/end_straight_distance",
-									   this->ras_params_->end_straight_distance);
-			this->planner_nh_.getParam(path_planner_key + "/control_point_distance",
-									   this->ras_params_->control_point_distance);
-			this->planner_nh_.getParam(path_planner_key + "/planning_points_per_spline",
-									   this->ras_params_->planning_points_per_spline);
-			this->planner_nh_.getParam(path_planner_key + "/minimal_curve_radius",
-									   this->ras_params_->minimal_curve_radius);
+			if(!this->planner_nh_.getParam(path_planner_key + "/free_cell_threshold",
+										   this->ras_params_->free_cell_threshold))
+			{
+				this->reportParamError("free_cell_threshold");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/start_straight_distance",
+									   this->ras_params_->start_straight_distance))
+			{
+				this->reportParamError("start_straight_distance");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/end_straight_distance",
+									   this->ras_params_->end_straight_distance))
+			{
+				this->reportParamError("end_straight_distance");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/control_point_distance",
+									   this->ras_params_->control_point_distance))
+			{
+				this->reportParamError("control_point_distance");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/planning_points_per_spline",
+									   this->ras_params_->planning_points_per_spline))
+			{
+				this->reportParamError("planning_points_per_spline");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/minimal_curve_radius",
+									   this->ras_params_->minimal_curve_radius))
+			{
+				this->reportParamError("minimal_curve_radius");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/max_iterator_step_size",
+									   this->ras_params_->max_iterator_step_size))
+			{
+				this->reportParamError("max_iterator_step_size");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/max_diff_to_target_length",
+									   this->ras_params_->max_diff_to_target_length))
+			{
+				this->reportParamError("max_diff_to_target_length");
+			}
+			if(!this->planner_nh_.getParam(path_planner_key + "/target_spline_length",
+									   this->ras_params_->target_spline_length))
+			{
+				this->reportParamError("target_spline_length");
+			}
 
 			// Check if calculated minimal radius is bigger than the param
 			// Minimal radius is calculated by getting the distance between the robot that is the furthest away from the formation centre
@@ -50,11 +89,16 @@ namespace fpp_data_classes
 			// 	minimal_curve_radius = max_calculated_minimal_curve_radius;
 			// }
 			// this->initial_path_planner_.setMinimalCurveRadius(minimal_curve_radius);
-        }
+		}
 		else
 		{
 			ROS_ERROR_STREAM("RASParamManager: Path planner for the FormationPathPlanner not found in the config file.");
 		}
+	}
+
+	void RASParamManager::reportParamError(std::string param_name)
+	{
+		ROS_ERROR_STREAM("The parameter: " << param_name << " was not set or found! This will result in faulty behaviour");
 	}
 
 	void RASParamManager::printInfo()
@@ -68,6 +112,9 @@ namespace fpp_data_classes
 		ROS_INFO_STREAM("Control Point Distance: " << this->ras_params_->control_point_distance);
 		ROS_INFO_STREAM("Planning Point Distance: " << this->ras_params_->planning_points_per_spline);
 		ROS_INFO_STREAM("Minimal Curve Radius: " << this->ras_params_->minimal_curve_radius);
+		ROS_INFO_STREAM("Maximal Iterator Step Size: " << this->ras_params_->max_iterator_step_size);
+		ROS_INFO_STREAM("Maximal Difference To Target Length: " << this->ras_params_->max_diff_to_target_length);
+		ROS_INFO_STREAM("Target Spline Length: " << this->ras_params_->target_spline_length);
 	}
 
 	std::shared_ptr<fpp_data_classes::RASParams> RASParamManager::getRASParams()

@@ -21,6 +21,11 @@ namespace fpp_data_classes
 		int control_point_distance;
 		int planning_points_per_spline;
 		float minimal_curve_radius;
+
+		// Settings for the generation of the points appended in the global plan
+		float max_iterator_step_size;
+		float max_diff_to_target_length;
+		float target_spline_length;
 	};
 
 	class RASParamManager
@@ -29,7 +34,7 @@ namespace fpp_data_classes
 			RASParamManager(ros::NodeHandle &nh, ros::NodeHandle &planner_nh);
 		
 			void readParams(std::string formation_planner_name);
-
+			void reportParamError(std::string param_name);
 			void printInfo();
 
 			#pragma region Getter/Setter

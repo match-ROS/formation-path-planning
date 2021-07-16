@@ -298,10 +298,6 @@ namespace path_planner
             plan.clear();
             std::vector<Eigen::Vector2f> points_of_plan;
 
-            float max_step_size = 0.0001; // Param
-            float max_diff_to_target = 0.001; // param
-            float target_spline_length = 0.05; // param
-
             // How much length is left to get out of the new spline (target_spline_length - old_spline_approx_length)
             float remaining_spline_length = 0.0; 
 
@@ -317,22 +313,22 @@ namespace path_planner
                     if(remaining_spline_length == 0.0)
                     {
                         spline_not_ended = spline->calcIteratorBySplineLength(iterator,
-                                                                              target_spline_length,
-                                                                              max_diff_to_target,
+                                                                              this->ras_params_->target_spline_length,
+                                                                              this->ras_params_->max_diff_to_target_length,
                                                                               (lower_bound - last_iterator),
-                                                                              max_step_size,
+                                                                              this->ras_params_->max_iterator_step_size,
                                                                               remaining_spline_length);
                     }
                     else
                     {
                         spline_not_ended = spline->calcIteratorBySplineLength(iterator,
                                                                               remaining_spline_length,
-                                                                              max_diff_to_target,
+                                                                              this->ras_params_->max_diff_to_target_length,
                                                                               (lower_bound - last_iterator),
-                                                                              max_step_size,
+                                                                              this->ras_params_->max_iterator_step_size,
                                                                               remaining_spline_length);
                     }
-                    
+
                     if(spline_not_ended)
                     {
                         Eigen::Vector2f point_on_spline = spline->calcPointOnBezierSpline(iterator);

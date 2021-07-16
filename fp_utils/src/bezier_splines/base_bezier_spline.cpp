@@ -218,9 +218,9 @@ namespace bezier_splines
         return bezier_spline;
     }
 
-	float BaseBezierSpline::calcSplineLength(float lower_bound, float upper_bound, float max_step_size)
+	float BaseBezierSpline::calcSplineLength(float lower_bound, float upper_bound, float max_iterator_step_size)
 	{
-		int number_of_steps = (upper_bound - lower_bound) / max_step_size;
+		int number_of_steps = (upper_bound - lower_bound) / max_iterator_step_size;
 		float real_step_size = (upper_bound - lower_bound) / float(number_of_steps);
 
 		float approx_spline_length = 0.0;
@@ -243,17 +243,17 @@ namespace bezier_splines
 	bool BaseBezierSpline::calcIteratorBySplineLength(float &iterator,
 													  float target_spline_length,
 													  float max_diff_from_target,
-													  float max_step_size,
+													  float max_iterator_step_size,
 													  float &spline_length_remainder)
 	{
-		return this->calcIteratorBySplineLength(iterator, target_spline_length, max_diff_from_target, 0.0, max_step_size, spline_length_remainder);
+		return this->calcIteratorBySplineLength(iterator, target_spline_length, max_diff_from_target, 0.0, max_iterator_step_size, spline_length_remainder);
 	}
 
 	bool BaseBezierSpline::calcIteratorBySplineLength(float &iterator,
 													  float target_spline_length,
 													  float max_diff_from_target,
 													  float first_step_size,
-													  float max_step_size,
+													  float max_iterator_step_size,
 													  float &spline_length_remainder)
 	{
 		float start_iterator = iterator;
@@ -261,14 +261,14 @@ namespace bezier_splines
 		// The first step can help to speed up the process as the iterator not always has to start at 0.0
 		if(first_step_size == 0.0)
 		{
-			iterator = iterator + max_step_size;	
+			iterator = iterator + max_iterator_step_size;	
 		}
 		else
 		{
 			iterator = iterator + first_step_size;
 		}		
 
-		float approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
+		float approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_iterator_step_size);
 
 		// Factor that will decrease the backtracking by half each time a step is performed
 		float max_step_size_factor = 0.5;
@@ -279,14 +279,14 @@ namespace bezier_splines
 		{
 			if(approx_spline_length < target_spline_length)
 			{
-				iterator = iterator + max_step_size;
+				iterator = iterator + max_iterator_step_size;
 				// Reset the factor for the next iteration where approx_spline_length is bigger than target_spline_length
 				max_step_size_factor = 0.5;
 				iterator_increased_once = true;
 			}
 			else if(approx_spline_length > target_spline_length)
 			{
-				iterator = iterator - max_step_size_factor * max_step_size;
+				iterator = iterator - max_step_size_factor * max_iterator_step_size;
 				// Lower max_step_size_factor for next iteration to get even closer to the target_spline_length
 				if(iterator_increased_once)
 				{
@@ -294,7 +294,7 @@ namespace bezier_splines
 				}
 			}
 			
-			approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_step_size);
+			approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_iterator_step_size);
 
 			if(iterator > 1.0)
 			{
@@ -302,7 +302,7 @@ namespace bezier_splines
 				{
 					// Iterator is too high and current spline can not offer the target_spline_length.
 					// Calculate until max value of 1.0 and return missing spline length
-					approx_spline_length = this->calcSplineLength(start_iterator, 1.0, max_step_size);
+					approx_spline_length = this->calcSplineLength(start_iterator, 1.0, max_iterator_step_size);
 					spline_length_remainder = target_spline_length - approx_spline_length;
 					return false;	
 				}				
