@@ -75,6 +75,14 @@ FormationPathPlanner:
       # This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.
       # Whichever radius is bigger will be selected for creating the splines
       minimal_curve_radius: 2.0
+      # This is the max step the iterator makes to approximate the length of the spline
+      max_iterator_step_size: 0.0001
+      # Maximal difference between the target spline length and the approximated spline length.
+      # When the difference is lower that this value a new point is added to the spline as the points are almost equal enough away from each other
+      max_diff_to_target_length: 0.001
+      # Distance the points should be appart from each other
+      # The distance is measured as the spline length
+      target_spline_length: 0.05
 
 RelaxedAStar:
   # The default tolerance that is used if the tolerance of the received goal is not valid.
