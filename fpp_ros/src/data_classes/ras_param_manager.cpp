@@ -4,7 +4,10 @@ namespace fpp_data_classes
 {
 	RASParamManager::RASParamManager(ros::NodeHandle &nh, ros::NodeHandle &planner_nh)
 		: nh_(nh), planner_nh_(planner_nh)
-	{ 
+	{
+		this->formation_info_srv_client_ = this->nh_.serviceClient<fpp_msgs::FormationFootprintInfo>("move_base_flex/footprint_info");
+		this->formation_info_srv_client_.waitForExistence();
+
 		this->ras_params_ = std::make_shared<RASParams>();
 	}
 
@@ -41,11 +44,11 @@ namespace fpp_data_classes
 			{
 				this->reportParamError("end_straight_distance");
 			}
-			if(!this->planner_nh_.getParam(path_planner_key + "/control_point_distance",
-									   this->ras_params_->control_point_distance))
-			{
-				this->reportParamError("control_point_distance");
-			}
+			// if(!this->planner_nh_.getParam(path_planner_key + "/control_point_distance",
+			// 						   this->ras_params_->control_point_distance))
+			// {
+			// 	this->reportParamError("control_point_distance");
+			// }
 			if(!this->planner_nh_.getParam(path_planner_key + "/planning_points_per_spline",
 									   this->ras_params_->planning_points_per_spline))
 			{
@@ -94,6 +97,27 @@ namespace fpp_data_classes
 		{
 			ROS_ERROR_STREAM("RASParamManager: Path planner for the FormationPathPlanner not found in the config file.");
 		}
+
+		fpp_msgs::FormationFootprintInfo footprint_info;
+		if(this->formation_info_srv_client_.call(footprint_info))
+		{
+			float max_distance = 0.0;
+			for(geometry_msgs::Point32 &robot_pose : footprint_info.response.formation_footprint.points)
+			{
+				float distance = std::sqrt(std::pow(robot_pose.x, 2) + std::pow(robot_pose.y, 2));
+				
+				if(distance > max_distance)
+				{
+					max_distance = distance;	
+				}
+			}
+
+			this->ras_params_->max_robot_to_formation_centre_dist = max_distance;
+		}
+		else
+		{
+			ROS_ERROR_STREAM("RASParamManager: Service call for formation radius failed.");
+		}
 	}
 
 	void RASParamManager::reportParamError(std::string param_name)
@@ -109,7 +133,7 @@ namespace fpp_data_classes
 		ROS_INFO_STREAM("Free Cell Threshold: " << this->ras_params_->free_cell_threshold);
 		ROS_INFO_STREAM("Start Straight Distance: " << this->ras_params_->start_straight_distance);
 		ROS_INFO_STREAM("End Straight Distance: " << this->ras_params_->end_straight_distance);
-		ROS_INFO_STREAM("Control Point Distance: " << this->ras_params_->control_point_distance);
+		ROS_INFO_STREAM("Max Robot to Formation Centre Distance: " << this->ras_params_->max_robot_to_formation_centre_dist);
 		ROS_INFO_STREAM("Planning Point Distance: " << this->ras_params_->planning_points_per_spline);
 		ROS_INFO_STREAM("Minimal Curve Radius: " << this->ras_params_->minimal_curve_radius);
 		ROS_INFO_STREAM("Maximal Iterator Step Size: " << this->ras_params_->max_iterator_step_size);

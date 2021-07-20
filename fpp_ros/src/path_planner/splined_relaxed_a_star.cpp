@@ -31,7 +31,7 @@ namespace path_planner
 
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
-
+            
             this->initVisuHelper(name);
 
             // Get the tf prefix
@@ -187,20 +187,46 @@ namespace path_planner
             this->createPoseArrayForPlan(array_plan, plan);
 
             // Select pose every so often
-			int control_point_amount = std::ceil(float(plan.size()) / float(this->ras_params_->control_point_distance));
-			int real_control_point_distance = int(plan.size() / control_point_amount);
+			// int control_point_amount = std::ceil(float(plan.size()) / float(this->ras_params_->control_point_distance));
+			// int real_control_point_distance = int(plan.size() / control_point_amount);
 
-			std::vector<geometry_msgs::PoseStamped> selected_poses;
+			// std::vector<geometry_msgs::PoseStamped> selected_poses;
 			
-			// Use smaller or equal because when control_point_amount = 2 (plan.size = 90 && control_point_distance = 50), then there should be start, end and one control point in the middle
-			for(int control_point_counter = 0; control_point_counter < control_point_amount; control_point_counter++)
-			{
-				selected_poses.push_back(plan[control_point_counter * real_control_point_distance]);
-			}
-            geometry_msgs::PoseStamped last;
-            last.header = (plan.end() - 1)->header;
-            last.pose = (plan.end() - 1)->pose;
-            selected_poses.push_back(last);
+			// // Use smaller or equal because when control_point_amount = 2 (plan.size = 90 && control_point_distance = 50), then there should be start, end and one control point in the middle
+			// for(int control_point_counter = 0; control_point_counter < control_point_amount; control_point_counter++)
+			// {
+			// 	selected_poses.push_back(plan[control_point_counter * real_control_point_distance]);
+			// }
+            // geometry_msgs::PoseStamped last;
+            // last.header = (plan.end() - 1)->header;
+            // last.pose = (plan.end() - 1)->pose;
+            // selected_poses.push_back(last);
+
+            // Select pose every so often
+            float min_control_point_distance = 2 * std::sqrt(2) * this->ras_params_->max_robot_to_formation_centre_dist;
+
+            std::vector<geometry_msgs::PoseStamped> selected_poses;
+            selected_poses.push_back(plan.front());
+            geometry_msgs::PoseStamped last_added_pose = selected_poses.back();
+            geometry_msgs::PoseStamped last_pose_of_plan = plan.back();
+            for(geometry_msgs::PoseStamped &pose_in_plan: plan)
+            {
+                float distance_to_end = std::sqrt(std::pow(pose_in_plan.pose.position.x - last_pose_of_plan.pose.position.x, 2) +
+                                                  std::pow(pose_in_plan.pose.position.y - last_pose_of_plan.pose.position.y, 2));
+                if(distance_to_end < min_control_point_distance)
+                {
+                    selected_poses.push_back(last_pose_of_plan);
+                    break;
+                }
+
+                float control_point_distance = std::sqrt(std::pow(pose_in_plan.pose.position.x - last_added_pose.pose.position.x, 2) +
+                                                         std::pow(pose_in_plan.pose.position.y - last_added_pose.pose.position.y, 2));
+                if(control_point_distance >= min_control_point_distance)
+                {
+                    last_added_pose = pose_in_plan;
+                    selected_poses.push_back(pose_in_plan);
+                }
+            }
 
 			// Create splines
             std::vector<std::shared_ptr<bezier_splines::QuinticBezierSplines>> spline_list;
