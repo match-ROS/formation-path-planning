@@ -1,6 +1,6 @@
 <launch>
     <arg name="ros_bag_filename" default="fpp_data"/>
-    <arg name="file_path" default="/home/hlurz/rosbags/"/>
+    <arg name="file_path" default="/home/rosmatch/rosbags/"/>
 
     <node pkg="rosbag" type="record" name="record_fpp"
        args="record -e  (.*)/mobile_base_controller/odom
