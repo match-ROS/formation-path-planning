@@ -134,5 +134,9 @@ namespace fpp
 			geometry_msgs::Pose convEigenToPose(Eigen::Vector3f eigen_pose);
 			Eigen::Vector3f convPoseToEigen(geometry_msgs::Pose pose);
 			#pragma endregion
+
+            #pragma region Helper Methods
+            std::string getRobotNameByTopicNamespace(std::string topic);
+            #pragma endregion
 	};
 }

@@ -45,9 +45,10 @@ int main(int argc, char **argv)
             dynamic_reconfigure::DoubleParameter inflation_reconfig;
             inflation_reconfig.name = "inflation_radius";
             inflation_reconfig.value = request.new_inflation_radius;
+            ROS_INFO_STREAM("New inflation radius: " << request.new_inflation_radius);
             dyn_reconfigure_inflation_msg.request.config.doubles.push_back(inflation_reconfig);
             
-            ROS_INFO("before call");
+            // ROS_INFO("before call");
 
 			ROS_INFO_STREAM(request.robot_namespace << "/move_base_flex/global_costmap/inflation/set_parameters");
             ros::service::call(request.robot_namespace + "/move_base_flex/global_costmap/inflation/set_parameters",

@@ -26,6 +26,8 @@
     <node name="dyn_reconfig_relay_node" pkg="fpp_ros" type="dyn_reconfig_relay_node" 
                   respawn="false" output="screen"/>
 
+    <node name="meta_data_sync_node" pkg="fpp_ros" type="fpp_meta_data_sync_node.py" respawn="false" output="screen"/>
+
     <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
     <group ns="$(arg robot0_namespace)">
         <!--This parameter is necessary to define the name of the robot in this namespace-->

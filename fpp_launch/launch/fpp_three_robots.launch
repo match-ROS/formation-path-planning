@@ -4,29 +4,31 @@
 
     <!--Variables for the robot0-->
     <arg name="robot0_name" value="robot0"/>
-    <arg name="robot0_x_pos" default="-8.0"/>
-    <arg name="robot0_y_pos" default="0.0"/>
-    <arg name="robot0_yaw_rot" default="0.0"/>
+    <arg name="robot0_x_pos" default="-17.0"/>
+    <arg name="robot0_y_pos" default="5.0"/>
+    <arg name="robot0_yaw_rot" default="-1.5"/>
 
     <!--Variables for the robot1-->
     <arg name="robot1_name" value="robot1"/>
-    <arg name="robot1_x_pos" default="-9.0"/>
-    <arg name="robot1_y_pos" default="1.0"/>
-    <arg name="robot1_yaw_rot" default="0.0"/>
+    <arg name="robot1_x_pos" default="-16.0"/>
+    <arg name="robot1_y_pos" default="6.0"/>
+    <arg name="robot1_yaw_rot" default="-1.5"/>
 
     <!--Variables for the robot2-->
     <arg name="robot2_name" value="robot2"/>
-    <arg name="robot2_x_pos" default="-9.0"/>
-    <arg name="robot2_y_pos" default="-1.0"/>
-    <arg name="robot2_yaw_rot" default="0.0"/>
+    <arg name="robot2_x_pos" default="-18.0"/>
+    <arg name="robot2_y_pos" default="6.0"/>
+    <arg name="robot2_yaw_rot" default="-1.5"/>
 
     <!--Constant values that cant be adjusted from outside the launch file-->
     <!--For this example only the robot0 will get an -->
     <arg name="navigation_rviz_command_args" value="-d $(find fpp_launch)/rviz/formation_path_planner_rviz_config.rviz"/>
 
     <include file="$(find match_gazebo)/launch/generic_world.launch">
-        <arg name="world_name" value="$(find fpp_gazebo)/worlds/fpp_test_world.world"/>
-        <arg name="map_name" value="$(find fpp_gazebo)/maps/fpp_test_world.yaml"/>
+        <!-- <arg name="world_name" value="$(find fpp_gazebo)/worlds/fpp_test_world.world"/>
+        <arg name="map_name" value="$(find fpp_gazebo)/maps/fpp_test_world.yaml"/> -->
+        <arg name="world_name" value="$(find match_gazebo)/worlds/advanced_maze.world"/>
+        <arg name="map_name" value="$(find match_gazebo)/maps/advanced_maze.yaml"/>
     </include>
 
 
@@ -36,6 +38,10 @@
     <!--This node is necessary so the fpp is able to reconfigure the costmap inflation_radius-->
     <node name="dyn_reconfig_relay_node" pkg="fpp_ros" type="dyn_reconfig_relay_node" 
                   respawn="false" output="screen"/>
+
+    <!--This node is necessary to relay all meta data info that is sent from the individual global planners
+    and combines them so they are in sync-->
+    <node name="meta_data_sync_node" pkg="fpp_ros" type="fpp_meta_data_sync_node.py" respawn="false" output="screen"/>
 
     <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
     <group ns="$(arg robot0_name)">
