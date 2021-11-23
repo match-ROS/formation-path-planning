@@ -6,7 +6,7 @@ from collections import defaultdict
 from fpp_msgs.msg import GlobalPlanPoseMetaData
 
 master_name = "robot0"
-robot_name_list = ["robot0", "robot1", "robot2"]
+robot_name_list = ["robot0", "robot1"]
 
 first_message = False # type: Boolean
 timer = None # type: Timer
