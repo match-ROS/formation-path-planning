@@ -205,6 +205,9 @@ namespace path_planner
             // Select pose every so often
             float min_control_point_distance = 2 * std::sqrt(2) * this->ras_params_->max_robot_to_formation_centre_dist;
 
+            // Tobias new control point distance - Test
+            // float min_control_point_distance = 4 * 0.55;
+
             std::vector<geometry_msgs::PoseStamped> selected_poses;
             selected_poses.push_back(plan.front());
             geometry_msgs::PoseStamped last_added_pose = selected_poses.back();
@@ -215,6 +218,7 @@ namespace path_planner
                                                   std::pow(pose_in_plan.pose.position.y - last_pose_of_plan.pose.position.y, 2));
                 if(distance_to_end < min_control_point_distance)
                 {
+                    selected_poses.push_back(pose_in_plan);
                     selected_poses.push_back(last_pose_of_plan);
                     break;
                 }
@@ -236,6 +240,9 @@ namespace path_planner
                 Eigen::Matrix<float, 2, 1> end_pose;
                 start_pose << selected_poses[pose_counter].pose.position.x, selected_poses[pose_counter].pose.position.y;
                 end_pose << selected_poses[pose_counter + 1].pose.position.x, selected_poses[pose_counter + 1].pose.position.y;
+
+
+
 				std::shared_ptr<bezier_splines::QuinticBezierSplines> spline =
 					std::make_shared<bezier_splines::QuinticBezierSplines>(&this->visu_helper_, start_pose, end_pose);
 				
@@ -255,30 +262,32 @@ namespace path_planner
 			tf::Quaternion end_quaternion;
 			tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
 			spline_list.back()->setEndTangentByQuaternion(end_quaternion);
+            spline_list.back()->setEndTangentMagnitude(spline_list.back()->getEndTangentMagnitude() * 2.0);
 			
-			// // Visualization
-			// for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
-			// {
+			// Visualization
+			for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
+			{
 			// 	spline->calcControlPoints();
-			// 	spline->addStartEndPointToVisuHelper();
+			 	spline->addStartEndPointToVisuHelper();
             //     spline->addTangentsToVisuHelper();
             //     spline->addControlPointsToVisuHelper();
             //     spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
-			// 	spline->visualizeData();
-			// }
+			 	spline->visualizeData();
+			}
 
 			// Optimize the curvature of the splines to be under a certain threshold
 			ROS_INFO_STREAM("Optimizing the curvature of the splines");
+            ROS_INFO_STREAM("Curve Radius: " << this->ras_params_->max_robot_to_formation_centre_dist);
 			for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
 			{
 				// ROS_INFO_STREAM("spline counter: " << spline_counter);
-				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
+				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->ras_params_->planning_points_per_spline, this->ras_params_->minimal_curve_radius, int i));
 
 				int timeout_counter = 0;
 
 				int point_of_failure = 0;
 				while (!spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->ras_params_->planning_points_per_spline,
-																				 this->ras_params_->minimal_curve_radius,
+																				 this->ras_params_->max_robot_to_formation_centre_dist,
 																				 point_of_failure))
 				{
 					// This process could be turned into an iterative optimization process, that tries to get to the limit of the minimal curve radius to minimize the distance the robots have to travel
@@ -310,6 +319,8 @@ namespace path_planner
 				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
 			}
 
+            ROS_INFO_STREAM("Finished optimizing splines");
+
 			// // Visualization
 			// for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
 			// {
@@ -336,7 +347,7 @@ namespace path_planner
                 do
                 {
                     float lower_bound = iterator;
-                    if(remaining_spline_length == 0.0)
+                    if(remaining_spline_length <= 0.0)
                     {
                         spline_not_ended = spline->calcIteratorBySplineLength(iterator,
                                                                               this->ras_params_->target_spline_length,
