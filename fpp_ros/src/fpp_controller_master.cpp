@@ -101,6 +101,9 @@ namespace fpp
 		{
 			if(robot_info->robot_name != this->fpp_params_->getCurrentRobotName())
 			{
+				ROS_ERROR_STREAM("Robot info != : " << robot_info->robot_name);
+				ROS_ERROR_STREAM("current name: " << this->fpp_params_->getCurrentRobotName());
+
 				std::shared_ptr<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>> slave_move_base_as =
 					std::make_shared<actionlib::SimpleActionClient<mbf_msgs::MoveBaseAction>>(
 						robot_info->robot_namespace + "/move_base_flex/move_base", true);

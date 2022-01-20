@@ -1,0 +1,51 @@
+controllers:
+  - name: 'FormationPathController'
+    type: 'local_planner/FormationPathController'
+
+# Default tolerance values that are used for the controller by MoveBaseFlex
+dist_tolerance: 0.02 # Tolerance in [m]
+angle_tolerance: 0.05 # Tolerance in [rad]
+
+FormationPathController:
+  # This parameter is only necessary if move-base pkg is used, for move-base-flex please use dist_tolerance
+  # Parameter is defining the tolerance when arriving at the goal in the x and y direction.
+  # Parameter is defined in meters
+  xy_default_tolerance: 0.03 
+  # This parameter is only necessary if move-base pkg is used, for move-base-flex please use angle_tolerance
+  # Parameter is defining the tolerance when arriving at the goal for the orientation.
+  # Parameter is defined in radian
+  yaw_default_tolerance: 0.05 # ~3°
+
+  # Defines whether or not to eat up the plan as the robot moves along the path. 
+  # If set to true, points will fall off the end of the plan once the robot moves 1 meter past them. 
+  prune_plane: true  
+
+  controller_config:
+    # Because the frequency of the move base stack is unreliable the controller gets an independent timer
+    # This calue defines the frequency the timer is called
+    controller_frequency: 100.0 
+
+    # Defines the max and min velocity where the target velocity will be caped at
+    # Separate in forward and backwards movement
+    max_vel_x:  0.1
+    min_vel_x: -0.2
+
+    # Defines the max and min rotational velocity of the robot
+    # As the robot can move equally to the left and right this looks at the absolut value
+    max_vel_theta: 1.0
+    min_vel_theta: 0.0
+
+  formation_config:
+    robot0:
+      namespace: /robot0_ns
+      master: true
+      robot_pose_topic: amcl_pose
+      robot_odom_topic: mobile_base_controller/odom
+      robot_cmd_vel_topic: mobile_base_controller/cmd_vel
+      lyapunov_params: [3.4, 30.0, 2.5]
+    robot1:
+      namespace: /robot1_ns
+      robot_pose_topic: amcl_pose
+      robot_odom_topic: mobile_base_controller/odom
+      robot_cmd_vel_topic: mobile_base_controller/cmd_vel
+      lyapunov_params: [3.4, 30.0, 2.5]
