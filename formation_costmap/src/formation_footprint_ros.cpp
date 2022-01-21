@@ -20,6 +20,7 @@ namespace formation_costmap
 		{
 			this->robot_position_updates_.insert(std::pair<std::string, bool>(robot_to_add->getRobotName(),
 																			  false));
+			this->updateFormationContour();
 		}
 
 		return add_robot_result;

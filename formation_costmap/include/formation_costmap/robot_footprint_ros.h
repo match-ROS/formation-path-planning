@@ -3,6 +3,7 @@
 #include "ros/ros.h"
 #include <tf/transform_datatypes.h>
 
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PolygonStamped.h>
 
@@ -37,6 +38,6 @@ namespace formation_costmap
 
 			void initTopics();
 
-			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
+			void getRobotPoseCb(const geometry_msgs::PoseConstPtr &msg);
     };
 }

@@ -64,13 +64,13 @@ namespace fpc
 		geometry_msgs::Pose goal_pose = this->getGoalPose();
 
 		// Check x for tolerance
-		if(goal_pose.position.x - this->current_robot_amcl_pose_.position.x > xy_tolerance)
+		if(goal_pose.position.x - this->current_robot_amcl_pose_->position.x > xy_tolerance)
 		{
 			return false;
 		}
 
 		// Check y for tolerance
-		if(goal_pose.position.y - this->current_robot_amcl_pose_.position.y > xy_tolerance)
+		if(goal_pose.position.y - this->current_robot_amcl_pose_->position.y > xy_tolerance)
 		{
 			return false;
 		}
@@ -81,7 +81,7 @@ namespace fpc
 		inv_goal_orientation.setW(-inv_goal_orientation.getW()); // Negate w to get inverse quaternion
 
 		tf::Quaternion current_orientation;
-		tf::quaternionMsgToTF(this->current_robot_amcl_pose_.orientation, current_orientation);
+		tf::quaternionMsgToTF(this->current_robot_amcl_pose_->orientation, current_orientation);
 
 		tf::Quaternion diff_orientation = current_orientation * inv_goal_orientation;
 		float yaw_diff = tf::getYaw(diff_orientation);
@@ -99,7 +99,7 @@ namespace fpc
 		geometry_msgs::PoseStamped current_robot_pose_stamped;
 		current_robot_pose_stamped.header.frame_id = this->global_frame_;
 		current_robot_pose_stamped.header.stamp = ros::Time::now();
-		current_robot_pose_stamped.pose = this->current_robot_amcl_pose_;
+		current_robot_pose_stamped.pose = *this->current_robot_amcl_pose_;
 
 		geometry_msgs::TwistStamped current_velocity;
 		current_velocity.header.frame_id = this->current_robot_odom_->header.frame_id;
@@ -234,7 +234,7 @@ namespace fpc
 	{
 		this->meta_data_msg_.stamp = ros::Time::now();
 
-		this->meta_data_msg_.current_pose = this->convertPose(this->current_robot_amcl_pose_);
+		this->meta_data_msg_.current_pose = this->convertPose(*this->current_robot_amcl_pose_);
 		this->meta_data_msg_.current_vel = this->current_robot_odom_->twist.twist;
 
 		this->meta_data_msg_.target_pose = target_pose;
@@ -259,10 +259,9 @@ namespace fpc
 	#pragma endregion
 
 	#pragma region CallbackMethods
-	void FPCControllerBase::getRobotPoseCb(
-		const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
+	void FPCControllerBase::getRobotPoseCb(const geometry_msgs::PoseConstPtr &msg)
 	{
-		this->current_robot_amcl_pose_ = msg->pose.pose;
+		this->current_robot_amcl_pose_ = msg;
 	}
 
 	void FPCControllerBase::getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg)

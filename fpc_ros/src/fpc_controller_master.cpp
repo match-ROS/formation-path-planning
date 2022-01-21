@@ -45,16 +45,16 @@ namespace fpc
 		FPCControllerBase::setPlan(plan);
 
 		// Insert value for master robot
-		int current_pose_on_path = this->locateRobotOnPath(this->current_robot_amcl_pose_);
+		int current_pose_on_path = this->locateRobotOnPath(*this->current_robot_amcl_pose_);
 		this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose =
-			this->calcDiff(this->current_robot_amcl_pose_, plan[current_pose_on_path+1].pose);
+			this->calcDiff(*this->current_robot_amcl_pose_, plan[current_pose_on_path+1].pose);
 
 		return true;
 	}
 
 	void FPCControllerMaster::runController()
 	{
-		int current_pose_on_path = this->locateRobotOnPath(this->current_robot_amcl_pose_);
+		int current_pose_on_path = this->locateRobotOnPath(*this->current_robot_amcl_pose_);
 
 		if(this->pose_index_ < (current_pose_on_path + 1))
 		{
@@ -74,7 +74,7 @@ namespace fpc
 				this->saved_command_res_list_[client.first] = cmd_msg.response;
 			}
 
-			geometry_msgs::Pose2D diff_to_target = this->calcDiff(this->current_robot_amcl_pose_,
+			geometry_msgs::Pose2D diff_to_target = this->calcDiff(*this->current_robot_amcl_pose_,
 																  this->global_plan_[this->pose_index_].pose);
 			// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << ": " << diff_to_target.x << "|" << diff_to_target.y);																  
 
@@ -83,7 +83,7 @@ namespace fpc
 			this->saved_command_res_list_[this->fpc_param_info_->getCurrentRobotName()].diff_after_next_pose = diff_to_target;
 		}
 
-		geometry_msgs::Pose2D diff_to_target = this->calcDiff(this->current_robot_amcl_pose_,
+		geometry_msgs::Pose2D diff_to_target = this->calcDiff(*this->current_robot_amcl_pose_,
 															  this->global_plan_[this->pose_index_].pose);
 
 		// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " " << diff_vector.x << " " << diff_vector.y << " " << diff_vector.theta);

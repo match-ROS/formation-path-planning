@@ -45,14 +45,13 @@ namespace formation_costmap
 			this);
 	}
 
-	void RobotFootprintRos::getRobotPoseCb(
-		const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
+	void RobotFootprintRos::getRobotPoseCb(const geometry_msgs::PoseConstPtr &msg)
 	{
 		Eigen::Vector2f lead_vector_world_cs;
-		lead_vector_world_cs_[0] = msg->pose.pose.position.x;
-		lead_vector_world_cs_[1] = msg->pose.pose.position.y;
+		lead_vector_world_cs_[0] = msg->position.x;
+		lead_vector_world_cs_[1] = msg->position.y;
 		
-		float new_cs_rotation = tf::getYaw(msg->pose.pose.orientation);
+		float new_cs_rotation = tf::getYaw(msg->orientation);
 
 		this->moveContour(lead_vector_world_cs_, new_cs_rotation);
 

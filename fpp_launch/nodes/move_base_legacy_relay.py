@@ -124,7 +124,7 @@ if __name__ == '__main__':
     rospy.init_node("move_base")
 
     # TODO what happens with malformed target goal???  FAILURE  or INVALID_POSE
-    # txt must be:  "Aborting on goal because it was sent with an invalid quaternion"   
+    # txt must be:  "Aborting on goal because it was sent with an invalid quaternion"
 
     # move_base_flex get_path and move_base action clients
     mbf_mb_ac = actionlib.SimpleActionClient("move_base_flex/move_base", mbf_msgs.MoveBaseAction)

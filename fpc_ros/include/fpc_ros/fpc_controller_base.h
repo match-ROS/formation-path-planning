@@ -96,7 +96,7 @@ namespace fpc
 
 			#pragma region Topics/Services/Actions/Timers
 			ros::Subscriber robot_amcl_pose_subscriber_;
-			geometry_msgs::Pose current_robot_amcl_pose_;
+			geometry_msgs::PoseConstPtr current_robot_amcl_pose_;
 			ros::Subscriber robot_odom_subscriber_;
 			nav_msgs::OdometryConstPtr current_robot_odom_;
 			ros::Subscriber robot_ground_truth_subscriber_; // This subscriber will only work in Gazebo where ground truth is published
@@ -110,7 +110,7 @@ namespace fpc
 			#pragma endregion
 
 			#pragma region CallbackMethods
-			void getRobotPoseCb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
+			void getRobotPoseCb(const geometry_msgs::PoseConstPtr &msg);
 			void getRobotOdomCb(const nav_msgs::OdometryConstPtr &msg);
 
 			void getRobotGroundTruthCb(const nav_msgs::OdometryConstPtr &msg);

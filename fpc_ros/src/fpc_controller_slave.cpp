@@ -29,7 +29,7 @@ namespace fpc
 			return;
 		}
 
-		this->diff_vector_ = this->calcDiff(this->current_robot_amcl_pose_,
+		this->diff_vector_ = this->calcDiff(*this->current_robot_amcl_pose_,
 											this->global_plan_[this->saved_target_cmd_req_.next_target_pose_index].pose);
 
 		// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << ": " << this->diff_vector_.x << " | " << this->diff_vector_.y << " | " << this->velocity_factor_);
@@ -68,7 +68,7 @@ namespace fpc
 			return false;
 		}
 
-		this->diff_vector_ = this->calcDiff(this->current_robot_amcl_pose_,
+		this->diff_vector_ = this->calcDiff(*this->current_robot_amcl_pose_,
 												  this->global_plan_[req.next_target_pose_index].pose);
 		res.diff_after_next_pose = this->diff_vector_;
 		// ROS_ERROR_STREAM(this->fpc_param_info_->getCurrentRobotName() << " slave: " << res.diff_after_next_pose.x << "|" << res.diff_after_next_pose.y);
