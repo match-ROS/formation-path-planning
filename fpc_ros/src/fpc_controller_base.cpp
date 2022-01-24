@@ -235,26 +235,29 @@ namespace fpc
 		this->meta_data_msg_.stamp = ros::Time::now();
 
 		this->meta_data_msg_.current_pose = this->convertPose(*this->current_robot_amcl_pose_);
-		this->meta_data_msg_.current_vel = this->current_robot_odom_->twist.twist;
+		if(this->current_robot_odom_ != nullptr)
+		{
+			this->meta_data_msg_.current_vel = this->current_robot_odom_->twist.twist;
 
-		this->meta_data_msg_.target_pose = target_pose;
+			this->meta_data_msg_.target_pose = target_pose;
 
-		// Calculate diff current to target
-		// this->meta_data_msg_.current_to_target_pose_diff = this->calcDiff(
-		// 	this->meta_data_msg_.current_pose, this->meta_data_msg_.target_pose);
-		this->meta_data_msg_.current_to_target_vel_diff = this->calcDiff(
-			this->meta_data_msg_.target_vel, this->meta_data_msg_.current_vel);
+			// Calculate diff current to target
+			// this->meta_data_msg_.current_to_target_pose_diff = this->calcDiff(
+			// 	this->meta_data_msg_.current_pose, this->meta_data_msg_.target_pose);
+			this->meta_data_msg_.current_to_target_vel_diff = this->calcDiff(
+				this->meta_data_msg_.target_vel, this->meta_data_msg_.current_vel);
 
-		// Insert additional pose info
-		this->meta_data_msg_.ground_truth_pose = this->convertPose(this->current_robot_ground_truth_->pose.pose);
-		this->meta_data_msg_.odom_pose = this->convertPose(this->current_robot_odom_->pose.pose);
+			// Insert additional pose info
+			this->meta_data_msg_.ground_truth_pose = this->convertPose(this->current_robot_ground_truth_->pose.pose);
+			this->meta_data_msg_.odom_pose = this->convertPose(this->current_robot_odom_->pose.pose);
 
-		// Insert additional interesting infos
-		this->meta_data_msg_.current_to_ground_truth_pose_diff = this->calcDiff(
-			this->meta_data_msg_.current_pose, this->meta_data_msg_.ground_truth_pose);
+			// Insert additional interesting infos
+			this->meta_data_msg_.current_to_ground_truth_pose_diff = this->calcDiff(
+				this->meta_data_msg_.current_pose, this->meta_data_msg_.ground_truth_pose);
 
-		// Publish data so it can be visualized in plotjuggler from rosbag
-		this->meta_data_publisher_.publish(this->meta_data_msg_);
+			// Publish data so it can be visualized in plotjuggler from rosbag
+			this->meta_data_publisher_.publish(this->meta_data_msg_);
+		}
 	}
 	#pragma endregion
 

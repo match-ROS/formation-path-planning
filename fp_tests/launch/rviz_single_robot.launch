@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <node name="fpp_navigation_rviz" pkg="rviz" type="rviz" respawn="false" 
+            args="-d $(find fp_tests)/rviz/single_robot_rviz_config.rviz" output="screen"/>
+</launch>
