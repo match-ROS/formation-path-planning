@@ -23,7 +23,7 @@ FormationPathPlanner:
       # This is only used in the generation of the footprint.
       # Normally the footprint is generated in a costmap layer. 
       # Later this functionality will be exported into a costmap layer
-      robot_pose_topic: amcl_pose 
+      robot_pose_topic: robot_pose 
     robot1:
       namespace: /robot1_ns
       offset: [0.0, -1.0] # Defines distance from master robot
@@ -33,7 +33,7 @@ FormationPathPlanner:
       # This is only used in the generation of the footprint.
       # Normally the footprint is generated in a costmap layer. 
       # Later this functionality will be exported into a costmap layer
-      robot_pose_topic: amcl_pose
+      robot_pose_topic: robot_pose
 
   formation_path_planner:
     # This planner is used to create the initial path from where all robots have to offset their own path

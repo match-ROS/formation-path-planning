@@ -7,8 +7,8 @@ formation_costmap:
       master: true
       namespace: /robot0_ns
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
-      robot_pose_topic: amcl_pose 
+      robot_pose_topic: robot_pose 
     robot1:
       namespace: /robot1_ns
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
-      robot_pose_topic: amcl_pose
+      robot_pose_topic: robot_pose
