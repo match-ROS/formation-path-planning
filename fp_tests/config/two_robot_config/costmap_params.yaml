@@ -5,10 +5,10 @@ formation_costmap:
   formation_robots:
     robot0:
       master: true
-      namespace: /robot0_ns
+      namespace: /robot0
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
       robot_pose_topic: robot_pose 
     robot1:
-      namespace: /robot1_ns
+      namespace: /robot1
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
       robot_pose_topic: robot_pose
