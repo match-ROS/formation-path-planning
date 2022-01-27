@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<launch>
+    <!--Variables for the robot0-->
+    <arg name="robot0_name" value="robot0"/>
+    <arg name="robot0_x_pos" default="-5.0"/>
+    <arg name="robot0_y_pos" default="0.0"/>
+    <arg name="robot0_yaw_rot" default="0.0"/>
+    
+    <!--This node is necessary so the fpp is able to reconfigure the costmap inflation_radius-->
+    <node name="dyn_reconfig_relay_node" pkg="fpp_ros" type="dyn_reconfig_relay_node" 
+                  respawn="false" output="screen"/>
+
+    <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
+    <group ns="$(arg robot0_name)">
+        <!--This parameter is necessary to define the name of the robot in this namespace-->
+        <param name="robot_name" type="str" value="$(arg robot0_name)"/> 
+
+        <include file="$(find mir_launch_sim)/launch/mir_200.launch">
+            <arg name="tf_prefix" value="$(arg robot0_name)"/>
+            <arg name="move_base_selector" value="move_base_flex"/>
+            <arg name="global_planner" value="FormationPathPlanner"/>
+            <arg name="global_planner_config" value="$(find fp_tests)/config/single_robot_config/global_planner_params.yaml" />
+            <arg name="local_planner" value="FormationPathController"/>
+            <arg name="local_planner_config" value="$(find fp_tests)/config/single_robot_config/local_planner_params.yaml" />
+            <!-- <arg name="x_pos" value="$(arg robot0_x_pos)"/>
+            <arg name="y_pos" value="$(arg robot0_y_pos)"/>
+            <arg name="yaw_rot" value="$(arg robot0_yaw_rot)"/> -->
+        </include>
+
+        <!--Override the existing global_planner params-->
+        <!-- <rosparam file="$(find fp_tests)/config/single_robot_config/global_planner_params.yaml" command="load" ns="move_base_flex"/> -->
+        <!-- <rosparam file="$(find fp_tests)/config/single_robot_config/local_planner_params.yaml" command="load" ns="move_base_flex" /> -->
+
+        <param name="move_base_flex/global_costmap/obstacles/enabled" value="false"/>
+
+        <!--This node is necessary to easily set the target position for the move_base_flex package through rviz-->
+        <!--If a different path planner should be used, change the planner that is defined in the relay-->
+        <!--Typically you copy this node to where you need a changed path planner. This one should stay default.-->
+        <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/>
+
+        <group ns="move_base_flex">
+            <node pkg="formation_costmap" type="formation_footprint_node" name="formation_footprint_node" output="screen">
+                <!--Load params for the formation costmap layer-->
+                <rosparam file="$(find fp_tests)/config/single_robot_config/costmap_params.yaml" command="load"/>
+            </node>
+        </group>
+    </group>
+
+    <!--Record the data of the formation path planner so failures can be comprehended afterwards-->
+    <!-- <include file="$(find fpp_launch)/launch/record_fpp.launch"/> -->
+</launch>

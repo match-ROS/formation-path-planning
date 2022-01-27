@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="gazebo_gui" default="false"/> <!--Start without Gazebo GUI, RVIZ is enough-->
+
     <!--Variables for the robot0-->
     <arg name="robot0_name" value="robot0"/>
-    <arg name="robot0_x_pos" default="-5.0"/>
-    <arg name="robot0_y_pos" default="0.0"/>
+    <arg name="robot0_x_pos" default="-9.0"/>
+    <arg name="robot0_y_pos" default="0.5"/>
     <arg name="robot0_yaw_rot" default="0.0"/>
     
     <!--This node is necessary so the fpp is able to reconfigure the costmap inflation_radius-->
@@ -15,20 +17,20 @@
         <!--This parameter is necessary to define the name of the robot in this namespace-->
         <param name="robot_name" type="str" value="$(arg robot0_name)"/> 
 
-        <include file="$(find mir_launch_hardware)/launch/mir.launch">
+        <include file="$(find mir_launch_sim)/launch/mir_200.launch">
             <arg name="tf_prefix" value="$(arg robot0_name)"/>
+            <arg name="model_name" value="$(arg robot0_name)"/>
             <arg name="move_base_selector" value="move_base_flex"/>
             <arg name="global_planner" value="FormationPathPlanner"/>
             <arg name="local_planner" value="FormationPathController"/>
-            <!-- <arg name="x_pos" value="$(arg robot0_x_pos)"/>
-            <arg name="y_pos" value="$(arg robot0_y_pos)"/>
-            <arg name="yaw_rot" value="$(arg robot0_yaw_rot)"/> -->
         </include>
 
         <!--Override the existing global_planner params-->
-        <rosparam file="$(find fp_tests)/config/single_robot_config/global_planner_params.yaml" command="load" ns="move_base_flex"/>
-        <rosparam file="$(find fp_tests)/config/single_robot_config/local_planner_params.yaml" command="load" ns="move_base_flex" />
+        <rosparam file="$(find fpp_launch)/config/fpp_two_parallel_robot_params.yaml" command="load" ns="move_base_flex"/>
+		<rosparam file="$(find fpp_launch)/config/fpc_two_parallel_robot_params.yaml" command="load" ns="move_base_flex"/>
 
+		<!--Overwrite the enabled param that defines if new obstacles should be inserted into the global costmap. -->
+        <!--Because of the mobile robots detecting each other this would add obstacles where the formation is standing -->
         <param name="move_base_flex/global_costmap/obstacles/enabled" value="false"/>
 
         <!--This node is necessary to easily set the target position for the move_base_flex package through rviz-->
@@ -43,7 +45,4 @@
             </node>
         </group>
     </group>
-
-    <!--Record the data of the formation path planner so failures can be comprehended afterwards-->
-    <!-- <include file="$(find fpp_launch)/launch/record_fpp.launch"/> -->
 </launch>

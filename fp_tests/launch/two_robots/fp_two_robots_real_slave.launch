@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+    <!--Variables for the robot1-->
+    <arg name="robot1_name" value="robot0"/>
+    <arg name="robot1_x_pos" default="-5.0"/>
+    <arg name="robot1_y_pos" default="0.0"/>
+    <arg name="robot1_yaw_rot" default="0.0"/>
+    
+    <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
+    <group ns="$(arg robot1_name)">
+        <!--This parameter is necessary to define the name of the robot in this namespace-->
+        <param name="robot_name" type="str" value="$(arg robot1_name)"/> 
+
+        <include file="$(find mir_launch_hardware)/launch/mir.launch">
+            <arg name="tf_prefix" value="$(arg robot1_name)"/>
+            <arg name="move_base_selector" value="move_base_flex"/>
+            <arg name="global_planner" value="FormationPathPlanner"/>
+            <arg name="local_planner" value="FormationPathController"/>
+        </include>
+
+        <!--Override the existing global_planner params-->
+        <rosparam file="$(find fp_tests)/config/single_robot_config/global_planner_params.yaml" command="load" ns="move_base_flex"/>
+        <rosparam file="$(find fp_tests)/config/single_robot_config/local_planner_params.yaml" command="load" ns="move_base_flex" />
+
+        <param name="move_base_flex/global_costmap/obstacles/enabled" value="false"/>
+    </group>
+</launch>
