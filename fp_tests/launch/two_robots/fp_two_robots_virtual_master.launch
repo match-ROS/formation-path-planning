@@ -4,9 +4,6 @@
 
     <!--Variables for the robot0-->
     <arg name="robot0_name" value="robot0"/>
-    <arg name="robot0_x_pos" default="-9.0"/>
-    <arg name="robot0_y_pos" default="0.5"/>
-    <arg name="robot0_yaw_rot" default="0.0"/>
     
     <!--This node is necessary so the fpp is able to reconfigure the costmap inflation_radius-->
     <node name="dyn_reconfig_relay_node" pkg="fpp_ros" type="dyn_reconfig_relay_node" 
@@ -17,19 +14,51 @@
         <!--This parameter is necessary to define the name of the robot in this namespace-->
         <param name="robot_name" type="str" value="$(arg robot0_name)"/> 
 
-        <include file="$(find mir_launch_sim)/launch/mir_200.launch">
+        <!-- <include file="$(find mir_launch_sim)/launch/mir_200.launch">
             <arg name="tf_prefix" value="$(arg robot0_name)"/>
             <arg name="model_name" value="$(arg robot0_name)"/>
             <arg name="move_base_selector" value="move_base_flex"/>
             <arg name="global_planner" value="FormationPathPlanner"/>
             <arg name="global_planner_config" value="$(find fp_tests)/config/single_robot_config/global_planner_params.yaml" />
-            <arg name="local_planner" value="FormationPathController"/>#
+            <arg name="local_planner" value="FormationPathController"/>
             <arg name="local_planner_config" value="$(find fp_tests)/config/single_robot_config/local_planner_params.yaml" />
+        </include> -->
+
+        <!-- Virtual MiR launch-->
+        <arg name="robot_urdf_path" value="$(find mir_description)/urdf/mir_100/mir_100.urdf"/>
+        <param name="robot_description" command="$(find xacro)/xacro $(arg robot_urdf_path) robot_namespace:=$(arg robot0_name) tf_prefix:=$(arg robot0_name)" />
+        <!-- Start of move base flex -->
+        <include file="$(find mir_navigation)/launch/move_base_flex.launch" >
+            <arg name="global_planner" value="FormationPathPlanner"/>
+            <arg name="global_planner_config" value="$(find fp_tests)/config/single_robot_config/global_planner_params.yaml" />
+            <arg name="local_planner" value="FormationPathController"/>
+            <arg name="local_planner_config" value="$(find fp_tests)/config/single_robot_config/local_planner_params.yaml" />
+            <arg name="tf_prefix" value="$(arg robot0_name)"/>
+            <arg name="start_move_base_simple" value="true"/>
         </include>
 
+        <!-- Robot state publisher -->
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+            <param name="tf_prefix" value="$(arg robot0_name)"/>
+        </node>
+
+        <!-- <node pkg="fp_tests" type="fake_pose_publisher.py" name="fake_pose_publisher_node" output="screen">
+            <param name="rate" value="10"/>
+            <param name="set_pose_topic" value="set_fake_robot_pose"/>
+            <param name="cmd_vel_topic" value="cmd_vel"/>
+            <param name="robot_pose_topic" value="robot_pose"/>
+            <param name="frame_id" value="base_link"/>
+        </node>
+
+        <node pkg="fp_tests" type="set_robot_pose.py" name="set_robot_pose_node" output="screen">
+            <param name="set_pose_topic" value="set_fake_robot_pose"/>
+            <param name="real_robot_pose_topic" value="/robot1/robot_pose"/>
+            <param name="rel_pose" value="[1,0]"/>
+        </node> -->
+
         <!--Override the existing global_planner params-->
-        <rosparam file="$(find fpp_launch)/config/fpp_two_parallel_robot_params.yaml" command="load" ns="move_base_flex"/>
-		<rosparam file="$(find fpp_launch)/config/fpc_two_parallel_robot_params.yaml" command="load" ns="move_base_flex"/>
+        <rosparam file="$(find fp_tests)/config/two_robot_config/fpp_two_robot_params.yaml" command="load" ns="move_base_flex"/>
+		<rosparam file="$(find fp_tests)/config/two_robot_config/fpc_two_robot_params.yaml" command="load" ns="move_base_flex"/>
 
 		<!--Overwrite the enabled param that defines if new obstacles should be inserted into the global costmap. -->
         <!--Because of the mobile robots detecting each other this would add obstacles where the formation is standing -->
@@ -38,7 +67,7 @@
         <!--This node is necessary to easily set the target position for the move_base_flex package through rviz-->
         <!--If a different path planner should be used, change the planner that is defined in the relay-->
         <!--Typically you copy this node to where you need a changed path planner. This one should stay default.-->
-        <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/>
+        <!-- <node pkg="fpp_launch" type="move_base_legacy_relay.py" name="move_base_legacy_relay" output="screen"/> -->
 
         <group ns="move_base_flex">
             <node pkg="formation_costmap" type="formation_footprint_node" name="formation_footprint_node" output="screen">
