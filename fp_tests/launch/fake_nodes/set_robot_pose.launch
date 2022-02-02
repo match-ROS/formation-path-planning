@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <!--Variables for the robot0-->
+    <arg name="robot0_name" value="robot0"/>
+    
+    <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
+    <group ns="$(arg robot0_name)">
+        <node pkg="fp_tests" type="set_robot_pose.py" name="set_robot_pose_node" output="screen">
+            <param name="set_pose_topic" value="set_fake_robot_pose"/>
+            <param name="real_robot_pose_topic" value="/robot1/robot_pose"/>
+            <param name="rel_pose" value="[1.0,0.0]"/>
+        </node>
+    </group>
+</launch>
