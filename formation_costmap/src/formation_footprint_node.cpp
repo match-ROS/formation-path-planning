@@ -117,8 +117,7 @@ int main(int argc, char **argv)
 		}
 		robot_contour->createContourEdges();
 		bool result = formation_footprint->addRobotToFormation(robot_contour);
-		ROS_ERROR_STREAM("formation_footprint_node: " << result);
-		ROS_ERROR_STREAM("formation corners: " << formation_footprint->getCornerPointsWorldCS().size());
+		ROS_INFO_STREAM("Formation contains: " << formation_footprint->getCornerPointsWorldCS().size() << " corners");
 	}
 
 	while(ros::ok())
