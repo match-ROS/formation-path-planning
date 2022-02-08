@@ -22,8 +22,7 @@ class set_robot_pose:
     def config(self):
         self.set_pose_topic = rospy.get_param('~set_pose_topic')
         self.follower_pose_topic = rospy.get_param('~real_robot_pose_topic')
-        # self.rel_pose = rospy.get_param('~rel_pose')
-        self.rel_pose = [1,0]
+        self.rel_pose = rospy.get_param('~rel_pose')
         print(self.rel_pose)
         print(type(self.rel_pose))
 

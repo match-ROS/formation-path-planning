@@ -38,7 +38,10 @@ class fake_pose_publisher_node:
         # self.robot_vel_topic = rospy.get_param('~robot_vel_topic')
         self.robot_pose_topic = rospy.get_param('~robot_pose_topic')
         self.cmd_vel_topic = rospy.get_param('~cmd_vel_topic')
-        self.frame_id = rospy.get_param('~frame_id')
+        self._tf_prefix = rospy.get_param('~tf_prefix')
+        self._tf_prefix_slashed = self._tf_prefix + "/"
+        self._odom_frame_id = self._tf_prefix_slashed + rospy.get_param("~odom_frame_id")
+        self._robot_base_frame_id = self._tf_prefix_slashed + rospy.get_param('~robot_base_frame_id')
         
     def run(self):
         Rate = rospy.Rate(self.rate)
@@ -77,10 +80,28 @@ class fake_pose_publisher_node:
             t = TransformStamped()
             t.header.stamp = rospy.Time.now()
             t.header.frame_id = "map"
-            t.child_frame_id = self.frame_id
+            t.child_frame_id = self._odom_frame_id
             t.transform.translation = self.robot_pose.position
             t.transform.rotation = self.robot_pose.orientation
             br.sendTransform(t)
+            
+            br2 = tf2_ros.TransformBroadcaster()
+            t = TransformStamped()
+            t.header.stamp = rospy.Time.now()
+            t.header.frame_id = self._odom_frame_id
+            t.child_frame_id = self._robot_base_frame_id
+            zero_offset = Pose()
+            zero_offset.position.x = 0.0
+            zero_offset.position.y = 0.0
+            zero_offset.position.z = 0.0
+            zero_offset.orientation.x = 0.0
+            zero_offset.orientation.y = 0.0
+            zero_offset.orientation.z = 0.0
+            zero_offset.orientation.w = 1.0
+            t.transform.translation = zero_offset.position
+            t.transform.rotation = zero_offset.orientation
+            br.sendTransform(t)
+            
             Rate.sleep()
 
     def set_pose_cb(self,data):
