@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="gazebo_gui" default="false"/> <!--Start without Gazebo GUI, RVIZ is enough-->
+
+    <!--Variables for the robot0-->
+    <arg name="robot_name" value="robot0"/>
+    
+    <!--This node is necessary so the fpp is able to reconfigure the costmap inflation_radius-->
+    <node name="dyn_reconfig_relay_node" pkg="fpp_ros" type="dyn_reconfig_relay_node" 
+                  respawn="false" output="screen"/>
+
+    <!--Create namespace for robot0 and start everything that belongs in the namespace inside the group-->
+    <group ns="$(arg robot_name)">
+        <!--This parameter is necessary to define the name of the robot in this namespace-->
+        <param name="robot_name" type="str" value="$(arg robot_name)"/> 
+
+        <!-- Virtual MiR launch-->
+        <arg name="robot_urdf_path" value="$(find mir_description)/urdf/mir_100/mir_100.urdf"/>
+        <param name="robot_description" command="$(find xacro)/xacro $(arg robot_urdf_path) robot_namespace:=$(arg robot_name) tf_prefix:=$(arg robot_name)" />
+        <!-- Start of move base flex -->
+        <include file="$(find mir_navigation)/launch/move_base_flex.launch" >
+            <arg name="global_planner" value="FormationPathPlanner"/>
+            <arg name="global_planner_config" value="$(find fp_tests)/config/three_robot_config/fpp_three_robot_params.yaml" />
+            <arg name="local_planner" value="FormationPathController"/>
+            <arg name="local_planner_config" value="$(find fp_tests)/config/three_robot_config/fpc_three_robot_params.yaml" />
+            <arg name="tf_prefix" value="$(arg robot_name)"/>
+            <arg name="start_move_base_simple" value="true"/>
+        </include>
+
+        <!-- Robot state publisher -->
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+            <param name="tf_prefix" value="$(arg robot_name)"/>
+        </node>
+
+		<!--Overwrite the enabled param that defines if new obstacles should be inserted into the global costmap. -->
+        <!--Because of the mobile robots detecting each other this would add obstacles where the formation is standing -->
+        <param name="move_base_flex/global_costmap/obstacles/enabled" value="false"/>
+
+        <group ns="move_base_flex">
+            <node pkg="formation_costmap" type="formation_footprint_node" name="formation_footprint_node" output="screen">
+                <!--Load params for the formation costmap layer-->
+                <rosparam file="$(find fp_tests)/config/two_robot_config/costmap_params.yaml" command="load"/>
+            </node>
+        </group>
+    </group>
+</launch>
