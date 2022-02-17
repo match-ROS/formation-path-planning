@@ -48,7 +48,7 @@ namespace fpc
 		this->meta_data_msg_.target_vel = cmd_vel;
 		this->last_published_cmd_vel_ = cmd_vel;
 
-		this->cmd_vel_publisher_.publish(cmd_vel);
+		// this->cmd_vel_publisher_.publish(cmd_vel);
 
 		this->meta_data_msg_.velocity_factor = this->velocity_factor_;
 		this->meta_data_msg_.current_to_target_pose_diff = this->diff_vector_;

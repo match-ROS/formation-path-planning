@@ -102,7 +102,7 @@ namespace fpc
 
 		this->meta_data_msg_.target_vel = cmd_vel;
 
-		this->cmd_vel_publisher_.publish(cmd_vel);
+		// this->cmd_vel_publisher_.publish(cmd_vel);
 		this->last_published_cmd_vel_ = cmd_vel;
 
 		this->meta_data_msg_.pose_index = this->pose_index_;

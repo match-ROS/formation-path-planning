@@ -30,9 +30,9 @@
         <!-- Start of move base flex -->
         <include file="$(find mir_navigation)/launch/move_base_flex.launch" >
             <arg name="global_planner" value="FormationPathPlanner"/>
-            <arg name="global_planner_config" value="$(find fp_tests)/config/single_robot_config/global_planner_params.yaml" />
+            <arg name="global_planner_config" value="$(find fp_tests)/config/two_robot_config/fpp_two_robot_params.yaml" />
             <arg name="local_planner" value="FormationPathController"/>
-            <arg name="local_planner_config" value="$(find fp_tests)/config/single_robot_config/local_planner_params.yaml" />
+            <arg name="local_planner_config" value="$(find fp_tests)/config/two_robot_config/fpc_two_robot_params.yaml" />
             <arg name="tf_prefix" value="$(arg robot0_name)"/>
             <arg name="start_move_base_simple" value="true"/>
         </include>

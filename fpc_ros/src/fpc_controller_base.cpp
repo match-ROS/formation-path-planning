@@ -96,23 +96,25 @@ namespace fpc
 
 	bool FPCControllerBase::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 	{
-		geometry_msgs::PoseStamped current_robot_pose_stamped;
-		current_robot_pose_stamped.header.frame_id = this->global_frame_;
-		current_robot_pose_stamped.header.stamp = ros::Time::now();
-		current_robot_pose_stamped.pose = *this->current_robot_amcl_pose_;
+		// geometry_msgs::PoseStamped current_robot_pose_stamped;
+		// current_robot_pose_stamped.header.frame_id = this->global_frame_;
+		// current_robot_pose_stamped.header.stamp = ros::Time::now();
+		// current_robot_pose_stamped.pose = *this->current_robot_amcl_pose_;
 
-		geometry_msgs::TwistStamped current_velocity;
-		current_velocity.header.frame_id = this->current_robot_odom_->header.frame_id;
-		current_velocity.header.stamp = ros::Time::now();
-		current_velocity.twist = this->current_robot_odom_->twist.twist;
+		// geometry_msgs::TwistStamped current_velocity;
+		// current_velocity.header.frame_id = this->current_robot_odom_->header.frame_id;
+		// current_velocity.header.stamp = ros::Time::now();
+		// current_velocity.twist = this->current_robot_odom_->twist.twist;
 
-		geometry_msgs::TwistStamped cmd_vel_stamped;
-		std::string message;
-		bool result;
+		// geometry_msgs::TwistStamped cmd_vel_stamped;
+		// std::string message;
+		// bool result;
 
-		result = this->computeVelocityCommands(current_robot_pose_stamped, current_velocity, cmd_vel_stamped, message);
+		// result = this->computeVelocityCommands(current_robot_pose_stamped, current_velocity, cmd_vel_stamped, message);
 
-		cmd_vel = cmd_vel_stamped.twist;
+		// cmd_vel = cmd_vel_stamped.twist;
+
+		ROS_ERROR_STREAM("run_controller1");
 	}
 
 	uint32_t FPCControllerBase::computeVelocityCommands(const geometry_msgs::PoseStamped &pose,
@@ -223,10 +225,10 @@ namespace fpc
 
 		// this->pose_index_++;
 
-		cmd_vel.header.frame_id = this->global_frame_;
-		cmd_vel.header.stamp = ros::Time::now();
-		cmd_vel.twist = this->last_published_cmd_vel_;
-
+		// cmd_vel.header.frame_id = this->global_frame_;
+		// cmd_vel.header.stamp = ros::Time::now();
+		// cmd_vel.twist = this->last_published_cmd_vel_;
+		ROS_ERROR_STREAM("run_controller2");
 		return 0;
 	}
 
