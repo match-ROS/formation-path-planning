@@ -39,7 +39,7 @@
         <group ns="move_base_flex">
             <node pkg="formation_costmap" type="formation_footprint_node" name="formation_footprint_node" output="screen">
                 <!--Load params for the formation costmap layer-->
-                <rosparam file="$(find fp_tests)/config/two_robot_config/costmap_params.yaml" command="load"/>
+                <rosparam file="$(find fp_tests)/config/three_robot_config/costmap_params.yaml" command="load"/>
             </node>
         </group>
     </group>

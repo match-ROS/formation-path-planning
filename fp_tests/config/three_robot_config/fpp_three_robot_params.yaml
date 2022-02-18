@@ -26,7 +26,7 @@ FormationPathPlanner:
       robot_pose_topic: robot_pose 
     robot1:
       namespace: /robot1
-      offset: [0.0, -1.0] # Defines distance from master robot
+      offset: [0.0, -0.75] # Defines distance from master robot
       # reconfig_offset: [-1.0, 0.7] # Defines the distance from the master after reconfiguration
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
 
@@ -37,7 +37,7 @@ FormationPathPlanner:
 
     robot2:
       namespace: /robot2
-      offset: [0.0, 1.0] # Defines distance from master robot
+      offset: [0.0, 0.75] # Defines distance from master robot
       # reconfig_offset: [-1.0, 0.7] # Defines the distance from the master after reconfiguration
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
 

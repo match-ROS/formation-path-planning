@@ -49,7 +49,7 @@ FormationPathController:
       robot_odom_topic: odom
       robot_cmd_vel_topic: cmd_vel_2
       lyapunov_params: [3.4, 10.0, 2.5]
-    robot1:
+    robot2:
       namespace: /robot2
       robot_pose_topic: robot_pose
       robot_odom_topic: odom
