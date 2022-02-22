@@ -63,9 +63,11 @@ FormationPathPlanner:
       # Distance that is subtracted from the end point of the Relaxed A Star in the direction of the end orientation.
       # This should help no creating splines that instantly make a curve before the end
       end_straight_distance: 1.0
+      
       # Every nth cell the cell of the RelaxedAStar planner will be used to generate splines
       # Every nth cell will act as a control point
-      control_point_distance: 80
+      # control_point_distance: 80
+
       # This value defines how many points should be inserted into the plan from one spline.
       # F.e. control_point_distance = 50. With 0.05m per cell the control points are spaced every 2.5m.
       # With a planning_points_per_spline value of 20 this would generate 30 points into the plan that are in between two control points.
@@ -75,6 +77,14 @@ FormationPathPlanner:
       # This value will also be checked when the formation shape is known and the minimal radius of a curve will be calculated.
       # Whichever radius is bigger will be selected for creating the splines
       minimal_curve_radius: 2.0
+      # This is the max step the iterator makes to approximate the length of the spline
+      max_iterator_step_size: 0.0001
+      # Maximal difference between the target spline length and the approximated spline length.
+      # When the difference is lower that this value a new point is added to the spline as the points are almost equal enough away from each other
+      max_diff_to_target_length: 0.001
+      # Distance the points should be appart from each other
+      # The distance is measured as the spline length
+      target_spline_length: 0.05
 
 RelaxedAStar:
   # The default tolerance that is used if the tolerance of the received goal is not valid.

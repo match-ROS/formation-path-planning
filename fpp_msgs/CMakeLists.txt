@@ -10,7 +10,7 @@ add_compile_options(-std=c++14)
 find_package(catkin REQUIRED COMPONENTS
     std_msgs
     geometry_msgs
-	nav_msgs
+	  nav_msgs
     message_generation)
 
 ## System dependencies are found with CMake's conventions

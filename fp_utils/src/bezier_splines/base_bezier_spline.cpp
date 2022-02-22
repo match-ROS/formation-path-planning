@@ -218,6 +218,102 @@ namespace bezier_splines
         return bezier_spline;
     }
 
+	float BaseBezierSpline::calcSplineLength(float lower_bound, float upper_bound, float max_iterator_step_size)
+	{
+		int number_of_steps = (upper_bound - lower_bound) / max_iterator_step_size;
+		float real_step_size = (upper_bound - lower_bound) / float(number_of_steps);
+
+		float approx_spline_length = 0.0;
+
+		for(float step_counter = 0; step_counter < number_of_steps; step_counter++)
+		{
+			// Eigen::Vector2f lower_point = this->calcPointOnBezierSpline(lower_bound + float(step_counter) * real_step_size);
+			// Eigen::Vector2f upper_point = this->calcPointOnBezierSpline(lower_bound + float(step_counter + 1) * real_step_size);
+
+			// Eigen::Vector2f diff = upper_point - lower_point;
+			// approx_spline_length = approx_spline_length + diff.norm();
+
+			Eigen::Vector2f gradient_value = this->calcFirstDerivativeValue(lower_bound + float(step_counter) * real_step_size);
+			approx_spline_length = approx_spline_length + (gradient_value * real_step_size).norm();
+		}
+
+		return approx_spline_length;
+	}
+
+	bool BaseBezierSpline::calcIteratorBySplineLength(float &iterator,
+													  float target_spline_length,
+													  float max_diff_from_target,
+													  float max_iterator_step_size,
+													  float &spline_length_remainder)
+	{
+		return this->calcIteratorBySplineLength(iterator, target_spline_length, max_diff_from_target, 0.0, max_iterator_step_size, spline_length_remainder);
+	}
+
+	bool BaseBezierSpline::calcIteratorBySplineLength(float &iterator,
+													  float target_spline_length,
+													  float max_diff_from_target,
+													  float first_step_size,
+													  float max_iterator_step_size,
+													  float &spline_length_remainder)
+	{
+		float start_iterator = iterator;
+
+		// The first step can help to speed up the process as the iterator not always has to start at 0.0
+		if(first_step_size == 0.0)
+		{
+			iterator = iterator + max_iterator_step_size;	
+		}
+		else
+		{
+			iterator = iterator + first_step_size;
+		}		
+
+		float approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_iterator_step_size);
+
+		// Factor that will decrease the backtracking by half each time a step is performed
+		float max_step_size_factor = 0.5;
+		// The backtracking steps will be reduced only if the algorithm increased the iterator at least once
+		bool iterator_increased_once = false;
+
+		do
+		{
+			if(approx_spline_length < target_spline_length)
+			{
+				iterator = iterator + max_iterator_step_size;
+				// Reset the factor for the next iteration where approx_spline_length is bigger than target_spline_length
+				max_step_size_factor = 0.5;
+				iterator_increased_once = true;
+			}
+			else if(approx_spline_length > target_spline_length)
+			{
+				iterator = iterator - max_step_size_factor * max_iterator_step_size;
+				// Lower max_step_size_factor for next iteration to get even closer to the target_spline_length
+				if(iterator_increased_once)
+				{
+					max_step_size_factor = max_step_size_factor * 0.5;
+				}
+			}
+			
+			approx_spline_length = this->calcSplineLength(start_iterator, iterator, max_iterator_step_size);
+
+			if(iterator > 1.0)
+			{
+				if((target_spline_length - approx_spline_length) < 0.0)
+				{
+					// Iterator is too high and current spline can not offer the target_spline_length.
+					// Calculate until max value of 1.0 and return missing spline length
+					approx_spline_length = this->calcSplineLength(start_iterator, 1.0, max_iterator_step_size);
+					spline_length_remainder = target_spline_length - approx_spline_length;
+					return false;	
+				}				
+			}
+		} while(std::abs(approx_spline_length - target_spline_length) > max_diff_from_target || iterator > 1.0);
+
+		// target_spline_length was reached so spline is not finished
+		spline_length_remainder = 0.0;
+		return true;
+	}
+
 	float BaseBezierSpline::calcCurvation(float iterator)
 	{
 		Eigen::Vector2f first_derivative_value = this->calcFirstDerivativeValue(iterator);
