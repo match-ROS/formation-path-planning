@@ -37,14 +37,14 @@ FormationPathController:
 
   formation_config:
     robot0:
-      namespace: /robot0_ns
+      namespace: /robot0
       master: true
       robot_pose_topic: amcl_pose
       robot_odom_topic: mobile_base_controller/odom
       robot_cmd_vel_topic: mobile_base_controller/cmd_vel
       lyapunov_params: [3.4, 30.0, 2.5]
     robot1:
-      namespace: /robot1_ns
+      namespace: /robot1
       robot_pose_topic: amcl_pose
       robot_odom_topic: mobile_base_controller/odom
       robot_cmd_vel_topic: mobile_base_controller/cmd_vel
