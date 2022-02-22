@@ -160,10 +160,15 @@ namespace fpp
 	void FPPControllerBase::publishPlanMetaData(const ros::Publisher &plan_meta_data_publisher,
 												const std::vector<geometry_msgs::PoseStamped> &plan)
 	{
+		geometry_msgs::PoseStamped last_pose = plan[0];
+		std::string robot_name = this->getRobotNameByTopicNamespace(this->robot_plan_pub_.getTopic());
+
 		for(int pose_counter = 0; pose_counter < plan.size(); pose_counter++)
 		{
 			fpp_msgs::GlobalPlanPoseMetaData pose_meta_data;
+			pose_meta_data.stamp = ros::Time::now();
 			pose_meta_data.index = pose_counter;
+			pose_meta_data.robot_name.data = robot_name;
 
 			pose_meta_data.pose = plan[pose_counter].pose;
 
@@ -172,6 +177,10 @@ namespace fpp
 			pose_meta_data.pose_2D.theta = tf::getYaw(plan[pose_counter].pose.orientation);
 
 			plan_meta_data_publisher.publish(pose_meta_data);
+			// ROS_INFO_STREAM("name: " << pose_meta_data.robot_name.data << " | x: " << plan[pose_counter].pose.position.x << " | y: " << plan[pose_counter].pose.position.y);
+			ros::Duration(0.001).sleep();
+
+			last_pose = plan[pose_counter];
 		}
 	}
 
@@ -254,6 +263,16 @@ namespace fpp
 		eigen_pose[2] = tf::getYaw(pose.orientation);
 
 		return eigen_pose;
+	}
+	#pragma endregion
+
+	#pragma region Helper Methods
+	std::string FPPControllerBase::getRobotNameByTopicNamespace(std::string topic)
+	{
+		std::string robot_name = topic;
+		robot_name = robot_name.substr(1);
+		robot_name = robot_name.substr(0, robot_name.find("/"));
+		return robot_name;
 	}
 	#pragma endregion
 }

@@ -31,7 +31,7 @@ namespace path_planner
 
             this->plan_publisher_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
             this->planning_points_orientation_publisher_ = private_nh.advertise<geometry_msgs::PoseArray>("planning_points_orientation", 1);
-
+            
             this->initVisuHelper(name);
 
             // Get the tf prefix
@@ -187,20 +187,50 @@ namespace path_planner
             this->createPoseArrayForPlan(array_plan, plan);
 
             // Select pose every so often
-			int control_point_amount = std::ceil(float(plan.size()) / float(this->ras_params_->control_point_distance));
-			int real_control_point_distance = int(plan.size() / control_point_amount);
+			// int control_point_amount = std::ceil(float(plan.size()) / float(this->ras_params_->control_point_distance));
+			// int real_control_point_distance = int(plan.size() / control_point_amount);
 
-			std::vector<geometry_msgs::PoseStamped> selected_poses;
+			// std::vector<geometry_msgs::PoseStamped> selected_poses;
 			
-			// Use smaller or equal because when control_point_amount = 2 (plan.size = 90 && control_point_distance = 50), then there should be start, end and one control point in the middle
-			for(int control_point_counter = 0; control_point_counter < control_point_amount; control_point_counter++)
-			{
-				selected_poses.push_back(plan[control_point_counter * real_control_point_distance]);
-			}
-            geometry_msgs::PoseStamped last;
-            last.header = (plan.end() - 1)->header;
-            last.pose = (plan.end() - 1)->pose;
-            selected_poses.push_back(last);
+			// // Use smaller or equal because when control_point_amount = 2 (plan.size = 90 && control_point_distance = 50), then there should be start, end and one control point in the middle
+			// for(int control_point_counter = 0; control_point_counter < control_point_amount; control_point_counter++)
+			// {
+			// 	selected_poses.push_back(plan[control_point_counter * real_control_point_distance]);
+			// }
+            // geometry_msgs::PoseStamped last;
+            // last.header = (plan.end() - 1)->header;
+            // last.pose = (plan.end() - 1)->pose;
+            // selected_poses.push_back(last);
+
+            // Select pose every so often
+            float min_control_point_distance = 2 * std::sqrt(2) * this->ras_params_->max_robot_to_formation_centre_dist;
+
+            // Tobias new control point distance - Test
+            // float min_control_point_distance = 4 * 0.55;
+
+            std::vector<geometry_msgs::PoseStamped> selected_poses;
+            selected_poses.push_back(plan.front());
+            geometry_msgs::PoseStamped last_added_pose = selected_poses.back();
+            geometry_msgs::PoseStamped last_pose_of_plan = plan.back();
+            for(geometry_msgs::PoseStamped &pose_in_plan: plan)
+            {
+                float distance_to_end = std::sqrt(std::pow(pose_in_plan.pose.position.x - last_pose_of_plan.pose.position.x, 2) +
+                                                  std::pow(pose_in_plan.pose.position.y - last_pose_of_plan.pose.position.y, 2));
+                if(distance_to_end < min_control_point_distance)
+                {
+                    selected_poses.push_back(pose_in_plan);
+                    selected_poses.push_back(last_pose_of_plan);
+                    break;
+                }
+
+                float control_point_distance = std::sqrt(std::pow(pose_in_plan.pose.position.x - last_added_pose.pose.position.x, 2) +
+                                                         std::pow(pose_in_plan.pose.position.y - last_added_pose.pose.position.y, 2));
+                if(control_point_distance >= min_control_point_distance)
+                {
+                    last_added_pose = pose_in_plan;
+                    selected_poses.push_back(pose_in_plan);
+                }
+            }
 
 			// Create splines
             std::vector<std::shared_ptr<bezier_splines::QuinticBezierSplines>> spline_list;
@@ -210,6 +240,9 @@ namespace path_planner
                 Eigen::Matrix<float, 2, 1> end_pose;
                 start_pose << selected_poses[pose_counter].pose.position.x, selected_poses[pose_counter].pose.position.y;
                 end_pose << selected_poses[pose_counter + 1].pose.position.x, selected_poses[pose_counter + 1].pose.position.y;
+
+
+
 				std::shared_ptr<bezier_splines::QuinticBezierSplines> spline =
 					std::make_shared<bezier_splines::QuinticBezierSplines>(&this->visu_helper_, start_pose, end_pose);
 				
@@ -229,30 +262,32 @@ namespace path_planner
 			tf::Quaternion end_quaternion;
 			tf::quaternionMsgToTF(goal.pose.orientation, end_quaternion);
 			spline_list.back()->setEndTangentByQuaternion(end_quaternion);
+            spline_list.back()->setEndTangentMagnitude(spline_list.back()->getEndTangentMagnitude() * 2.0);
 			
-			// // Visualization
-			// for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
-			// {
+			// Visualization
+			for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
+			{
 			// 	spline->calcControlPoints();
-			// 	spline->addStartEndPointToVisuHelper();
+			 	spline->addStartEndPointToVisuHelper();
             //     spline->addTangentsToVisuHelper();
             //     spline->addControlPointsToVisuHelper();
             //     spline->addBezierSplineToVisuHelper(this->ras_params_->planning_points_per_spline);
-			// 	spline->visualizeData();
-			// }
+			 	spline->visualizeData();
+			}
 
 			// Optimize the curvature of the splines to be under a certain threshold
 			ROS_INFO_STREAM("Optimizing the curvature of the splines");
+            ROS_INFO_STREAM("Curve Radius: " << this->ras_params_->max_robot_to_formation_centre_dist);
 			for(int spline_counter = 0; spline_counter < spline_list.size(); spline_counter++)
 			{
 				// ROS_INFO_STREAM("spline counter: " << spline_counter);
-				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
+				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->ras_params_->planning_points_per_spline, this->ras_params_->minimal_curve_radius, int i));
 
 				int timeout_counter = 0;
 
 				int point_of_failure = 0;
 				while (!spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->ras_params_->planning_points_per_spline,
-																				 this->ras_params_->minimal_curve_radius,
+																				 this->ras_params_->max_robot_to_formation_centre_dist,
 																				 point_of_failure))
 				{
 					// This process could be turned into an iterative optimization process, that tries to get to the limit of the minimal curve radius to minimize the distance the robots have to travel
@@ -284,6 +319,8 @@ namespace path_planner
 				// ROS_INFO_STREAM("valid: " << spline_list[spline_counter]->checkMinCurveRadiusOnSpline(this->planning_points_per_spline_, this->minimal_curve_radius_));
 			}
 
+            ROS_INFO_STREAM("Finished optimizing splines");
+
 			// // Visualization
 			// for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
 			// {
@@ -294,15 +331,53 @@ namespace path_planner
 			// 	spline->visualizeData();
 			// }
 
-			// Create plan by splines
+            // Create list of points as plan
             plan.clear();
-            std::vector<Eigen::Matrix<float, 2, 1>> points_of_plan;
+            std::vector<Eigen::Vector2f> points_of_plan;
+
+            // How much length is left to get out of the new spline (target_spline_length - old_spline_approx_length)
+            float remaining_spline_length = 0.0; 
+
             for(std::shared_ptr<bezier_splines::QuinticBezierSplines> &spline: spline_list)
             {
-                std::vector<Eigen::Matrix<float, 2, 1>> points;
-                points = spline->calcBezierSpline(this->ras_params_->planning_points_per_spline);
-                points_of_plan.insert(points_of_plan.end(), points.begin(), points.end());
+                float iterator = 0.0;
+                float last_iterator = 0.0;
+                bool spline_not_ended = true;
+
+                do
+                {
+                    float lower_bound = iterator;
+                    if(remaining_spline_length <= 0.0)
+                    {
+                        spline_not_ended = spline->calcIteratorBySplineLength(iterator,
+                                                                              this->ras_params_->target_spline_length,
+                                                                              this->ras_params_->max_diff_to_target_length,
+                                                                              (lower_bound - last_iterator),
+                                                                              this->ras_params_->max_iterator_step_size,
+                                                                              remaining_spline_length);
+                    }
+                    else
+                    {
+                        spline_not_ended = spline->calcIteratorBySplineLength(iterator,
+                                                                              remaining_spline_length,
+                                                                              this->ras_params_->max_diff_to_target_length,
+                                                                              (lower_bound - last_iterator),
+                                                                              this->ras_params_->max_iterator_step_size,
+                                                                              remaining_spline_length);
+                    }
+
+                    if(spline_not_ended)
+                    {
+                        Eigen::Vector2f point_on_spline = spline->calcPointOnBezierSpline(iterator);
+                        points_of_plan.push_back(spline->calcPointOnBezierSpline(iterator));
+                    }
+
+                    last_iterator = lower_bound;
+                } while(spline_not_ended);
             }
+            // Add the target point to the spline as it will most likely not be added
+            points_of_plan.push_back(spline_list.back()->calcPointOnBezierSpline(1.0));
+
             geometry_msgs::PoseStamped last_pose;
             // < is necessary because we just copy elements from one vector (0 until size()) to the other
             for(uint path_counter = 0; path_counter < points_of_plan.size(); path_counter++)

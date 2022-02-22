@@ -2,6 +2,9 @@
 
 #include "ros/ros.h"
 
+#include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/Point32.h>
+#include <fpp_msgs/FormationFootprintInfo.h>
 #include <fpp_ros/data_classes/path_planner_types.h>
 
 namespace fpp_data_classes
@@ -18,9 +21,14 @@ namespace fpp_data_classes
 		float end_straight_distance;
 
 		// Settings for generating points with Bezier Splines
-		int control_point_distance;
+		float max_robot_to_formation_centre_dist;
 		int planning_points_per_spline;
 		float minimal_curve_radius;
+
+		// Settings for the generation of the points appended in the global plan
+		float max_iterator_step_size;
+		float max_diff_to_target_length;
+		float target_spline_length;
 	};
 
 	class RASParamManager
@@ -29,7 +37,7 @@ namespace fpp_data_classes
 			RASParamManager(ros::NodeHandle &nh, ros::NodeHandle &planner_nh);
 		
 			void readParams(std::string formation_planner_name);
-
+			void reportParamError(std::string param_name);
 			void printInfo();
 
 			#pragma region Getter/Setter
@@ -40,6 +48,8 @@ namespace fpp_data_classes
 			ros::NodeHandle &nh_;
 			ros::NodeHandle &planner_nh_;
 
-			std::shared_ptr<fpp_data_classes::RASParams> ras_params_;			
+			ros::ServiceClient formation_info_srv_client_;
+
+			std::shared_ptr<fpp_data_classes::RASParams> ras_params_;
 	};
 }

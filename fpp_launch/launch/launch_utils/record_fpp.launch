@@ -1,6 +1,6 @@
 <launch>
     <arg name="ros_bag_filename" default="fpp_data"/>
-    <arg name="file_path" default="/home/hlurz/rosbags/"/>
+    <arg name="file_path" default="/home/rosmatch/rosbags/"/>
 
     <node pkg="rosbag" type="record" name="record_fpp"
        args="record -e  (.*)/mobile_base_controller/odom
@@ -8,6 +8,8 @@
 						(.*)/move_base_flex/FormationPathController/fpc_meta_data
 						(.*)/move_base_flex/FormationPathPlanner/robot_plan_meta_data
 						(.*)/move_base_flex/FormationPathPlanner/formation_plan_meta_data
+                        (.*)/global_plan_meta_data_relay
+                        (.*)/formation_plan_meta_data_relay
                         
                     -o $(arg file_path)$(arg ros_bag_filename).bag"/>
 </launch>

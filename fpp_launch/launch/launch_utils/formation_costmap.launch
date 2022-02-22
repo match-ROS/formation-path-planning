@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <launch>
+	<arg name="formation_costmap_config_path"/>
+
 	<group ns="move_base_flex">
 		<node pkg="formation_costmap" type="formation_footprint_node" name="formation_footprint_node" output="screen">
 			<!--Load params for the formation costmap layer-->
-			<rosparam file="$(find fpp_launch)/config/formation_costmap_params.yaml" command="load"/>
+			<rosparam file="$(arg formation_costmap_config_path)" command="load"/>
 		</node>
 	</group>
 </launch>
