@@ -7,12 +7,12 @@ formation_costmap:
       master: true
       namespace: /robot0
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
-      robot_pose_topic: amcl_pose 
+      robot_pose_topic: amcl_pose_converted
     robot1:
       namespace: /robot1
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
-      robot_pose_topic: amcl_pose
+      robot_pose_topic: amcl_pose_converted
     robot2:
       namespace: /robot2
       robot_outline: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
-      robot_pose_topic: amcl_pose 
+      robot_pose_topic: amcl_pose_converted
